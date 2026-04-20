@@ -1,0 +1,107 @@
+/* --- トップページ専用スタイル --- */
+
+/* ページ全体の背景や余白を制御するコンテナ */
+.siteindex_main_wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 100px;
+}
+
+/* コンテンツ選択エリア（横並びの親要素） */
+.siteindex_options_container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 選択肢カード */
+.siteindex_card {
+    flex: 1;
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f0f0f0;
+}
+
+/* ホバー時の挙動 */
+.siteindex_card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 200, 233, 0.2);
+    border-color: #00C8E9;
+}
+
+.siteindex_card_h3 {
+    font-size: 1.6rem;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    position: relative;
+}
+
+/* タイトル下の装飾線 */
+.siteindex_card_h3::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background-color: #00C8E9;
+    border-radius: 2px;
+}
+
+.siteindex_card_p {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    flex-grow: 1; /* ボタンの位置を下揃えにする */
+}
+
+/* ボタン */
+.siteindex_btn_box {
+    background-color: #00C8E9;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    width: 200px;
+    margin: 0 auto;
+    border: none;
+    cursor: pointer;
+}
+
+.siteindex_btn_link {
+    display: block;
+    padding: 15px 0;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.siteindex_btn_box:hover {
+    background-color: #00a3bf;
+    box-shadow: 0 5px 15px rgba(0, 200, 233, 0.4);
+}
+
+/* レスポンシブ */
+@media (max-width: 850px) {
+    .siteindex_options_container {
+        flex-direction: column;
+        gap: 30px;
+    }
+    .siteindex_hero_h1 {
+        font-size: 2rem;
+    }
+    .siteindex_card {
+        padding: 30px 20px;
+    }
+}

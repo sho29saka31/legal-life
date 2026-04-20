@@ -1,0 +1,87 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>チャット | 法令の学習・相談サイト legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "チャット | 法令の学習・相談サイト legal&life",
+            "url": "https://deskside31.github.io/content/chat/"
+        }
+        </script>
+        <meta name="description" content="AIチャット｜法令や法律問題についてAIにチャットで質問できます。あなたの疑問にリアルタイムで回答します。法令の学習・相談 legal&life">
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="チャット | 法令の学習・相談サイト legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/blob/main/images/site_icon.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/chat.css">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <script defer src="/assets/js/collect-data.js"></script>
+        <meta name="google-site-verification" content="Z4VDHXNVy6fnHXm3hCXhn18YC7IcrgtDsd3lXt1kv8Q" />
+    </head>
+
+    <body class="all-page">
+        
+        <div id="header"></div>
+
+        <main class="chat-content">
+            <div class="page-title">
+                <h1>法令専門AIチャット</h1>
+                <p>
+                    日本の法令に関して聞かれたことに対してAIが詳しく回答します。<br>
+                    履歴はご利用中の端末もしくはサーバーに自動で保存されます。
+                </p>
+            </div>
+
+            <div class="chat_caution_box">
+                <h3 class="chat_caution_title">⚠️ 重要な注意事項</h3>
+                <ul class="chat_caution_list">
+                    <li class="chat_caution_item">個人情報(氏名、住所、電話番号等)は絶対に入力しないでください</li>
+                    <li class="chat_caution_item">本サービスは法的助言ではありません</li>
+                    <li class="chat_caution_item">AI生成の回答には誤りが含まれる可能性があります</li>
+                    <li class="chat_caution_item">重要な判断には必ず専門家にご相談ください</li>
+                </ul>
+                <p class="chat_caution_footer">
+                    当機能利用時は当サイト  <a href="/law/disclaimer/" class="chat_caution_link">免責事項</a>  並びに  <a href="/law/privacy/#section6" class="chat_caution_link">AI利用に関する詳細情報開示</a>  に同意したものをみなします。
+                </p>
+            </div>
+
+            <div class="chat_search_info_box">
+                <p class="chat_search_info_text">
+                    💡 わからない法令名は
+                    <a href="/content/search/" class="chat_search_info_link">法令検索</a>
+                    ページで調べてみよう！
+                </p>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-wrapper">
+                    <header class="chat-inner-header">
+                        <span>法令専門AIチャット</span>
+                    </header>
+
+                    <div id="responseArea" class="chat-chat-window"></div>
+
+                    <div class="chat-input-area">
+                        <textarea id="userInput" class="chat-user-input" placeholder="AIと話すにはここに入力..."></textarea>
+                        <button id="sendButton" class="chat-send-btn">送信</button>
+                        <button id="clearAllButton" class="chat-clear-btn">全削除</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/chat.js" defer></script>
+    </body>
+</html>

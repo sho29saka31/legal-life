@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <title>ニュース | 法令の学習・相談サイト legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "ニュース | 法令の学習・相談サイト legal&life",
+            "url": "https://deskside31.github.io/content/news/"
+        }
+        </script>
+        <meta name="description" content="法令ニュース｜最新の法令ニュースを法令の学習相談LEGAL&LIFEで分かりやすく詳しく学んでみませんか？">
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="ニュース | 法令の学習・相談サイト legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/blob/main/images/site_icon.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <Link rel="stylesheet" href="/assets/css/news.css">
+        <script defer src="/assets/js/collect-data.js"></script>
+        <meta name="google-site-verification" content="Z4VDHXNVy6fnHXm3hCXhn18YC7IcrgtDsd3lXt1kv8Q" />
+    </head>
+    <body class="all-page">
+
+        <div id="header"></div>
+        
+        <div class="page-title">
+            <h1>最新法令ニュース</h1>
+            <p>
+                最新の法令の改定・制定情報をこのページでは配信しています。<br>
+                ぜひこのページで分かりやすく詳しく最新の法令情報を学んでみませんか？
+            </p>
+        </div>
+
+        <div class="news-search-group">
+            <div class="news-search-group search-input-container">
+                <div class="search-input-wrapper">
+                    <input type="text" id="searchInput" class="news-search-input" placeholder="検索キーワードをここに入力"/>
+                    <button type="button" id="news-search-clear" class="news-search-clear" aria-label="入力をクリア">&times;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="news-search-group">
+            <label for="news_typeSelect">ニュースタイプ：</label>
+            <select id="news_typeSelect">
+                <option value="" selected>すべて</option>
+                <option value="Enactment">制定</option>
+                <option value="Amendment">改正</option>
+                <option value="Promulgation">公布</option>
+                <option value="Abolition">廃止</option>
+                <option value="Enforcement">施行</option>                
+            </select>
+        </div>
+
+        <button id="searchButton" onclick="searchNews()">検索</button>
+
+        <div class="news-search-group">
+            <label for="sortSelect">並び替え：</label>
+            <select id="sortSelect" onchange="searchNews(0)">
+                <option value="none" selected>指定なし</option>
+                <option value="news_post_new">投稿の新しい順</option>
+                <option value="news_post_old">投稿の古い順</option>
+            </select>
+        </div>
+
+        <div id="errorMessage"></div>
+        <div id="loadingMessage"></div>
+        <div id="results"></div>
+
+        <div id="footer"></div>
+
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/news.js"></script>
+    </body>
+</html>

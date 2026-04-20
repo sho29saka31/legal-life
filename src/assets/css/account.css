@@ -1,0 +1,470 @@
+/* account.css - アカウント設定ページ専用スタイル */
+
+.settings-container {
+    max-width: 580px;
+    margin: 40px auto;
+    padding: 0 20px 80px;
+}
+.settings-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 8px;
+}
+.settings-subtitle {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 32px;
+}
+
+/* カード共通 */
+.account-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.account-card.danger-card {
+    border: 1.5px solid #fcd0cc;
+    background: #fff9f9;
+}
+.account-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+.account-card.danger-card .account-card-title {
+    color: #c0392b;
+    border-bottom-color: #fcd0cc;
+}
+
+/* ユーザー情報 */
+.user-info-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.user-info-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid #00C8E9;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.user-info-avatar-placeholder {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #e0f7fb;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+.user-info-name  { font-size: 1rem; font-weight: 700; color: #222; }
+.user-info-email { font-size: 0.85rem; color: #888; margin-top: 2px; }
+
+/* プロバイダー連携リスト */
+.provider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
+}
+.provider-row:last-child { border-bottom: none; }
+.provider-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+.provider-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.provider-icon.google  { background: #f1f3f4; }
+.provider-icon.twitter { background: #000; }
+.provider-icon.line    { background: #06C755; }
+.provider-icon.email   { background: #e0f7fb; }
+.provider-label { font-size: 14px; font-weight: 700; color: #333; }
+.provider-status {
+    font-size: 12px;
+    margin-top: 2px;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+.provider-status.linked { color: #27ae60; }
+
+/* 連携/解除ボタン */
+.provider-link-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    font-family: "BIZ UDGothic", sans-serif;
+    transition: all 0.18s;
+    flex-shrink: 0;
+}
+.provider-link-btn.link-btn {
+    background: #00C8E9;
+    color: #fff;
+}
+.provider-link-btn.link-btn:hover { background: #00a3bf; }
+.provider-link-btn.unlink-btn {
+    background: #fff;
+    color: #e74c3c;
+    border: 1.5px solid #e74c3c;
+}
+.provider-link-btn.unlink-btn:hover { background: #fff5f5; }
+.provider-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* フォーム共通 */
+.settings-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+.settings-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+    font-family: "BIZ UDGothic", sans-serif;
+    transition: border-color 0.2s;
+}
+.settings-input:focus {
+    outline: none;
+    border-color: #00C8E9;
+    box-shadow: 0 0 0 3px rgba(0,200,233,0.12);
+}
+.settings-btn {
+    width: 100%;
+    padding: 12px;
+    background: #00C8E9;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "BIZ UDGothic", sans-serif;
+    transition: background 0.2s, transform 0.1s;
+}
+.settings-btn:hover:not(:disabled) { background: #00a3bf; transform: translateY(-1px); }
+.settings-btn:disabled             { opacity: 0.6; cursor: not-allowed; }
+.settings-btn.danger-btn           { background: #e74c3c; margin-top: 8px; }
+.settings-btn.danger-btn:hover:not(:disabled) { background: #c0392b; }
+.settings-msg {
+    font-size: 13px;
+    min-height: 20px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+.settings-msg.error   { color: #e74c3c; }
+.settings-msg.success { color: #27ae60; }
+.settings-note { font-size: 12px; color: #aaa; margin-top: 12px; line-height: 1.6; }
+.danger-note   { font-size: 12px; color: #e74c3c; margin-top: 12px; line-height: 1.6; }
+
+/* セクション折りたたみ */
+.collapsible-section {
+    margin-top: 0;
+}
+.collapsible-section.hidden { display: none; }
+
+/* ローディング */
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+/* 削除確認モーダル */
+.delete-confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 10001;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+.delete-confirm-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px 28px;
+    max-width: 380px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.delete-confirm-title { font-size: 1.2rem; font-weight: 700; color: #c0392b; margin: 0 0 10px; }
+.delete-confirm-text  { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 20px; }
+.delete-confirm-btns  { display: flex; gap: 10px; }
+.delete-confirm-btns button {
+    flex: 1; padding: 11px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: "BIZ UDGothic", sans-serif;
+}
+.delete-cancel-btn  { background: #eee; color: #555; }
+.delete-cancel-btn:hover  { background: #ddd; }
+.delete-execute-btn { background: #e74c3c; color: #fff; }
+.delete-execute-btn:hover { background: #c0392b; }
+.delete-msg { font-size: 13px; color: #e74c3c; min-height: 18px; margin-bottom: 12px; }
+
+/* ユーザー情報行：ログアウトボタン配置 */
+.user-info-row {
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* 表示名行（名前 + 編集ボタン） */
+.user-info-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.edit-name-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.edit-name-btn:hover { opacity: 1; }
+
+/* UUID行 */
+.user-info-uuid-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+.user-info-uuid-label {
+    font-size: 11px;
+    color: #aaa;
+}
+.user-info-uuid {
+    font-size: 11px;
+    color: #bbb;
+    font-family: monospace;
+    word-break: break-all;
+}
+.copy-uuid-btn {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 1px 6px;
+    color: #888;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+.copy-uuid-btn:hover { background: #f5f5f5; }
+
+/* 設定ページ内ログアウトボタン */
+.settings-inline-logout-btn {
+    padding: 7px 14px;
+    background: #fff;
+    color: #e74c3c;
+    border: 1.5px solid #e74c3c;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "BIZ UDGothic", sans-serif;
+    white-space: nowrap;
+    transition: background 0.18s;
+    flex-shrink: 0;
+    align-self: center;
+}
+.settings-inline-logout-btn:hover { background: #fff5f5; }
+
+/* 表示名編集フォーム */
+.edit-name-form {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+.edit-name-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+.settings-btn-cancel {
+    background: #aaa;
+}
+.settings-btn-cancel:hover:not(:disabled) { background: #888; }
+
+/* auth-section-label（モーダル内のメールセクション見出し） */
+.auth-section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    margin: 0 0 10px;
+    text-align: left;
+}
+
+/* ========================================
+   二段階認証トグル
+   ======================================== */
+.two-factor-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.two-factor-info { flex: 1; }
+.two-factor-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+.two-factor-desc {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+.two-factor-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.two-factor-status {
+    font-size: 13px;
+    font-weight: 700;
+    color: #aaa;
+    min-width: 24px;
+}
+
+/* トグルスイッチ */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 28px;
+    cursor: pointer;
+    transition: background 0.25s;
+}
+.toggle-slider::before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-slider { background: #00C8E9; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); }
+.toggle-switch input:checked ~ .two-factor-status { color: #00a3bf; }
+.toggle-switch input:disabled + .toggle-slider { opacity: 0.5; cursor: not-allowed; }
+
+/* ========================================
+   OTP確認モーダル
+   ======================================== */
+.otp-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 20000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+.otp-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 28px 28px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: authModalIn 0.22s ease;
+}
+.otp-modal-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #222;
+    text-align: center;
+    margin: 0 0 8px;
+}
+.otp-modal-desc {
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    line-height: 1.6;
+    margin: 0 0 20px;
+}
+.otp-modal-input {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 8px;
+    box-sizing: border-box;
+    font-family: monospace;
+    transition: border-color 0.2s;
+    margin-bottom: 8px;
+}
+.otp-modal-input:focus {
+    outline: none;
+    border-color: #00C8E9;
+    box-shadow: 0 0 0 3px rgba(0,200,233,0.12);
+}
+.otp-modal-msg {
+    font-size: 13px;
+    color: #e74c3c;
+    text-align: center;
+    min-height: 20px;
+    margin-bottom: 16px;
+}
+.otp-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+.otp-modal-actions .settings-btn { margin: 0; }
+
+body.otp-modal-open {
+    overflow: hidden;
+}

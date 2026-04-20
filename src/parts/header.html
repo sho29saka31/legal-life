@@ -1,0 +1,120 @@
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PFE76QZ3J6"></script>
+<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-PFE76QZ3J6');</script>
+<header>
+    <script type="module" src="/assets/js/important.js"></script>
+    <meta name="google-site-verification" content="Z4VDHXNVy6fnHXm3hCXhn18YC7IcrgtDsd3lXt1kv8Q" />
+    <link rel="stylesheet" href="/assets/css/main.css">
+
+    <div class="header-logo">
+        <h1>
+            <a href="/"><img src="/assets/images/site_icon_clear.png" alt="site-logo">LEGAL & LIFE</a>
+        </h1>
+    </div>
+
+    <div class="header-right-content">
+        <nav class="header-nav-container">
+            <button class="hamberger-btn" aria-expanded="false" aria-controls="main-menu" aria-label="メニューを開く">
+                <span class="hamberger-bar"></span>
+                <span class="hamberger-bar"></span>
+                <span class="hamberger-bar"></span>
+            </button>
+            <ul class="header-nav-menu" id="main-menu">
+                <li><a href="/">ホーム</a></li>
+                <li><a href="/content/chat/">AIチャット</a></li>
+                <li><a href="/content/study/">学習</a></li>
+                <li><a href="/content/search/">検索</a></li>
+                <li><a href="/content/news/">ニュース</a></li>
+                <hr class="menu-divider">
+
+                <!-- ログイン / ログイン済みプロフィール -->
+                <li class="menu-auth-area">
+                    <div id="auth-header-area" class="auth">
+                        <!-- 未ログイン時：ログインボタン -->
+                        <button id="g_id_signin" class="menu-login-btn">ログイン</button>
+                        <!-- ログイン済み時：アバター＋名前＋アカウント設定＋ログアウト -->
+                        <div id="user-profile" class="auth-user-profile" style="display:none;">
+                            <img id="user-avatar" src="" alt="avatar" class="auth-user-icon">
+                            <span id="user-name" class="auth-user-name"></span>
+                            <button id="menu-settings-btn" class="menu-settings-btn">アカウント設定</button>
+                            <button id="logout-btn" class="menu-logout-btn">ログアウト</button>
+                        </div>
+                    </div>
+                </li>
+
+                <li><hr class="menu-divider"></li>
+                <li><a href="/info/about/">サイト概要</a></li>
+                <li><a href="/info/faq/">よくある質問</a></li>
+                <li><a href="/info/contact/">お問い合わせ</a></li>
+                <li><a href="/info/map/">サイトマップ</a></li>
+                <li class="theme-switch-wrapper">
+                    <a href="javascript:void(0)" id="theme-toggle-btn">モード切替</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- ========== 認証モーダル ========== -->
+<div id="auth-modal-overlay" class="auth-modal-overlay" style="display:none;">
+    <div class="auth-modal">
+        <button id="auth-modal-close" class="auth-modal-close" aria-label="閉じる">✕</button>
+
+        <!-- 画面1: ログイン（Google + メール/PW を1画面に統合） -->
+        <div id="auth-view-select" class="auth-view">
+            <h2 class="auth-modal-title">ログイン / 新規登録</h2>
+
+            <button id="auth-google-btn" class="auth-provider-btn auth-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" height="20">
+                Googleでログイン
+            </button>
+
+            <div class="auth-divider"><span>または</span></div>
+
+            <p class="auth-section-label" id="auth-email-title">メールアドレスでログイン</p>
+
+            <input id="auth-email-input" type="email" placeholder="メールアドレス" class="auth-input" autocomplete="email">
+            <input id="auth-password-input" type="password" placeholder="パスワード（6文字以上）" class="auth-input" autocomplete="current-password">
+
+            <div id="auth-name-row" style="display:none;">
+                <input id="auth-name-input" type="text" placeholder="お名前（表示名）" class="auth-input" autocomplete="name">
+            </div>
+
+            <p id="auth-error-msg" class="auth-error-msg"></p>
+
+            <button id="auth-submit-btn" class="auth-submit-btn">ログイン</button>
+
+            <p class="auth-toggle-text" id="auth-forgot-wrap">
+                <a href="javascript:void(0)" id="auth-forgot-btn">パスワードをお忘れの方はこちら</a>
+            </p>
+            <p class="auth-toggle-text" id="auth-to-register-wrap">
+                アカウントをお持ちでない方は
+                <a href="javascript:void(0)" id="auth-to-register">新規登録</a>
+            </p>
+            <p class="auth-toggle-text" id="auth-to-login-wrap" style="display:none;">
+                すでにアカウントをお持ちの方は
+                <a href="javascript:void(0)" id="auth-to-login">ログイン</a>
+            </p>
+        </div>
+
+        <!-- 画面2: ログイン済み -->
+        <div id="auth-view-loggedin" class="auth-view" style="display:none;">
+            <img id="modal-user-avatar" src="" alt="avatar" class="modal-user-avatar">
+            <p id="modal-user-name" class="modal-user-name"></p>
+            <p class="auth-modal-sub">ログイン中です</p>
+            <button id="modal-settings-link" class="auth-settings-btn">⚙️ アカウント設定</button>
+            <button id="modal-logout-btn" class="auth-submit-btn auth-logout-btn">ログアウト</button>
+        </div>
+
+        <!-- 画面3: パスワードリセット送信完了 -->
+        <div id="auth-view-reset" class="auth-view" style="display:none;">
+            <h2 class="auth-modal-title">📧 メールを送信しました</h2>
+            <p class="auth-modal-sub" style="margin-bottom:8px;">
+                入力したメールアドレス宛にパスワード再設定のリンクを送りました。<br>
+                メールをご確認ください。
+            </p>
+            <p id="auth-reset-email-display" style="text-align:center; font-weight:700; color:#333; margin-bottom:20px;"></p>
+            <button id="auth-reset-back-btn" class="auth-submit-btn">ログイン画面に戻る</button>
+        </div>
+    </div>
+</div>
