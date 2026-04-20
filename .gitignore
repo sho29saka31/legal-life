@@ -1,0 +1,10 @@
+# ビルド成果物
+dist/
+_site/
+
+# 環境設定ファイル
+.env
+.env.local
+
+# エディタ設定
+.vscode/
