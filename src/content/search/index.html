@@ -52,22 +52,12 @@
             <div class="search-form-body">
 
                 <!-- キーワード入力欄 -->
-                <div class="search-input-container">
-                    <div class="search-input-wrapper">
-                        <span class="search-icon">🔍</span>
-                        <input
-                            type="text"
-                            id="searchInput"
-                            class="lawapi-search-input"
-                            placeholder="ここに入力して検索"
-                        />
-                        <button
-                            type="button"
-                            id="faq-search-clear"
-                            class="lawapi-search-clear"
-                            aria-label="入力をクリア"
-                        >&times;</button>
-                    </div>
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="SearchInput" class="search-input" placeholder="ここに入力して検索">
+                    <span type="button" id="search-clear" class="search-clear" aria-label="入力をクリア">
+                        &times;
+                    </span>
                 </div>
 
                 <!-- フィルター行（絞り込み・並び替え） -->

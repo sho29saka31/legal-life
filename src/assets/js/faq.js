@@ -1,49 +1,41 @@
+// 役割: FAQのフィルタリングとアコーディオン開閉のみを担当。
+// クリアボタンの表示制御は important.js で実施。
+
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('faq-search');
-    const clearBtn = document.getElementById('faq-search-clear'); // 追加
-    const tabBtns = document.querySelectorAll('.faq_tab_btn');
-    const faqItems = document.querySelectorAll('.faq_item');
+    const searchInput  = document.getElementById('faq-search');
+    const tabBtns      = document.querySelectorAll('.faq_tab_btn');
+    const faqItems     = document.querySelectorAll('.faq_item');
     const emptyMessage = document.getElementById('faq-empty-message');
 
+    // ---- FAQフィルタリング（FAQ固有のロジック）----
     function filterFAQ() {
-        const searchTerm = searchInput.value.toLowerCase();
-        
-        // --- クリアボタンの表示制御 ---
-        if (searchTerm.length > 0) {
-            clearBtn.style.display = 'block';
-        } else {
-            clearBtn.style.display = 'none';
-        }
-        // ----------------------------
-
+        const searchTerm     = searchInput.value.toLowerCase();
         const activeCategory = document.querySelector('.faq_tab_btn.active').dataset.category;
-        let visibleCount = 0;
+        let visibleCount     = 0;
 
         faqItems.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            const category = item.dataset.category;
-            const matchesSearch = text.includes(searchTerm);
+            const text           = item.textContent.toLowerCase();
+            const category       = item.dataset.category;
+            const matchesSearch  = text.includes(searchTerm);
             const matchesCategory = (activeCategory === 'all' || category === activeCategory);
 
-            if (matchesSearch && matchesCategory) {
-                item.style.display = 'block';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+            if (matchesSearch && matchesCategory) visibleCount++;
         });
 
         emptyMessage.style.display = visibleCount === 0 ? 'block' : 'none';
     }
 
-    // --- クリアボタンクリック時の処理 ---
-    clearBtn.addEventListener('click', () => {
-        searchInput.value = ''; // 入力を空にする
-        filterFAQ();           // 検索結果をリセット
-        searchInput.focus();    // 入力欄にフォーカスを戻す
-    });
+    // ---- イベントリスナー ----
 
-    // 既存のイベントリスナー
+    // 通常の文字入力時
+    searchInput.addEventListener('input', filterFAQ);
+
+    // common-search.js からクリアイベントを受け取ったとき、フィルターをリセット
+    // （inputイベントも同時に発火するが、明示的に書くことで意図を明確にする）
+    searchInput.addEventListener('search:cleared', filterFAQ);
+
+    // タブ切り替え時
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             tabBtns.forEach(b => b.classList.remove('active'));
@@ -51,8 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
             filterFAQ();
         });
     });
-
-    searchInput.addEventListener('input', filterFAQ);
 
     // アコーディオン開閉
     faqItems.forEach(item => {

@@ -24,11 +24,10 @@ const LIMIT = 20;
 let currentSearchTarget = 'title'; // デフォルトは法令名検索
 
 // ========================================
-// 初期化：タブ切り替え・クリアボタン
+// 初期化：タブ切り替えのみ（クリアボタン処理はimportant.jsで実施）
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
     const tabs        = document.querySelectorAll('.search-tab');
-    const clearButton = document.getElementById('faq-search-clear');
     const searchInput = document.getElementById('searchInput');
 
     // タブクリック
@@ -40,23 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchInput) searchInput.focus();
         });
     });
-
-    // クリアボタン
-    if (clearButton && searchInput) {
-        // 入力があるときだけ表示
-        searchInput.addEventListener('input', function() {
-            clearButton.style.display = this.value.length > 0 ? 'flex' : 'none';
-        });
-
-        clearButton.addEventListener('click', function() {
-            searchInput.value = '';
-            clearButton.style.display = 'none';
-            searchInput.focus();
-        });
-
-        // 初期状態は非表示
-        clearButton.style.display = 'none';
-    }
 
     // Enterキーで検索
     if (searchInput) {

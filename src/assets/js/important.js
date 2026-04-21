@@ -531,3 +531,50 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log('%c警告!', 'color: red; font-size: 1.2em; font-weight: bold;', '\n不用意なコード実行は避けてください。');
+
+// 役割: 検索バーのクリアボタンの「表示/非表示制御」と「入力リセット」のみを担当。
+// 固有のフィルタリングや再検索ロジックは一切持たず、
+// 処理完了後に CustomEvent を発火して各ページの JS に委譲する。
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // [data-search-clear="入力欄のID"] を持つボタンをすべて検索し、共通処理をバインド
+    document.querySelectorAll('[data-search-clear]').forEach(clearBtn => {
+
+        const targetId = clearBtn.dataset.searchClear;
+        const input    = document.getElementById(targetId);
+
+        // 対応する入力欄が存在しない場合はスキップ（エラー防止）
+        if (!input) {
+            console.warn(`[common-search] #${targetId} が見つかりません。`);
+            return;
+        }
+
+        // ---- 表示制御ヘルパー ----
+        const syncVisibility = () => {
+            // 入力があれば表示、なければ非表示
+            clearBtn.style.display = input.value.length > 0 ? 'flex' : 'none';
+        };
+
+        // 初期状態を即時反映（ページ読み込み時に値が残っているケースへの対応）
+        syncVisibility();
+
+        // 入力値が変わるたびに表示状態を更新
+        input.addEventListener('input', syncVisibility);
+
+        // ---- クリアボタンのクリック処理 ----
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            syncVisibility();       // ボタンを非表示に
+            input.focus();          // 入力欄にフォーカスを戻す
+
+            // 「クリアされた」ことを伝えるカスタムイベントを発火。
+            // bubbles: true にすることで document レベルでも受け取れる。
+            // detail に inputId を含めることで、複数の検索バーを持つページでも判別可能。
+            input.dispatchEvent(new CustomEvent('search:cleared', {
+                bubbles: true,
+                detail: { inputId: targetId }
+            }));
+        });
+    });
+});

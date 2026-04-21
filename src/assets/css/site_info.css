@@ -226,60 +226,6 @@
         border-radius: 12px;
     }
 
-    /* 検索窓 */
-    .faq_search_container {
-        position: relative;
-        max-width: 600px; /* 必要に応じてサイズ調整 */
-        margin: 0 auto 30px;
-        margin-bottom: 30px;
-    }
-
-    /* 文字入力中はアイコンと被らないよう右側に余白を確保 */
-    .faq_search_input {
-        width: 100%;
-        padding: 15px 20px 15px 45px;
-        padding-right: 45px;
-        border: 2px solid #e2e8f0;
-        border-radius: 30px;
-        font-size: 16px;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-
-    .faq_search_input:focus {
-        border-color: #00C8E9;
-    }
-
-    .faq_search_icon {
-        position: absolute;
-        left: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #94a3b8;
-    }
-
-    /* クリアボタンのスタイル */
-    .faq_search_clear {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        font-size: 24px;
-        color: #94a3b8;
-        cursor: pointer;
-        display: none; /* 初期は非表示 */
-        padding: 5px;
-        line-height: 1;
-        transition: color 0.2s;
-    }
-
-    .faq_search_clear:hover {
-        color: #0f172a;
-    }
-
-
     /* サイドバーとメインの分割 */
     .faq_layout {
         display: flex;
