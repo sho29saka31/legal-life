@@ -23,12 +23,10 @@ let currentPage = 0;
 const LIMIT = 20;
 let currentSearchTarget = 'title'; // デフォルトは法令名検索
 
-// ========================================
-// 初期化：タブ切り替えのみ（クリアボタン処理はimportant.jsで実施）
-// ========================================
+// search.js の DOMContentLoaded ブロックのみ変更
 document.addEventListener('DOMContentLoaded', function() {
     const tabs        = document.querySelectorAll('.search-tab');
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('SearchInput'); // ← 小文字'i'から大文字'I'に修正
 
     // タブクリック
     tabs.forEach(function(tab) {

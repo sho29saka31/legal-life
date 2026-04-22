@@ -1,8 +1,9 @@
+// faq.js
 // 役割: FAQのフィルタリングとアコーディオン開閉のみを担当。
-// クリアボタンの表示制御は important.js で実施。
+// クリアボタンの表示制御はimportant.jsで実施。
 
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput  = document.getElementById('faq-search');
+    const searchInput  = document.getElementById('SearchInput'); // ← 'faq-search'から修正
     const tabBtns      = document.querySelectorAll('.faq_tab_btn');
     const faqItems     = document.querySelectorAll('.faq_item');
     const emptyMessage = document.getElementById('faq-empty-message');
@@ -14,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let visibleCount     = 0;
 
         faqItems.forEach(item => {
-            const text           = item.textContent.toLowerCase();
-            const category       = item.dataset.category;
-            const matchesSearch  = text.includes(searchTerm);
+            const text            = item.textContent.toLowerCase();
+            const category        = item.dataset.category;
+            const matchesSearch   = text.includes(searchTerm);
             const matchesCategory = (activeCategory === 'all' || category === activeCategory);
 
             item.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
@@ -31,8 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 通常の文字入力時
     searchInput.addEventListener('input', filterFAQ);
 
-    // common-search.js からクリアイベントを受け取ったとき、フィルターをリセット
-    // （inputイベントも同時に発火するが、明示的に書くことで意図を明確にする）
+    // important.js からクリアイベントを受け取ったとき、フィルターをリセット
     searchInput.addEventListener('search:cleared', filterFAQ);
 
     // タブ切り替え時
