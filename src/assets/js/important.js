@@ -1,38 +1,48 @@
 // important.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 import {
     getAuth, onAuthStateChanged,
     signInWithPopup, signOut,
     GoogleAuthProvider,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     updateProfile, fetchSignInMethodsForEmail,
-    linkWithCredential, unlink, sendPasswordResetEmail
+    linkWithCredential, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
 
-// === ダークモード初期化 ===
-(function() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
+// ========================================
+// ダークモード初期化（最優先で実行）
+// ========================================
+(function () {
+    if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
     }
 })();
 
-// === ヘッダー・フッターのfetchを最速で開始<tempファイル内のコード変更時は番号を更新すること！> ===
+// ========================================
+// ヘッダー・フッター キャッシュ付きfetch
+// ========================================
 const LAYOUT_VERSION = "260416-2300";
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;
+
+    // 旧バージョンのキャッシュを削除
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const k = sessionStorage.key(i);
-        if (k && k.startsWith('cache:' + url) && k !== key) sessionStorage.removeItem(k);
+        if (k?.startsWith(`cache:${url}`) && k !== key) sessionStorage.removeItem(k);
     }
+
     const cached = sessionStorage.getItem(key);
     if (cached) return Promise.resolve(cached);
+
     return fetch(url)
         .then(r => r.ok ? r.text() : "")
-        .then(text => { if (text) sessionStorage.setItem(key, text); return text; });
+        .then(text => {
+            if (text) sessionStorage.setItem(key, text);
+            return text;
+        });
 }
 
 const layoutPromise = Promise.all([
@@ -40,8 +50,11 @@ const layoutPromise = Promise.all([
     fetchWithCache("/parts/footer.html"),
 ]);
 
-// === Firebase初期化 ===
+// ========================================
+// Firebase 初期化
+// ========================================
 let app, db, auth, googleProvider;
+
 try {
     const firebaseConfig = __FIREBASE_CONFIG__;
     app = initializeApp(firebaseConfig);
@@ -49,23 +62,24 @@ try {
         provider: new ReCaptchaEnterpriseProvider('6LfYKIMsAAAAAGN3k-0MoBFZC59YGCXckIOWaxK-'),
         isTokenAutoRefreshEnabled: true
     });
-    db  = getFirestore(app);
-    auth = getAuth(app);
-    googleProvider  = new GoogleAuthProvider();
+    db           = getFirestore(app);
+    auth         = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
 } catch (error) {
-    console.error("⚠️ Firebaseの初期化に失敗しました:", error);
+    console.error("⚠️ Firebase初期化失敗:", error);
     auth = { onAuthStateChanged: () => {} };
 }
 
 // ========================================
-// 自動アカウント連携ヘルパー
+// 同一メール別プロバイダー 自動連携ヘルパー
 // ========================================
 async function autoLinkAndSignIn(error, pendingCredential) {
     if (error.code !== 'auth/account-exists-with-different-credential') throw error;
+
     const email = error.customData?.email;
     if (!email) throw error;
 
-    console.log(`🔗 同メールアドレス(${email})で別プロバイダーを検出。自動連携を試みます...`);
+    console.log(`🔗 同メール(${email})で別プロバイダーを検出。自動連携を試みます...`);
     const methods = await fetchSignInMethodsForEmail(auth, email);
 
     if (methods.includes('google.com')) {
@@ -76,10 +90,14 @@ async function autoLinkAndSignIn(error, pendingCredential) {
     }
 
     if (methods.includes('password')) {
-        const e = new Error('このメールアドレスはパスワードログインで登録済みです。先にパスワードでログインし、アカウント設定から連携してください。');
+        const e = new Error(
+            'このメールアドレスはパスワードログインで登録済みです。' +
+            '先にパスワードでログインし、アカウント設定から連携してください。'
+        );
         e.code = 'auth/manual-link-required';
         throw e;
     }
+
     throw error;
 }
 
@@ -91,34 +109,123 @@ class AuthManager {
         this.currentUser = null;
         this.initialized = false;
         this._emailMode  = 'login';
-        this.start();
+        this._start();
     }
 
-    async start() {
-        if (auth && auth.onAuthStateChanged) {
-            onAuthStateChanged(auth, async (user) => {
-                this.currentUser = user;
-                console.log("👤 認証状態:", user ? user.displayName || user.email : "ログアウト中");
+    // ---- 認証状態の監視開始 ----
+    _start() {
+        if (!auth?.onAuthStateChanged) return;
 
-                // Twitter連携が残っていれば自動解除
-                if (user) {
-                    const hasTwitter = user.providerData.some(p => p.providerId === 'twitter.com');
-                    if (hasTwitter) {
-                        try {
-                            await unlink(user, 'twitter.com');
-                            console.log("🔓 Twitter連携を自動解除しました");
-                        } catch (e) {
-                            console.warn("Twitter自動解除失敗:", e);
-                        }
-                    }
-                }
-                setTimeout(() => this.updateUI(user), 100);
-            });
+        this._unsubSession = null; // リモートログアウトリスナー
+
+        onAuthStateChanged(auth, (user) => {
+            this.currentUser = user;
+            console.log("👤 認証状態:", user ? (user.displayName || user.email) : "ログアウト中");
+
+            // 前のセッションリスナーをクリーンアップ
+            if (this._unsubSession) {
+                this._unsubSession();
+                this._unsubSession = null;
+            }
+
+            if (user) {
+                // セッション記録 + リモートログアウト監視（非同期・ノンブロッキング）
+                this._setupSession(user).catch(e => console.warn("セッション設定失敗:", e));
+            }
+
+            setTimeout(() => this.updateUI(user), 100);
+        });
+
+        this._observeModal();
+    }
+
+    // ---- セッションID の取得 or 新規生成 ----
+    _getOrCreateSessionId() {
+        const KEY = 'legallife_session_id';
+        let id = localStorage.getItem(KEY);
+        if (!id) {
+            id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+            localStorage.setItem(KEY, id);
         }
-        this.observeModal();
+        return id;
     }
 
-    // ---- UI更新 ----
+    // ---- UA からブラウザ / OS / デバイス種別を判定 ----
+    _parseUserAgent() {
+        const ua = navigator.userAgent;
+
+        let browser = 'その他';
+        if (ua.includes('Edg/'))                               browser = 'Microsoft Edge';
+        else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
+        else if (ua.includes('Chrome/'))                       browser = 'Google Chrome';
+        else if (ua.includes('Firefox/'))                      browser = 'Mozilla Firefox';
+        else if (ua.includes('Safari/'))                       browser = 'Safari';
+
+        let os = 'その他';
+        if (/iPhone|iPad|iPod/.test(ua))  os = 'iOS';
+        else if (ua.includes('Android'))  os = 'Android';
+        else if (ua.includes('Windows'))  os = 'Windows';
+        else if (ua.includes('Mac OS X')) os = 'macOS';
+        else if (ua.includes('Linux'))    os = 'Linux';
+
+        const device = /Mobi|Android|iPhone|iPad/i.test(ua)
+            ? 'スマートフォン/タブレット' : 'PC';
+
+        return { browser, os, device };
+    }
+
+    // ---- IPジオロケーションで都市・国を取得（失敗時は"不明"）----
+    async _fetchLocation() {
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 3000);
+            const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok) return '不明';
+            const data = await res.json();
+            return [data.city, data.country_name].filter(Boolean).join(', ') || '不明';
+        } catch {
+            return '不明';
+        }
+    }
+
+    // ---- セッションの記録 + リモートログアウトリスナー設置 ----
+    async _setupSession(user) {
+        const sessionId  = this._getOrCreateSessionId();
+        const sessionRef = doc(db, "users", user.uid, "sessions", sessionId);
+        const { browser, os, device } = this._parseUserAgent();
+
+        try {
+            const snap = await getDoc(sessionRef);
+            if (!snap.exists()) {
+                // 新規セッション：位置情報を取得してフルレコード作成
+                const location = await this._fetchLocation();
+                await setDoc(sessionRef, {
+                    sessionId,
+                    browser, os, device, location,
+                    loginAt:      serverTimestamp(),
+                    lastActive:   serverTimestamp(),
+                    shouldLogout: false,
+                });
+            } else {
+                // 既存セッション：lastActive のみ更新
+                await setDoc(sessionRef, { lastActive: serverTimestamp() }, { merge: true });
+            }
+        } catch (e) {
+            console.warn("セッション記録失敗:", e);
+        }
+
+        // リモートログアウト監視
+        this._unsubSession = onSnapshot(sessionRef, (snap) => {
+            if (snap.exists() && snap.data().shouldLogout === true) {
+                console.log("📤 リモートログアウト信号を受信");
+                localStorage.removeItem('legallife_session_id');
+                signOut(auth).then(() => { window.location.href = '/'; });
+            }
+        });
+    }
+
+    // ---- UI 更新 ----
     updateUI(user) {
         const loginBtn    = document.getElementById("g_id_signin");
         const menuProfile = document.getElementById("user-profile");
@@ -126,86 +233,79 @@ class AuthManager {
         const menuName    = document.getElementById("user-name");
 
         if (user) {
-            if (loginBtn)    loginBtn.style.display    = "none";
-            if (menuProfile) menuProfile.style.display = "flex";
-            if (menuAvatar)  menuAvatar.src  = user.photoURL || "";
-            if (menuName)    menuName.textContent = user.displayName || user.email || "ユーザー";
+            loginBtn    ?.setAttribute('style', 'display:none');
+            menuProfile ?.setAttribute('style', 'display:flex');
+            if (menuAvatar) menuAvatar.src = user.photoURL || "";
+            if (menuName)   menuName.textContent = user.displayName || user.email || "ユーザー";
 
             const overlay = document.getElementById("auth-modal-overlay");
-            if (overlay && overlay.style.display === "flex") {
-                this.showModalView('loggedin', user);
-            }
+            if (overlay?.style.display === "flex") this._showModalView('loggedin', user);
         } else {
-            if (loginBtn)    loginBtn.style.display    = "block";
-            if (menuProfile) menuProfile.style.display = "none";
+            loginBtn    ?.setAttribute('style', 'display:block');
+            menuProfile ?.setAttribute('style', 'display:none');
         }
     }
 
-    // ---- モーダル監視 ----
-    observeModal() {
-        if (this.tryBindModal()) return;
+    // ---- モーダル DOM 監視（遅延読み込み対応）----
+    _observeModal() {
+        if (this._tryBindModal()) return;
+
         const observer = new MutationObserver((_, obs) => {
-            if (this.tryBindModal()) obs.disconnect();
+            if (this._tryBindModal()) obs.disconnect();
         });
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    tryBindModal() {
+    _tryBindModal() {
         const overlay = document.getElementById("auth-modal-overlay");
         if (!overlay || this.initialized) return false;
 
-        // ログインボタン
+        // ---- ログインボタン ----
         document.getElementById("g_id_signin")
             ?.addEventListener("click", () => this.openModal());
 
-        // モーダルを閉じる
+        // ---- モーダルを閉じる ----
         document.getElementById("auth-modal-close")
             ?.addEventListener("click", () => this.closeModal());
-        overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) this.closeModal();
-        });
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") this.closeModal();
-        });
+        overlay.addEventListener("click", e => { if (e.target === overlay) this.closeModal(); });
+        document.addEventListener("keydown", e => { if (e.key === "Escape") this.closeModal(); });
 
-        // 各プロバイダーボタン
+        // ---- Google ----
         document.getElementById("auth-google-btn")
-            ?.addEventListener("click", () => this.loginWithGoogle());
+            ?.addEventListener("click", () => this._loginWithGoogle());
 
-        // メール画面
+        // ---- メール 画面切替 ----
         document.getElementById("auth-to-register")
-            ?.addEventListener("click", () => this.setEmailMode('register'));
+            ?.addEventListener("click", () => this._setEmailMode('register'));
         document.getElementById("auth-to-login")
-            ?.addEventListener("click", () => this.setEmailMode('login'));
+            ?.addEventListener("click", () => this._setEmailMode('login'));
+
+        // ---- メール 送信 ----
         document.getElementById("auth-submit-btn")
-            ?.addEventListener("click", () => this.submitEmail());
+            ?.addEventListener("click", () => this._submitEmail());
 
-        // パスワードリセット
-        document.getElementById("auth-forgot-btn")
-            ?.addEventListener("click", () => this.sendPasswordReset());
-        document.getElementById("auth-reset-back-btn")
-            ?.addEventListener("click", () => this.showModalView('select'));
-
-        // Enterキー送信
+        // ---- Enterキー ----
         ['auth-email-input', 'auth-password-input', 'auth-name-input'].forEach(id => {
-            document.getElementById(id)?.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") this.submitEmail();
+            document.getElementById(id)?.addEventListener("keydown", e => {
+                if (e.key === "Enter") this._submitEmail();
             });
         });
 
-        // ログアウト
+        // ---- パスワードリセット ----
+        document.getElementById("auth-forgot-btn")
+            ?.addEventListener("click", () => this._sendPasswordReset());
+        document.getElementById("auth-reset-back-btn")
+            ?.addEventListener("click", () => this._showModalView('select'));
+
+        // ---- ログアウト ----
         document.getElementById("logout-btn")
-            ?.addEventListener("click", () => this.handleLogout());
+            ?.addEventListener("click", () => this._handleLogout());
         document.getElementById("modal-logout-btn")
-            ?.addEventListener("click", () => this.handleLogout());
+            ?.addEventListener("click", () => this._handleLogout());
 
-        // ハンバーガーメニュー内アカウント設定
+        // ---- アカウント設定 ----
         document.getElementById("menu-settings-btn")
-            ?.addEventListener("click", () => {
-                location.href = "/account/settings/";
-            });
-
-        // モーダル内アカウント設定
+            ?.addEventListener("click", () => { location.href = "/account/settings/"; });
         document.getElementById("modal-settings-link")
             ?.addEventListener("click", () => {
                 this.closeModal();
@@ -223,11 +323,7 @@ class AuthManager {
         const overlay = document.getElementById("auth-modal-overlay");
         if (!overlay) return;
         overlay.style.display = "flex";
-        if (this.currentUser) {
-            this.showModalView('loggedin', this.currentUser);
-        } else {
-            this.showModalView('select');
-        }
+        this._showModalView(this.currentUser ? 'loggedin' : 'select', this.currentUser);
     }
 
     closeModal() {
@@ -236,52 +332,49 @@ class AuthManager {
     }
 
     // ---- 画面切替 ----
-    showModalView(view, user = null) {
+    _showModalView(view, user = null) {
         ['select', 'loggedin', 'reset'].forEach(v => {
             const el = document.getElementById(`auth-view-${v}`);
-            if (el) el.style.display = (v === view) ? "block" : "none";
+            if (el) el.style.display = v === view ? "block" : "none";
         });
+
         if (view === 'loggedin' && user) {
             const avatar = document.getElementById("modal-user-avatar");
             const name   = document.getElementById("modal-user-name");
             if (avatar) avatar.src = user.photoURL || "";
             if (name)   name.textContent = user.displayName || user.email || "ユーザー";
         }
+
         if (view === 'select') {
-            this.setEmailMode('login');
+            this._setEmailMode('login');
             const errMsg = document.getElementById("auth-error-msg");
             if (errMsg) errMsg.textContent = "";
         }
     }
 
-    setEmailMode(mode) {
+    _setEmailMode(mode) {
         this._emailMode = mode;
-        const title          = document.getElementById("auth-email-title");
-        const submitBtn      = document.getElementById("auth-submit-btn");
-        const nameRow        = document.getElementById("auth-name-row");
-        const toRegisterWrap = document.getElementById("auth-to-register-wrap");
-        const toLoginWrap    = document.getElementById("auth-to-login-wrap");
-        const forgotWrap     = document.getElementById("auth-forgot-wrap");
+        const isRegister = mode === 'register';
 
-        if (mode === 'register') {
-            if (title)          title.textContent            = "新規登録";
-            if (submitBtn)      submitBtn.textContent        = "登録する";
-            if (nameRow)        nameRow.style.display        = "block";
-            if (toRegisterWrap) toRegisterWrap.style.display = "none";
-            if (toLoginWrap)    toLoginWrap.style.display    = "block";
-            if (forgotWrap)     forgotWrap.style.display     = "none";
-        } else {
-            if (title)          title.textContent            = "メールでログイン";
-            if (submitBtn)      submitBtn.textContent        = "ログイン";
-            if (nameRow)        nameRow.style.display        = "none";
-            if (toRegisterWrap) toRegisterWrap.style.display = "block";
-            if (toLoginWrap)    toLoginWrap.style.display    = "none";
-            if (forgotWrap)     forgotWrap.style.display     = "block";
-        }
+        const els = {
+            title:          document.getElementById("auth-email-title"),
+            submitBtn:      document.getElementById("auth-submit-btn"),
+            nameRow:        document.getElementById("auth-name-row"),
+            toRegisterWrap: document.getElementById("auth-to-register-wrap"),
+            toLoginWrap:    document.getElementById("auth-to-login-wrap"),
+            forgotWrap:     document.getElementById("auth-forgot-wrap"),
+        };
+
+        if (els.title)          els.title.textContent            = isRegister ? "新規登録"      : "メールでログイン";
+        if (els.submitBtn)      els.submitBtn.textContent        = isRegister ? "登録する"      : "ログイン";
+        if (els.nameRow)        els.nameRow.style.display        = isRegister ? "block"         : "none";
+        if (els.toRegisterWrap) els.toRegisterWrap.style.display = isRegister ? "none"          : "block";
+        if (els.toLoginWrap)    els.toLoginWrap.style.display    = isRegister ? "block"         : "none";
+        if (els.forgotWrap)     els.forgotWrap.style.display     = isRegister ? "none"          : "block";
     }
 
-    // ---- 各認証処理 ----
-    async loginWithGoogle() {
+    // ---- 認証処理 ----
+    async _loginWithGoogle() {
         try {
             await signInWithPopup(auth, googleProvider);
             this.closeModal();
@@ -291,18 +384,18 @@ class AuthManager {
                 this.closeModal();
             } catch (linkErr) {
                 console.error("❌ Googleログイン失敗:", linkErr);
-                this.showError(linkErr.message || "Googleログインに失敗しました");
+                this._showError(linkErr.message || "Googleログインに失敗しました");
             }
         }
     }
 
-    async submitEmail() {
+    async _submitEmail() {
         const email    = document.getElementById("auth-email-input")?.value.trim();
         const password = document.getElementById("auth-password-input")?.value;
         const name     = document.getElementById("auth-name-input")?.value.trim();
 
         if (!email || !password) {
-            this.showError("メールアドレスとパスワードを入力してください");
+            this._showError("メールアドレスとパスワードを入力してください");
             return;
         }
 
@@ -319,7 +412,7 @@ class AuthManager {
             this.closeModal();
         } catch (e) {
             console.error("❌ メール認証失敗:", e);
-            const messages = {
+            const MSG = {
                 'auth/email-already-in-use':  'このメールアドレスはすでに使用されています',
                 'auth/invalid-email':          'メールアドレスの形式が正しくありません',
                 'auth/weak-password':          'パスワードは6文字以上にしてください',
@@ -328,7 +421,7 @@ class AuthManager {
                 'auth/invalid-credential':     'メールアドレスまたはパスワードが間違っています',
                 'auth/too-many-requests':      'しばらく時間をおいてから再試行してください',
             };
-            this.showError(messages[e.code] || 'ログインに失敗しました');
+            this._showError(MSG[e.code] || 'ログインに失敗しました');
         } finally {
             if (submitBtn) {
                 submitBtn.textContent = this._emailMode === 'register' ? "登録する" : "ログイン";
@@ -337,68 +430,83 @@ class AuthManager {
         }
     }
 
-    // パスワードリセットメール送信
-    async sendPasswordReset() {
+    async _sendPasswordReset() {
         const email = document.getElementById("auth-email-input")?.value.trim();
-        if (!email) {
-            this.showError("メールアドレスを入力してください");
-            return;
-        }
+        if (!email) { this._showError("メールアドレスを入力してください"); return; }
+
         try {
             await sendPasswordResetEmail(auth, email);
             const display = document.getElementById("auth-reset-email-display");
             if (display) display.textContent = email;
-            this.showModalView('reset');
-            console.log("📧 パスワードリセットメールを送信しました:", email);
+            this._showModalView('reset');
+            console.log("📧 パスワードリセットメール送信:", email);
         } catch (e) {
             console.error("❌ パスワードリセット失敗:", e);
-            const messages = {
+            const MSG = {
                 'auth/user-not-found':    'このメールアドレスは登録されていません',
                 'auth/invalid-email':     'メールアドレスの形式が正しくありません',
                 'auth/too-many-requests': 'しばらく時間をおいてから再試行してください',
             };
-            this.showError(messages[e.code] || 'メール送信に失敗しました');
+            this._showError(MSG[e.code] || 'メール送信に失敗しました');
         }
     }
 
-    showError(msg) {
+    _showError(msg) {
         const el = document.getElementById("auth-error-msg");
         if (el) el.textContent = msg;
     }
 
-    handleLogout() {
-        signOut(auth).then(() => {
-            console.log("👋 ログアウトしました");
-            this.updateUI(null);
-            const overlay = document.getElementById("auth-modal-overlay");
-            if (overlay && overlay.style.display === "flex") {
-                this.showModalView('select');
-            }
-        }).catch(e => console.error("❌ ログアウト失敗:", e));
+    _handleLogout() {
+        // ログアウト前に現在のセッションドキュメントを削除
+        const sessionId = localStorage.getItem('legallife_session_id');
+        if (sessionId && this.currentUser) {
+            deleteDoc(doc(db, "users", this.currentUser.uid, "sessions", sessionId))
+                .catch(e => console.warn("セッション削除失敗:", e));
+        }
+        localStorage.removeItem('legallife_session_id');
+
+        signOut(auth)
+            .then(() => {
+                console.log("👋 ログアウトしました");
+                this.updateUI(null);
+                const overlay = document.getElementById("auth-modal-overlay");
+                if (overlay?.style.display === "flex") this._showModalView('select');
+            })
+            .catch(e => console.error("❌ ログアウト失敗:", e));
     }
 
-    // ---- Firestore保存 ----
+    // ========================================
+    // Firestore: チャット履歴の保存・削除
+    //   パス: content/chat/{uid}/{docId}
+    //   ※ "content"=コレクション, "chat"=ドキュメント(固定),
+    //      uid=サブコレクション名, docId=メッセージドキュメント
+    // ========================================
     async saveToCloud(input, response, category) {
         if (!this.currentUser) return null;
+
         try {
             const docId = Date.now().toString();
-            await setDoc(doc(db, "consultations", docId), {
-                userId:     this.currentUser.uid,
-                userInput:  input,
-                aiResponse: response,
-                category:   category,
-                timestamp:  serverTimestamp()
-            });
+            await setDoc(
+                doc(db, "content", "chat", this.currentUser.uid, docId),
+                {
+                    userInput:  input,
+                    aiResponse: response,
+                    category:   category,
+                    timestamp:  serverTimestamp(),
+                }
+            );
             return docId;
         } catch (error) {
             console.error("❌ 保存失敗:", error);
+            return null;
         }
     }
 
     async deleteConsultation(docId) {
-        if (!docId) return;
+        if (!docId || !this.currentUser) return;
+
         try {
-            await deleteDoc(doc(db, "consultations", docId));
+            await deleteDoc(doc(db, "content", "chat", this.currentUser.uid, docId));
             console.log("🗑️ クラウドから削除成功");
         } catch (error) {
             console.error("❌ 削除失敗:", error);
@@ -409,68 +517,76 @@ class AuthManager {
 window.authApp = new AuthManager();
 
 // ========================================
-// ヘッダー・フッターの読み込み
+// ヘッダー・フッター 挿入
 // ========================================
-layoutPromise.then(([headerData, footerData]) => {
-    const headerTarget = document.querySelector("#header");
-    const footerTarget = document.querySelector("#footer");
-    if (headerTarget && headerData) headerTarget.innerHTML = headerData;
-    if (footerTarget && footerData) footerTarget.innerHTML = footerData;
+layoutPromise
+    .then(([headerData, footerData]) => {
+        const headerTarget = document.querySelector("#header");
+        const footerTarget = document.querySelector("#footer");
+        if (headerTarget && headerData) headerTarget.innerHTML = headerData;
+        if (footerTarget && footerData) footerTarget.innerHTML = footerData;
 
-    // ダークモード切替
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const html = document.documentElement;
-            if (html.getAttribute('data-theme') === 'dark') {
-                html.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        });
-    }
+        _initThemeToggle();
+        _initHamburgerMenu();
+        _loadCookieScript();
+    })
+    .catch(err => console.error('important.js_load-error:', err));
 
-    // ハンバーガーメニュー
+function _initThemeToggle() {
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            html.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+}
+
+function _initHamburgerMenu() {
     const button = document.querySelector('.hamberger-btn');
     const menu   = document.getElementById('main-menu');
-    if (button && menu) {
-        const overlay = document.createElement('div');
-        overlay.className = 'menu-overlay';
-        document.body.appendChild(overlay);
+    if (!button || !menu) return;
 
-        const toggleMenu = (shouldOpen) => {
-            menu.classList.toggle('is-active', shouldOpen);
-            button.classList.toggle('is-active', shouldOpen);
-            overlay.classList.toggle('is-active', shouldOpen);
-            button.setAttribute('aria-expanded', String(shouldOpen));
-        };
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMenu(button.getAttribute('aria-expanded') !== 'true');
-        });
-        document.addEventListener('click', (e) => {
-            if (menu.classList.contains('is-active') &&
-                !menu.contains(e.target) &&
-                !button.contains(e.target)) {
-                toggleMenu(false);
-            }
-        });
-        menu.querySelectorAll('a').forEach(link =>
-            link.addEventListener('click', () => toggleMenu(false))
-        );
-    }
+    const overlay = Object.assign(document.createElement('div'), { className: 'menu-overlay' });
+    document.body.appendChild(overlay);
 
-    // cookie.jsの動的読み込み
-    const cookieScript = document.createElement('script');
-    cookieScript.src = '/assets/js/cookie.js';
-    cookieScript.onload  = () => console.log('✅ cookie.js: 読み込み完了');
-    cookieScript.onerror = () => console.error('❌ cookie.js: 読み込み失敗');
+    const toggleMenu = (shouldOpen) => {
+        menu.classList.toggle('is-active', shouldOpen);
+        button.classList.toggle('is-active', shouldOpen);
+        overlay.classList.toggle('is-active', shouldOpen);
+        button.setAttribute('aria-expanded', String(shouldOpen));
+    };
+
+    button.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleMenu(button.getAttribute('aria-expanded') !== 'true');
+    });
+
+    document.addEventListener('click', e => {
+        if (menu.classList.contains('is-active') &&
+            !menu.contains(e.target) && !button.contains(e.target)) {
+            toggleMenu(false);
+        }
+    });
+
+    menu.querySelectorAll('a').forEach(link =>
+        link.addEventListener('click', () => toggleMenu(false))
+    );
+}
+
+function _loadCookieScript() {
+    const cookieScript = Object.assign(document.createElement('script'), {
+        src:     '/assets/js/cookie.js',
+        onload:  () => console.log('✅ cookie.js: 読み込み完了'),
+        onerror: () => console.error('❌ cookie.js: 読み込み失敗'),
+    });
     document.body.appendChild(cookieScript);
-})
-.catch(err => console.error('important.js_load-error:', err));
+}
 
 // ========================================
 // TOPに戻るボタン
@@ -479,35 +595,42 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.style.overflowX = 'hidden';
     document.body.style.overflowX = 'hidden';
 
-    const topBtn = document.createElement('button');
-    topBtn.id        = 'js-scroll-top';
-    topBtn.className = 'scroll-top-btn';
-    topBtn.ariaLabel = 'トップへ戻る';
-    topBtn.innerHTML = '▲';
+    const isMobile = () => window.innerWidth <= 600;
 
-    const isMobile = window.innerWidth <= 600;
-    topBtn.style.cssText = `
-        position: fixed !important;
-        right: ${isMobile ? '10px' : '20px'} !important;
-        bottom: 20px !important;
-        width: ${isMobile ? '45px' : '50px'} !important;
-        height: ${isMobile ? '45px' : '50px'} !important;
-        background-color: #00C8E9 !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: 50% !important;
-        cursor: pointer !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        font-size: ${isMobile ? '18px' : '20px'} !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
-        z-index: 9999 !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-        transform: translateY(20px) !important;
-        transition: all 0.3s ease !important;
-    `;
+    const topBtn = Object.assign(document.createElement('button'), {
+        id:        'js-scroll-top',
+        className: 'scroll-top-btn',
+        ariaLabel: 'トップへ戻る',
+        innerHTML: '▲',
+    });
+
+    const applySize = () => {
+        const m = isMobile();
+        Object.assign(topBtn.style, {
+            position:       'fixed',
+            right:          m ? '10px' : '20px',
+            bottom:         '20px',
+            width:          m ? '45px' : '50px',
+            height:         m ? '45px' : '50px',
+            backgroundColor:'#00C8E9',
+            color:          '#fff',
+            border:         'none',
+            borderRadius:   '50%',
+            cursor:         'pointer',
+            display:        'flex',
+            justifyContent: 'center',
+            alignItems:     'center',
+            fontSize:       m ? '18px' : '20px',
+            boxShadow:      '0 4px 10px rgba(0,0,0,0.2)',
+            zIndex:         '9999',
+            opacity:        '0',
+            visibility:     'hidden',
+            transform:      'translateY(20px)',
+            transition:     'all 0.3s ease',
+        });
+    };
+
+    applySize();
     document.body.appendChild(topBtn);
 
     window.addEventListener('scroll', () => {
@@ -516,65 +639,46 @@ document.addEventListener('DOMContentLoaded', () => {
         topBtn.style.visibility = show ? 'visible' : 'hidden';
         topBtn.style.transform  = show ? 'translateY(0)' : 'translateY(20px)';
     });
-    topBtn.addEventListener('click', (e) => {
+
+    topBtn.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    window.addEventListener('resize', () => {
-        const m = window.innerWidth <= 600;
-        topBtn.style.right    = m ? '10px' : '20px';
-        topBtn.style.width    = m ? '45px' : '50px';
-        topBtn.style.height   = m ? '45px' : '50px';
-        topBtn.style.fontSize = m ? '18px' : '20px';
-    });
+
+    window.addEventListener('resize', applySize);
 });
 
-console.log('%c警告!', 'color: red; font-size: 1.2em; font-weight: bold;', '\n不用意なコード実行は避けてください。');
-
-// 役割: 検索バーのクリアボタンの「表示/非表示制御」と「入力リセット」のみを担当。
-// 固有のフィルタリングや再検索ロジックは一切持たず、
-// 処理完了後に CustomEvent を発火して各ページの JS に委譲する。
-
+// ========================================
+// 検索バー クリアボタン（共通）
+// ========================================
 document.addEventListener('DOMContentLoaded', () => {
-
-    // [data-search-clear="入力欄のID"] を持つボタンをすべて検索し、共通処理をバインド
     document.querySelectorAll('[data-search-clear]').forEach(clearBtn => {
-
         const targetId = clearBtn.dataset.searchClear;
         const input    = document.getElementById(targetId);
-
-        // 対応する入力欄が存在しない場合はスキップ（エラー防止）
         if (!input) {
             console.warn(`[common-search] #${targetId} が見つかりません。`);
             return;
         }
 
-        // ---- 表示制御ヘルパー ----
         const syncVisibility = () => {
-            // 入力があれば表示、なければ非表示
             clearBtn.style.display = input.value.length > 0 ? 'flex' : 'none';
         };
 
-        // 初期状態を即時反映（ページ読み込み時に値が残っているケースへの対応）
         syncVisibility();
-
-        // 入力値が変わるたびに表示状態を更新
         input.addEventListener('input', syncVisibility);
 
-        // ---- クリアボタンのクリック処理 ----
         clearBtn.addEventListener('click', () => {
             input.value = '';
-            syncVisibility();       // ボタンを非表示に
-            input.focus();          // 入力欄にフォーカスを戻す
-
-            // 「クリアされた」ことを伝えるカスタムイベントを発火。
-            // bubbles: true にすることで document レベルでも受け取れる。
-            // detail に inputId を含めることで、複数の検索バーを持つページでも判別可能。
+            syncVisibility();
+            input.focus();
             input.dispatchEvent(new CustomEvent('search:cleared', {
                 bubbles: true,
-                detail: { inputId: targetId }
+                detail:  { inputId: targetId },
             }));
         });
     });
 });
+
+console.log('%c警告!', 'color: red; font-size: 1.2em; font-weight: bold;',
+    '\n不用意なコード実行は避けてください。');

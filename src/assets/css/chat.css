@@ -437,7 +437,7 @@
 }
 
 /* AI側バブル：水色系の角丸 */
-.consult-ai-message {
+.chat-ai-message {
     background: linear-gradient(135deg, #e8f7fb 0%, #cceef7 100%) !important;
     border: 1px solid #a8d8e8 !important;
     border-radius: 18px 18px 18px 4px !important;
@@ -451,7 +451,7 @@
 }
 
 /* ユーザー側バブル：ネイビー系の角丸 */
-.consult-user-message {
+.chat-user-message {
     background: linear-gradient(135deg, #1e3a5a 0%, #0f2744 100%) !important;
     border: none !important;
     border-radius: 18px 18px 4px 18px !important;
@@ -481,11 +481,11 @@
         gap: 0 !important;
     }
 
-    .consult-ai-message {
+    .chat-ai-message {
         max-width: 95% !important;
     }
 
-    .consult-user-message {
+    .chat-user-message {
         max-width: 90% !important;
     }
 

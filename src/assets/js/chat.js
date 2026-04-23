@@ -1,4 +1,4 @@
-// consult.js
+// chat.js
 
 /** HTML エスケープ（モーダルプレビュー用） */
 function escapeHtml(str) {
@@ -130,18 +130,18 @@ class LegalChatApp {
            this.elements.responseArea.innerHTML = `
 <div class="chat-ai-container">
     <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-    <div class="chat-message consult-ai-message">こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？</div>
+    <div class="chat-message chat-ai-message">こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？</div>
 </div>`;
             return;
         }
         this.elements.responseArea.innerHTML = this.history.map(item => `
     <div class="chat-user-container">
         <button class="chat-delete-btn" onclick="chatApp.deleteItem('${item.id}')">🗑️</button>
-        <div class="chat-message consult-user-message">${this.escape(item.question)}</div>
+        <div class="chat-message chat-user-message">${this.escape(item.question)}</div>
     </div>
     <div class="chat-ai-container">
         <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-        <div class="chat-message consult-ai-message">${this.escape(item.answer).trim().replace(/\n/g, '<br>')}</div>
+        <div class="chat-message chat-ai-message">${this.escape(item.answer).trim().replace(/\n/g, '<br>')}</div>
     </div>`).join('');
     }
 
@@ -216,7 +216,7 @@ class LegalChatApp {
         const msgHtml = `
             <div class="chat-user-container" data-temp-id="${tempId}">
                 <button class="chat-delete-btn" style="visibility:hidden;">🗑️</button>
-                <div class="chat-message consult-user-message">${this.escape(text)}</div>
+                <div class="chat-message chat-user-message">${this.escape(text)}</div>
             </div>
         `;
         this.elements.responseArea.insertAdjacentHTML('beforeend', msgHtml);
@@ -273,7 +273,7 @@ class LegalChatApp {
         if (!confirmed) return;
 
         if (item?.docId && window.authApp) {
-            await window.authApp.deleteConsultation(item.docId);
+            await window.authApp.deleteChat(item.docId);
         }
 
         this.history = this.history.filter(i => i.id !== id);
@@ -295,7 +295,7 @@ class LegalChatApp {
 
         if (window.authApp?.currentUser) {
             for (const item of this.history) {
-                if (item.docId) await window.authApp.deleteConsultation(item.docId);
+                if (item.docId) await window.authApp.deleteChat(item.docId);
             }
         }
 
@@ -396,7 +396,7 @@ class LegalChatApp {
             this.elements.responseArea.insertAdjacentHTML('beforeend',
                 `<div id="loading-bubble" class="chat-ai-container">` +
                 `<img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">` +
-                `<div class="chat-message consult-ai-message"><div class="chat-loading-dots">考え中...</div></div>` +
+                `<div class="chat-message chat-ai-message"><div class="chat-loading-dots">考え中...</div></div>` +
                 `</div>`
             );
         } else {
@@ -409,7 +409,7 @@ class LegalChatApp {
         this.elements.responseArea.insertAdjacentHTML('beforeend', `
     <div class="chat-ai-container">
         <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
-        <div class="chat-message consult-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
+        <div class="chat-message chat-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
     </div>`);
     }
 

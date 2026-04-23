@@ -80,20 +80,6 @@
                 <div class="account-card">
                     <p class="account-card-title">🔗 ログイン方法の連携</p>
 
-                    <!-- Google -->
-                    <div class="provider-row">
-                        <div class="provider-info">
-                            <div class="provider-icon google">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
-                            </div>
-                            <div>
-                                <div class="provider-label">Google</div>
-                                <div class="provider-status" id="status-google">未連携</div>
-                            </div>
-                        </div>
-                        <button id="btn-google" class="provider-link-btn link-btn">連携する</button>
-                    </div>
-
                     <!-- メール/パスワード -->
                     <div class="provider-row">
                         <div class="provider-info">
@@ -109,6 +95,20 @@
                             </div>
                         </div>
                         <button id="btn-email" class="provider-link-btn link-btn">設定する</button>
+                    </div>
+
+                    <!-- Google -->
+                    <div class="provider-row">
+                        <div class="provider-info">
+                            <div class="provider-icon google">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+                            </div>
+                            <div>
+                                <div class="provider-label">Google</div>
+                                <div class="provider-status" id="status-google">未連携</div>
+                            </div>
+                        </div>
+                        <button id="btn-google" class="provider-link-btn link-btn">連携する</button>
                     </div>
 
                     <p id="provider-msg" class="settings-msg" style="margin-top:12px;"></p>
@@ -145,6 +145,18 @@
                         </div>
                     </div>
                     <p id="two-factor-msg" class="settings-msg"></p>
+                </div>
+
+                <!-- 最近のアクション（ログインセッション） -->
+                <div class="account-card" id="recent-activity-card">
+                    <p class="account-card-title">📱 最近のアクション</p>
+                    <div id="sessions-list">
+                        <p class="session-loading">読み込み中...</p>
+                    </div>
+                    <button id="logout-all-others-btn" class="settings-btn danger-btn"
+                        style="display:none; margin-top:16px;">
+                        他のすべての端末をログアウト
+                    </button>
                 </div>
 
                 <!-- パスワード設定・変更 -->
