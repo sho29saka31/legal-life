@@ -1,9 +1,9 @@
 // cookie.js - Cookie同意管理専用ファイル
-// 測定ID = 'G-PFE76QZ3J6'
+// 測定ID = 'G-2JXNJ9QJ9S'
 
 // cookie.js - Cookie同意管理専用ファイル
 // Google Analytics測定ID（必ず実際のIDに置き換えてください）
-const GA_MEASUREMENT_ID = 'G-PFE76QZ3J6'; // ← あなたの測定IDに置き換え
+const GA_MEASUREMENT_ID = 'G-2JXNJ9QJ9S'; // ← あなたの測定IDに置き換え
 
 // ========================================
 // Cookie操作関数
