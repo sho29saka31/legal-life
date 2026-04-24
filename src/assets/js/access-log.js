@@ -1,29 +1,36 @@
-// access-log.js
-// 役割: ページアクセス情報を Firestore に記録する軽量ログ収集モジュール
-// 保存先: access_logs/{auto-id}
-// ※ 個人情報は一切保存しない（UID は保存しない）
-
-// ========================================
-// ログ収集の実行
-//   important.js の Firebase 初期化完了後に
-//   window._logAccess() として呼び出される
-// ========================================
+// access-log.js v2 — Realtime Database 版アクセスログ
+// 保存先: analytics/{YYYY-MM-DD}/{pushId}
+// 収集情報: GA4 相当（ページビュー・スクロール・クリック・滞在時間・デバイス・地域）
+// ※ UID など個人情報は一切保存しない
 
 (function () {
     'use strict';
 
+    const VISITOR_KEY      = 'll_visitor'; // 初回訪問日時（localStorage）
+    const SESSION_KEY      = 'll_session'; // セッション開始（sessionStorage）
+    const SCROLL_MILESTONES = [25, 50, 75, 100];
+
+    // ---- セッション・訪問者判定 ----
+    function getVisitorInfo() {
+        const now = Date.now();
+        const isNewVisitor = !localStorage.getItem(VISITOR_KEY);
+        if (isNewVisitor) localStorage.setItem(VISITOR_KEY, String(now));
+        const isNewSession = !sessionStorage.getItem(SESSION_KEY);
+        if (isNewSession) sessionStorage.setItem(SESSION_KEY, String(now));
+        return { isNewVisitor, isNewSession };
+    }
+
     // ---- UA パーサー ----
     function parseUA() {
         const ua = navigator.userAgent;
-
-        let browser = 'その他';
+        let browser = 'Other';
         if (ua.includes('Edg/'))                               browser = 'Edge';
         else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
         else if (ua.includes('Chrome/'))                       browser = 'Chrome';
         else if (ua.includes('Firefox/'))                      browser = 'Firefox';
         else if (ua.includes('Safari/'))                       browser = 'Safari';
 
-        let os = 'その他';
+        let os = 'Other';
         if (/iPhone|iPad|iPod/.test(ua))  os = 'iOS';
         else if (ua.includes('Android'))  os = 'Android';
         else if (ua.includes('Windows'))  os = 'Windows';
@@ -31,75 +38,128 @@
         else if (ua.includes('Linux'))    os = 'Linux';
 
         const device = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
-
         return { browser, os, device };
     }
 
-    // ---- 位置情報（IP ベース、失敗時は '不明'）----
-    async function fetchRegion() {
+    // ---- IP ジオロケーション（3秒タイムアウト）----
+    async function fetchLocation() {
         try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3000);
-            const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-            clearTimeout(timer);
-            if (!res.ok) return { country: '不明', region: '不明' };
-            const data = await res.json();
-            return {
-                country: data.country_name || '不明',
-                region:  data.region       || '不明',
-            };
-        } catch {
-            return { country: '不明', region: '不明' };
-        }
+            const ctrl = new AbortController();
+            setTimeout(() => ctrl.abort(), 3000);
+            const res = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
+            if (!res.ok) return {};
+            const d = await res.json();
+            return { country: d.country_name || null, region: d.region || null, city: d.city || null };
+        } catch { return {}; }
     }
 
-    // ---- メイン処理 ----
-    async function recordAccessLog(db, addDoc, collection, serverTimestamp) {
-        try {
-            const { browser, os, device } = parseUA();
-            const { country, region }     = await fetchRegion();
-
-            await addDoc(collection(db, 'access_logs'), {
-                // ページ情報
-                path:     location.pathname,
-                title:    document.title || '未設定',
-                referrer: document.referrer || '直接アクセス',
-                // 環境情報
-                browser, os, device,
-                // 地域情報
-                country, region,
-                // 表示設定
-                language:  navigator.language  || '不明',
-                theme:     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-                screen:    `${window.innerWidth}x${window.innerHeight}`,
-                // タイムスタンプ
-                timestamp: serverTimestamp(),
+    // ---- スクロール深度 ----
+    function setupScrollTracking(logEvent) {
+        const reached = new Set();
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY + window.innerHeight;
+            const total    = document.documentElement.scrollHeight;
+            if (!total) return;
+            const pct = Math.round((scrolled / total) * 100);
+            SCROLL_MILESTONES.forEach(m => {
+                if (pct >= m && !reached.has(m)) {
+                    reached.add(m);
+                    logEvent('scroll', { depth: m });
+                }
             });
-
-            console.log('📝 access-log: 記録完了');
-        } catch (e) {
-            // ログ失敗はユーザー体験に影響させない
-            console.warn('📝 access-log: 記録失敗', e.message);
-        }
+        }, { passive: true });
     }
 
-    // ---- important.js の Firebase 初期化を待って起動 ----
-    function waitAndLog(attempt = 0) {
-        // window._firebaseDb は important.js 側でセットされる想定
-        // （後述の important.js への1行追加が必要）
-        if (window._firebaseDb && window._firebaseModules) {
-            const { db }                              = window._firebaseDb;
-            const { addDoc, collection, serverTimestamp } = window._firebaseModules;
-            recordAccessLog(db, addDoc, collection, serverTimestamp);
+    // ---- 滞在時間（beforeunload + visibilitychange）----
+    function setupTimeTracking(logEvent) {
+        const start = Date.now();
+        const send = () => {
+            const ms = Date.now() - start;
+            if (ms < 2000) return;
+            logEvent('engagement', { ms, sec: Math.round(ms / 1000) });
+        };
+        window.addEventListener('beforeunload', send);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') send();
+        });
+    }
+
+    // ---- クリックトラッキング ----
+    function setupClickTracking(logEvent) {
+        const targets = [
+            { sel: '.chat-send-btn',      label: 'chat_send'       },
+            { sel: '#clearAllButton',      label: 'chat_clear'      },
+            { sel: '#searchButton',        label: 'law_search'      },
+            { sel: '.siteindex_btn_link',  label: 'top_cta'         },
+            { sel: '.hamberger-btn',       label: 'menu_open'       },
+            { sel: '#cookie-accept',       label: 'cookie_accept'   },
+            { sel: '#cookie-reject',       label: 'cookie_reject'   },
+            { sel: '#auth-google-btn',     label: 'login_google'    },
+            { sel: '#auth-submit-btn',     label: 'login_email'     },
+            { sel: '.lawapi-view-button',  label: 'law_detail_open' },
+        ];
+        document.addEventListener('click', e => {
+            for (const { sel, label } of targets) {
+                if (e.target.closest(sel)) {
+                    logEvent('click', { element: label });
+                    break;
+                }
+            }
+        }, { passive: true });
+    }
+
+    // ---- メイン ----
+    async function init(rtdb, ref, push, set) {
+        const today   = new Date().toISOString().slice(0, 10);
+        const session = getVisitorInfo();
+        const ua      = parseUA();
+        const loc     = await fetchLocation();
+
+        const logEvent = (type, extra = {}) => {
+            try {
+                const logRef = push(ref(rtdb, `analytics/${today}`));
+                set(logRef, {
+                    type,
+                    path:    location.pathname,
+                    ts:      Date.now(),
+                    browser: ua.browser,
+                    os:      ua.os,
+                    device:  ua.device,
+                    screen:  `${window.innerWidth}x${window.innerHeight}`,
+                    lang:    navigator.language,
+                    theme:   window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+                    ...(Object.keys(loc).length ? loc : {}),
+                    ...extra,
+                });
+            } catch (_) { /* ログ失敗は無視 */ }
+        };
+
+        // ページビュー
+        logEvent('page_view', {
+            title:        document.title || null,
+            referrer:     document.referrer || null,
+            isNewVisitor: session.isNewVisitor,
+            isNewSession: session.isNewSession,
+        });
+
+        // 行動イベント
+        setupScrollTracking(logEvent);
+        setupTimeTracking(logEvent);
+        setupClickTracking(logEvent);
+    }
+
+    function waitAndInit(attempt = 0) {
+        if (window._firebaseRTDB?.rtdb) {
+            const { rtdb, ref, push, set } = window._firebaseRTDB;
+            init(rtdb, ref, push, set);
         } else if (attempt < 50) {
-            setTimeout(() => waitAndLog(attempt + 1), 100);
+            setTimeout(() => waitAndInit(attempt + 1), 100);
         }
     }
 
-    // DOMContentLoaded 後に開始（ページ描画を妨げない）
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => waitAndLog());
+        document.addEventListener('DOMContentLoaded', () => waitAndInit());
     } else {
-        waitAndLog();
+        waitAndInit();
     }
 })();

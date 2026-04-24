@@ -1,6 +1,7 @@
 // important.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 import {
     getAuth, onAuthStateChanged,
     signInWithPopup, signOut,
@@ -53,7 +54,7 @@ const layoutPromise = Promise.all([
 // ========================================
 // Firebase 初期化
 // ========================================
-let app, db, auth, googleProvider;
+let app, db, auth, googleProvider, rtdb;
 
 try {
     const firebaseConfig = __FIREBASE_CONFIG__;
@@ -65,6 +66,7 @@ try {
     db           = getFirestore(app);
     auth         = getAuth(app);
     googleProvider = new GoogleAuthProvider();
+    rtdb         = getDatabase(app);
 } catch (error) {
     console.error("⚠️ Firebase初期化失敗:", error);
     auth = { onAuthStateChanged: () => {} };
@@ -520,6 +522,8 @@ window.authApp = new AuthManager();
 // （アクセスログ機能を使わない場合は削除しても無害）
 window._firebaseDb      = { db };
 window._firebaseModules = { addDoc, collection, serverTimestamp };
+// Realtime Database（アクセスログ用）
+window._firebaseRTDB = { rtdb, ref: rtdbRef, push: rtdbPush, set: rtdbSet };
 
 // ========================================
 // ヘッダー・フッター 挿入
