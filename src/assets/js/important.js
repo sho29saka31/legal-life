@@ -1,6 +1,6 @@
 // important.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 import {
     getAuth, onAuthStateChanged,
     signInWithPopup, signOut,
@@ -515,6 +515,11 @@ class AuthManager {
 }
 
 window.authApp = new AuthManager();
+
+// access-log.js から利用できるよう Firebase インスタンスを公開
+// （アクセスログ機能を使わない場合は削除しても無害）
+window._firebaseDb      = { db };
+window._firebaseModules = { addDoc, collection, serverTimestamp };
 
 // ========================================
 // ヘッダー・フッター 挿入
