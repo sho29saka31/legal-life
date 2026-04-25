@@ -1,0 +1,70 @@
+/* --- お問い合わせページ専用スタイル --- */
+    /* コンテンツ全体のラッパー（mainタグ等に付与） */
+    .contact_container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    /* ページタイトルエリア */
+    .contact_title_area {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .contact_title_h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .contact_title_desc {
+        font-size: 1rem;
+        color: #555;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* フォームを包む外枠 */
+    .contact_form_card {
+        background-color: #ffffff;
+        padding: 40px 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 60px;
+        /* フォームの中身を中央寄せにする */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Googleフォーム（iframe） */
+    .contact_form_iframe {
+        width: 100%;
+        max-width: 640px;
+        background-color: #ffffff;
+        border: none;
+        border-radius: 8px;
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 680px) {
+        .contact_container {
+            padding: 20px 10px;
+        }
+
+        .contact_form_card {
+            padding: 20px 10px;
+            border-radius: 8px;
+        }
+
+        .contact_form_iframe {
+            height: 800px; /* スマホ用に高さを調整 */
+        }
+
+        .contact_title_h1 {
+            font-size: 1.6rem;
+        }
+    }

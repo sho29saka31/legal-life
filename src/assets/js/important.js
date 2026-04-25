@@ -60,7 +60,7 @@ try {
     const firebaseConfig = __FIREBASE_CONFIG__;
     app = initializeApp(firebaseConfig);
     initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider('6LfYKIMsAAAAAGN3k-0MoBFZC59YGCXckIOWaxK-'),
+        provider: new ReCaptchaEnterpriseProvider('6LcVlMUsAAAAAEnD5aEOzOh-_RU5-GASP3WY6AFZ'),
         isTokenAutoRefreshEnabled: true
     });
     db           = getFirestore(app);

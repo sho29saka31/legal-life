@@ -1,0 +1,224 @@
+/* --- よくある質問ページ専用スタイル --- */
+   /* FAQ全体のレイアウト */
+    .faq-title {
+        font-size: 28px;
+        color: #0f172a;
+        text-align: center;
+        margin-top: 40px;
+        margin-bottom: 10px;
+        font-weight: 700;
+        position: relative;
+        padding-bottom: 15px;
+    }
+
+    /* タイトルの下の装飾線 */
+    .faq-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: #00C8E9;
+        border-radius: 2px;
+    }
+
+    /* 最終更新日のデザイン */
+    .faq-update-data {
+        font-size: 14px;
+        color: #64748b; /* グレー */
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .faq_section {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    /* FAQセクション全体の導入文（最初のp） */
+    .faq-section > p:first-of-type {
+        font-size: 16px;
+        line-height: 1.8;
+        color: #334155;
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 40px; /* 中央寄せ */
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 12px;
+    }
+
+    /* サイドバーとメインの分割 */
+    .faq_layout {
+        display: flex;
+        gap: 30px;
+    }
+
+    .faq_sidebar {
+        flex: 0 0 250px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .faq_tab_btn {
+        padding: 12px 20px;
+        text-align: left;
+        border: none;
+        background: #f8fafc;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .faq_tab_btn.active {
+        background-color: #0f172a;
+        color: #ffffff;
+    }
+
+    .faq_tab_btn:hover:not(.active) {
+        background-color: #e2e8f0;
+    }
+
+    /* 質問アイテム */
+    .faq_content {
+        flex: 1;
+    }
+
+    .faq_item {
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .faq_question {
+        padding: 15px 20px;
+        cursor: pointer;
+        font-weight: bold;
+        position: relative;
+        padding-left: 45px;
+    }
+
+    .faq_question::before {
+        content: "Q";
+        position: absolute;
+        left: 18px;
+        color: #00C8E9;
+        font-weight: 900;
+    }
+
+    .faq_answer {
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 20px;
+        background: #fcfcfc;
+        transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+
+    .faq_item.is-active .faq_answer {
+        max-height: 2000px;
+        padding: 15px 20px 15px 45px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+   /* --- 改良版：まだ解決しない場合 のエリア --- */
+    /* --- お問い合わせエリアの最終調整 --- */
+
+    /* まだ解決しない場合の見出し */
+    .faq-section h2 {
+        font-size: 24px;
+        color: #0f172a;
+        margin-top: 80px; /* FAQリストとの間隔を広く */
+        margin-bottom: 30px;
+        text-align: center;
+        width: 100%;
+    }
+
+    /* 説明文：強制的に一行ずつにする */
+    .faq-section h2 + p {
+        display: block;      /* インラインからブロックに変更して独立させる */
+        text-align: center;
+        font-size: 16px;
+        color: #334155;
+        margin-bottom: 10px; /* ボタンとの距離（上側） */
+        line-height: 1.6;
+    }
+
+    /* ボタン下の「よりお気軽にご連絡ください」部分 */
+    .faq-section a[href*="contact.html"] + p {
+        display: block;
+        text-align: center;
+        font-size: 16px;
+        color: #334155;
+        margin-top: 25px;    /* ボタンとの距離（下側） */
+        margin-bottom: 10px;
+    }
+
+    /* お問い合わせボタン：中央配置とデザインの固定 */
+    .faq-section a[href*="contact.html"] {
+        display: flex;            /* 中の文字を中央寄せに */
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto;        /* 上下の余白を作りつつ左右中央に */
+        width: fit-content;       /* 文字幅に合わせる */
+        min-width: 280px;         /* 最低限の横幅を確保 */
+        padding: 16px 40px;
+        background-color: #ffffff;
+        border: 1.5px solid #00C8E9;
+        color: #007c91;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 18px;
+        border-radius: 4px;       /* 誠実な印象の角丸 */
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* ボタンホバー時 */
+    .faq-section a[href*="contact.html"]:hover {
+        background-color: #f0fdff;
+        border-color: #007c91;
+        box-shadow: 0 4px 12px rgba(0, 200, 233, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* 1週間以内に〜 の注釈 */
+    .faq-section h2 + p + p {
+        display: block;
+        text-align: center;
+        font-size: 13px;
+        color: #94a3b8;
+        margin-top: 15px;
+    }
+
+    /* スマホ対応 */
+    @media (max-width: 768px) {
+        .faq_layout {
+            flex-direction: column;
+        }
+        .faq_sidebar {
+            flex-direction: row;
+            overflow-x: auto; /* タブを横スクロールに */
+            padding-bottom: 10px;
+        }
+        .faq_tab_btn {
+            white-space: nowrap;
+        }
+        .faq-title {
+            font-size: 22px;
+        }
+        .faq-section > p:first-of-type {
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+        .faq-section a[href*="contact.html"] {
+            min-width: 100%; /* 横幅いっぱいにする */
+            font-size: 16px;
+        }
+    }
