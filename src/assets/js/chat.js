@@ -1,24 +1,31 @@
 // chat.js
 
-/** HTML エスケープ（モーダルプレビュー用） */
+// ========================================
+// ユーティリティ
+// ========================================
+
+/** HTML エスケープ（XSS 対策 / モーダルプレビュー共用） */
 function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str ?? '';
     return div.innerHTML;
 }
 
+// ========================================
+// 設定
+// ========================================
 const CONFIG = {
     GEMINI_API_KEY: '__GEMINI_API_KEY__',
     GEMINI_API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent',
-    STORAGE_KEY: 'legalChatHistory',
-    MAX_HISTORY: 50,
-    MAX_INPUT_LENGTH: 1000,
-    API_TIMEOUT: 60000,
+    STORAGE_KEY:    'legalChatHistory',
+    MAX_HISTORY:    50,
+    MAX_INPUT_LEN:  1000,
+    API_TIMEOUT:    60000,
 };
 
-/**
- * カスタム確認モーダル
- */
+// ========================================
+// カスタム確認モーダル
+// ========================================
 function showConfirm(message, icon = '⚠️', preview = null) {
     return new Promise((resolve) => {
         const previewHtml = preview ? `
@@ -29,240 +36,221 @@ function showConfirm(message, icon = '⚠️', preview = null) {
                 <div class="modal-preview-text">${escapeHtml(preview.answer).replace(/\n/g, '<br>')}</div>
             </div>` : '';
 
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.innerHTML = `
-            <div class="modal-box${preview ? ' modal-box--wide' : ''}" role="dialog" aria-modal="true">
-                <div class="modal-icon">${icon}</div>
-                <p class="modal-message">${message}</p>
-                ${previewHtml}
-                <div class="modal-actions">
-                    <button class="modal-btn modal-btn-cancel" id="modalCancel">キャンセル</button>
-                    <button class="modal-btn modal-btn-confirm" id="modalOk">削除する</button>
-                </div>
-            </div>
-        `;
+        const overlay = Object.assign(document.createElement('div'), {
+            className: 'modal-overlay',
+            innerHTML: `
+                <div class="modal-box${preview ? ' modal-box--wide' : ''}" role="dialog" aria-modal="true">
+                    <div class="modal-icon">${icon}</div>
+                    <p class="modal-message">${message}</p>
+                    ${previewHtml}
+                    <div class="modal-actions">
+                        <button class="modal-btn modal-btn-cancel" id="modalCancel">キャンセル</button>
+                        <button class="modal-btn modal-btn-confirm" id="modalOk">削除する</button>
+                    </div>
+                </div>`,
+        });
 
         document.body.appendChild(overlay);
         overlay.querySelector('#modalOk').focus();
 
         const close = (result) => {
             overlay.style.animation = 'modalOverlayIn 0.15s ease-out reverse forwards';
-            setTimeout(() => {
-                document.body.removeChild(overlay);
-                resolve(result);
-            }, 140);
+            setTimeout(() => { document.body.removeChild(overlay); resolve(result); }, 140);
         };
 
         overlay.querySelector('#modalOk').onclick     = () => close(true);
         overlay.querySelector('#modalCancel').onclick = () => close(false);
-
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close(false);
-        });
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
 
         const onKeydown = (e) => {
-            if (e.key === 'Escape') {
-                document.removeEventListener('keydown', onKeydown);
-                close(false);
-            }
+            if (e.key === 'Escape') { document.removeEventListener('keydown', onKeydown); close(false); }
         };
         document.addEventListener('keydown', onKeydown);
     });
 }
 
+// ========================================
+// LegalChatApp
+// ========================================
 class LegalChatApp {
     constructor() {
-        this.history = [];
+        this.history     = [];
         this.isGenerating = false;
-        
-        this.elements = {
-            responseArea: document.getElementById('responseArea'),
-            userInput: document.getElementById('userInput'),
-            sendButton: document.getElementById('sendButton'),
-            clearAllButton: document.getElementById('clearAllButton')
+
+        // DOM キャッシュ
+        this.el = {
+            responseArea:  document.getElementById('responseArea'),
+            userInput:     document.getElementById('userInput'),
+            sendButton:    document.getElementById('sendButton'),
+            clearAllButton:document.getElementById('clearAllButton'),
         };
     }
 
-    /**
-     * 初期化処理
-     */
+    // ========================================
+    // 初期化
+    // ========================================
     init() {
         const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
         this.history = saved ? JSON.parse(saved) : [];
-        
-        this.render();
-        this.setupEventListeners();
 
-        // ページ読み込み時のみ最下部へスクロール
-        this.scrollToBottom();
-        
+        this.render();
+        this._setupEventListeners();
+        this._scrollToBottom();
+
         window.chatApp = this;
         console.log("⚖️ Legal Chat App Initialized.");
     }
 
-    /**
-     * イベントリスナーの設定
-     */
-    setupEventListeners() {
-        this.elements.sendButton.onclick = () => this.handleSend();
-        this.elements.clearAllButton.onclick = () => this.handleClearAll();
+    // ========================================
+    // イベントリスナー
+    // ========================================
+    _setupEventListeners() {
+        this.el.sendButton.onclick     = () => this.handleSend();
+        this.el.clearAllButton.onclick = () => this.handleClearAll();
 
-        this.elements.userInput.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.handleSend();
-            }
+        this.el.userInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.handleSend(); }
         };
 
-        this.elements.userInput.oninput = (e) => {
+        this.el.userInput.oninput = (e) => {
             e.target.style.height = 'auto';
             e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
         };
     }
 
-    /**
-     * 描画処理
-     * ※ render() 内では自動スクロールしない。呼び出し元が必要に応じて制御する。
-     */
+    // ========================================
+    // 描画
+    // ========================================
     render() {
         if (this.history.length === 0) {
-           this.elements.responseArea.innerHTML = `
+            this.el.responseArea.innerHTML = `
 <div class="chat-ai-container">
-    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-    <div class="chat-message chat-ai-message">こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？</div>
+    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon"
+         onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
+    <div class="chat-message consult-ai-message">
+        こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？
+    </div>
 </div>`;
             return;
         }
-        this.elements.responseArea.innerHTML = this.history.map(item => `
-    <div class="chat-user-container">
-        <button class="chat-delete-btn" onclick="chatApp.deleteItem('${item.id}')">🗑️</button>
-        <div class="chat-message chat-user-message">${this.escape(item.question)}</div>
-    </div>
-    <div class="chat-ai-container">
-        <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-        <div class="chat-message chat-ai-message">${this.escape(item.answer).trim().replace(/\n/g, '<br>')}</div>
-    </div>`).join('');
+
+        this.el.responseArea.innerHTML = this.history.map(item => `
+<div class="chat-user-container">
+    <button class="chat-delete-btn" onclick="chatApp.deleteItem('${item.id}')">🗑️</button>
+    <div class="chat-message consult-user-message">${escapeHtml(item.question)}</div>
+</div>
+<div class="chat-ai-container">
+    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon"
+         onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
+    <div class="chat-message consult-ai-message">${escapeHtml(item.answer).trim().replace(/\n/g, '<br>')}</div>
+</div>`).join('');
     }
 
-    /**
-     * 送信処理
-     */
+    // ========================================
+    // 送信
+    // ========================================
     async handleSend() {
-        const question = this.elements.userInput.value.trim();
+        const question = this.el.userInput.value.trim();
         if (!question || this.isGenerating) return;
 
-        if (question.length > CONFIG.MAX_INPUT_LENGTH) {
-            alert(`質問は${CONFIG.MAX_INPUT_LENGTH}文字以内で入力してください。`);
+        if (question.length > CONFIG.MAX_INPUT_LEN) {
+            alert(`質問は${CONFIG.MAX_INPUT_LEN}文字以内で入力してください。`);
             return;
         }
 
         this.isGenerating = true;
 
-        // ① ユーザー発言を先に挿入（スクロールはappendUserMessage内で行う）
         const tempId = 'temp-' + Date.now();
-        this.appendUserMessage(question, tempId);
-        this.elements.userInput.value = "";
-        this.elements.userInput.style.height = 'auto';
+        this._appendUserMessage(question, tempId);
+        this.el.userInput.value = "";
+        this.el.userInput.style.height = 'auto';
 
-        // ② ユーザー発言の直下にローディングを挿入
-        this.setLoadingState(true);
+        this._setLoadingState(true);
 
         try {
-            const prompt = this.buildPrompt(question);
-            const answer = await this.callGeminiAPI(prompt);
+            const answer = await this._callGeminiAPI(this._buildPrompt(question));
 
             const IGNORE_PHRASE = "関係のない質問には回答できません";
             if (answer.includes(IGNORE_PHRASE)) {
-                this.showError("法令に関する質問ではないため、回答・保存をスキップしました。");
-                const tempMsg = document.querySelector(`[data-temp-id="${tempId}"]`);
-                if (tempMsg) tempMsg.remove();
+                this._showError("法令に関する質問ではないため、回答・保存をスキップしました。");
+                document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
                 return;
             }
 
-            const fullAnswer = answer + "\n\n━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️免責事項 : 本回答はAIによる一般的な法令情報です。\n個別の法的判断が必要な場合は、必ず弁護士等の専門家にご相談ください。";
-            
-            const newItem = {
-                id: Date.now().toString(),
-                question: question,
-                answer: fullAnswer,
-                docId: null
-            };
+            const fullAnswer = answer +
+                "\n\n━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                "⚠️免責事項 : 本回答はAIによる一般的な法令情報です。\n" +
+                "個別の法的判断が必要な場合は、必ず弁護士等の専門家にご相談ください。";
+
+            const newItem = { id: Date.now().toString(), question, answer: fullAnswer, docId: null };
 
             if (window.authApp?.currentUser) {
-                newItem.docId = await window.authApp.saveToCloud(question, fullAnswer, "法令相談");
+                try {
+                    newItem.docId = await window.authApp.saveToCloud(question, fullAnswer, "法令相談");
+                    if (newItem.docId) {
+                        console.log("✅ チャット履歴をクラウドに保存:", newItem.docId);
+                    } else {
+                        console.warn("⚠️ クラウド保存がnullを返しました（Firestoreルールまたは認証を確認）");
+                    }
+                } catch (saveErr) {
+                    console.error("❌ クラウド保存エラー:", saveErr);
+                }
+            } else {
+                console.log("📝 未ログイン: ローカルのみに保存");
             }
 
             this.history.push(newItem);
-
-            // ③ 描画後、ユーザー発言の先頭へスクロール（回答はユーザーが自分でスクロールして読む）
-            this.saveAndRender();
-            this.scrollToLastUserMessage();
+            this._saveAndRender();
+            this._scrollToLastUserMessage();
 
         } catch (error) {
             console.error(error);
-            this.showError("エラーが発生しました: " + error.message);
+            this._showError("エラーが発生しました: " + error.message);
         } finally {
             this.isGenerating = false;
-            this.setLoadingState(false);
+            this._setLoadingState(false);
         }
     }
 
-    /**
-     * ユーザーメッセージを追加（リアルタイム表示用）
-     * 挿入後、そのメッセージが見えるようにスクロール
-     */
-    appendUserMessage(text, tempId) {
-        const msgHtml = `
-            <div class="chat-user-container" data-temp-id="${tempId}">
-                <button class="chat-delete-btn" style="visibility:hidden;">🗑️</button>
-                <div class="chat-message chat-user-message">${this.escape(text)}</div>
-            </div>
-        `;
-        this.elements.responseArea.insertAdjacentHTML('beforeend', msgHtml);
+    // ========================================
+    // ユーザーメッセージの即時挿入
+    // ========================================
+    _appendUserMessage(text, tempId) {
+        this.el.responseArea.insertAdjacentHTML('beforeend', `
+<div class="chat-user-container" data-temp-id="${tempId}">
+    <button class="chat-delete-btn" style="visibility:hidden;">🗑️</button>
+    <div class="chat-message consult-user-message">${escapeHtml(text)}</div>
+</div>`);
 
-        // 送信したユーザー発言の先頭が見えるようにスクロール
-        const userMsg = this.elements.responseArea.querySelector(`[data-temp-id="${tempId}"]`);
-        if (userMsg) {
-            userMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        document.querySelector(`[data-temp-id="${tempId}"]`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    /**
-     * 回答受信・描画後：最後のユーザー発言の位置へスクロール
-     * 回答はユーザーが自分でスクロールして確認する
-     */
-    scrollToLastUserMessage() {
-        const allUserMsgs = this.elements.responseArea.querySelectorAll('.chat-user-container');
-        const lastUserMsg = allUserMsgs[allUserMsgs.length - 1];
-        if (lastUserMsg) {
-            lastUserMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
-    /**
-     * Gemini APIとの通信
-     */
-    async callGeminiAPI(prompt) {
+    // ========================================
+    // Gemini API 呼び出し
+    // ========================================
+    async _callGeminiAPI(prompt) {
         const response = await fetch(`${CONFIG.GEMINI_API_URL}?key=${CONFIG.GEMINI_API_KEY}`, {
-            method: 'POST',
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-            })
+                contents:         [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
+            }),
         });
 
         if (!response.ok) throw new Error("APIリクエストに失敗しました");
-        const data = await response.json();
+
+        const data   = await response.json();
         const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!result) throw new Error("AIから有効な回答が得られませんでした");
+
         return result;
     }
 
-    /**
-     * 個別削除
-     */
+    // ========================================
+    // 個別削除
+    // ========================================
     async deleteItem(id) {
         const item = this.history.find(i => i.id === id);
         const confirmed = await showConfirm(
@@ -273,40 +261,38 @@ class LegalChatApp {
         if (!confirmed) return;
 
         if (item?.docId && window.authApp) {
-            await window.authApp.deleteChat(item.docId);
+            await window.authApp.deleteConsultation(item.docId);
         }
 
         this.history = this.history.filter(i => i.id !== id);
-        this.saveAndRender();
+        this._saveAndRender();
     }
 
-    /**
-     * 全削除
-     */
+    // ========================================
+    // 全削除
+    // ========================================
     async handleClearAll() {
         if (this.history.length === 0) return;
 
-        const count = this.history.length;
-        const confirmed = await showConfirm(
-            `${count}件の履歴をすべて削除しますか？`,
-            '⚠️'
-        );
+        const confirmed = await showConfirm(`${this.history.length}件の履歴をすべて削除しますか？`, '⚠️');
         if (!confirmed) return;
 
         if (window.authApp?.currentUser) {
-            for (const item of this.history) {
-                if (item.docId) await window.authApp.deleteChat(item.docId);
-            }
+            const deletePromises = this.history
+                .filter(item => item.docId)
+                .map(item => window.authApp.deleteConsultation(item.docId));
+            await Promise.allSettled(deletePromises);
         }
 
         this.history = [];
-        this.saveAndRender();
+        this._saveAndRender();
     }
 
-    /**
-     * プロンプト構築（ガードレール維持）
-     */
-    buildPrompt(q) {return `
+    // ========================================
+    // プロンプト構築
+    // ========================================
+    _buildPrompt(q) {
+        return `
 あなたは日本の法令に関する一般的な情報を提供するAIアシスタントです。
 法令に関係のない質問はプレーンテキストを無視し、「関係のない質問には回答できません」と明記する。
 ご質問が不明である場合の回答形式を生成しないでください。
@@ -328,12 +314,12 @@ class LegalChatApp {
 ・ この分野ではどの専門家に相談するのが一般的かを案内  
 ・ 利用できる公的相談窓口を紹介  
 ※ 手続きの具体的指示、文書作成指示、交渉アドバイスは行わない。
-※ ご質問が不明である場合の回答形式をを生成しない。
+※ ご質問が不明である場合の回答形式を生成しない。
 
 【3. 関連する法的根拠(一般論)】
 関連し得る法令・条文を一般的に紹介する。  
 ※ 特定の事実に当てはめた解釈は行わない。
-※ ご質問が不明である場合の回答形式生成しない。
+※ ご質問が不明である場合の回答形式を生成しない。
 
 【4. 詳細説明(一般的知識)】
 ・ 法令の趣旨・目的  
@@ -375,57 +361,57 @@ class LegalChatApp {
 ・ アスタリスク記号を使用しない。  
 ・ 条文番号は正確に記載する。
 ・ 句構造文法を用いて自然な日本語にして。
-`;}
+`;
+    }
 
-    /**
-     * 共通処理
-     */
-    saveAndRender() {
+    // ========================================
+    // 共通処理
+    // ========================================
+    _saveAndRender() {
         localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(this.history));
         this.render();
     }
 
-    setLoadingState(isLoading) {
-        this.elements.sendButton.disabled = isLoading;
+    _setLoadingState(isLoading) {
+        this.el.sendButton.disabled = isLoading;
+        this.el.sendButton.innerHTML = isLoading
+            ? '<span class="sending-dots"><span>.</span><span>.</span><span>.</span></span>'
+            : '送信';
+
         if (isLoading) {
-            this.elements.sendButton.innerHTML = '<span class="sending-dots"><span>.</span><span>.</span><span>.</span></span>';
+            this.el.responseArea.insertAdjacentHTML('beforeend', `
+<div id="loading-bubble" class="chat-ai-container">
+    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
+    <div class="chat-message consult-ai-message">
+        <div class="chat-loading-dots">考え中...</div>
+    </div>
+</div>`);
         } else {
-            this.elements.sendButton.innerHTML = '送信';
-        }
-        if (isLoading) {
-            this.elements.responseArea.insertAdjacentHTML('beforeend',
-                `<div id="loading-bubble" class="chat-ai-container">` +
-                `<img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">` +
-                `<div class="chat-message chat-ai-message"><div class="chat-loading-dots">考え中...</div></div>` +
-                `</div>`
-            );
-        } else {
-            const lb = document.getElementById('loading-bubble');
-            if (lb) lb.remove();
+            document.getElementById('loading-bubble')?.remove();
         }
     }
 
-    showError(msg) {
-        this.elements.responseArea.insertAdjacentHTML('beforeend', `
-    <div class="chat-ai-container">
-        <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
-        <div class="chat-message chat-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
-    </div>`);
+    _showError(msg) {
+        this.el.responseArea.insertAdjacentHTML('beforeend', `
+<div class="chat-ai-container">
+    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
+    <div class="chat-message consult-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
+</div>`);
     }
 
-    scrollToBottom() {
-        this.elements.responseArea.scrollTop = this.elements.responseArea.scrollHeight;
+    _scrollToBottom() {
+        this.el.responseArea.scrollTop = this.el.responseArea.scrollHeight;
     }
 
-    escape(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+    _scrollToLastUserMessage() {
+        const all = this.el.responseArea.querySelectorAll('.chat-user-container');
+        all[all.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
+// ========================================
 // 起動
+// ========================================
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new LegalChatApp();
-    app.init();
+    new LegalChatApp().init();
 });

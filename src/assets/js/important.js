@@ -1,7 +1,7 @@
 // important.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 import {
     getAuth, onAuthStateChanged,
     signInWithPopup, signOut,
@@ -10,7 +10,7 @@ import {
     updateProfile, fetchSignInMethodsForEmail,
     linkWithCredential, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
+// App Check: 現在無効（reCAPTCHA設定完了後に再有効化予定）
 
 // ========================================
 // ダークモード初期化（最優先で実行）
@@ -24,7 +24,7 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gst
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260501-0000";
+const LAYOUT_VERSION = "2605010800";
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;
@@ -59,10 +59,7 @@ let app, db, auth, googleProvider, rtdb;
 try {
     const firebaseConfig = __FIREBASE_CONFIG__;
     app = initializeApp(firebaseConfig);
-    initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider('6Lf-X8ksAAAAAEuc2Zvv5e9I8k9zazQ2SmUwoSwk'),
-        isTokenAutoRefreshEnabled: true
-    });
+
     db           = getFirestore(app);
     auth         = getAuth(app);
     googleProvider = new GoogleAuthProvider();
@@ -178,17 +175,34 @@ class AuthManager {
 
     // ---- IPジオロケーションで都市・国を取得（失敗時は"不明"）----
     async _fetchLocation() {
-        try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3000);
-            const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-            clearTimeout(timer);
-            if (!res.ok) return '不明';
-            const data = await res.json();
-            return [data.city, data.country_name].filter(Boolean).join(', ') || '不明';
-        } catch {
-            return '不明';
+        // ipwho.is: 無料・HTTPS・CORS対応・制限なし
+        const APIS = [
+            {
+                url: 'https://ipwho.is/',
+                parse: d => [d.city, d.country].filter(Boolean).join(', ') || '不明',
+            },
+            {
+                url: 'https://freeipapi.com/api/json',
+                parse: d => [d.cityName, d.countryName].filter(Boolean).join(', ') || '不明',
+            },
+        ];
+
+        for (const api of APIS) {
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 3000);
+                const res = await fetch(api.url, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!res.ok) continue;
+                const data = await res.json();
+                if (!data || data.success === false) continue;
+                return api.parse(data);
+            } catch {
+                // 次のAPIにフォールバック
+                continue;
+            }
         }
+        return '不明';
     }
 
     // ---- セッションの記録 + リモートログアウトリスナー設置 ----
@@ -221,30 +235,49 @@ class AuthManager {
         this._unsubSession = onSnapshot(sessionRef, (snap) => {
             if (snap.exists() && snap.data().shouldLogout === true) {
                 console.log("📤 リモートログアウト信号を受信");
+                // セッションドキュメントを削除してからサインアウト
+                const sid = localStorage.getItem('legallife_session_id');
                 localStorage.removeItem('legallife_session_id');
-                signOut(auth).then(() => { window.location.href = '/'; });
+                deleteDoc(sessionRef)
+                    .catch(() => {})
+                    .finally(() => {
+                        signOut(auth).then(() => { window.location.href = '/'; });
+                    });
             }
         });
     }
 
     // ---- UI 更新 ----
+    // ⚠️ main.css に「display: block !important」があるため、
+    //    setProperty の第3引数 'important' で上書きする必要がある
     updateUI(user) {
         const loginBtn    = document.getElementById("g_id_signin");
         const menuProfile = document.getElementById("user-profile");
         const menuAvatar  = document.getElementById("user-avatar");
         const menuName    = document.getElementById("user-name");
 
+        // DOM がまだ注入されていない場合はスキップ（次の updateUI 呼び出しで処理される）
+        if (!loginBtn) {
+            console.log(`🎨 UI更新スキップ: loginBtn未存在（ヘッダー未注入）`);
+            return;
+        }
+
         if (user) {
-            loginBtn    ?.setAttribute('style', 'display:none');
-            menuProfile ?.setAttribute('style', 'display:flex');
-            if (menuAvatar) menuAvatar.src = user.photoURL || "";
-            if (menuName)   menuName.textContent = user.displayName || user.email || "ユーザー";
+            // ログイン済み: ログインボタン非表示、プロフィール表示
+            // !important を持つ CSS ルールに勝つため setProperty の 'important' フラグを使用
+            loginBtn.style.setProperty('display', 'none', 'important');
+            if (menuProfile) menuProfile.style.setProperty('display', 'flex', 'important');
+            if (menuAvatar)  menuAvatar.src = user.photoURL || "";
+            if (menuName)    menuName.textContent = user.displayName || user.email || "ユーザー";
 
             const overlay = document.getElementById("auth-modal-overlay");
             if (overlay?.style.display === "flex") this._showModalView('loggedin', user);
+            console.log(`🎨 UI更新: ログイン済み (${user.displayName || user.email})`);
         } else {
-            loginBtn    ?.setAttribute('style', 'display:block');
-            menuProfile ?.setAttribute('style', 'display:none');
+            // 未ログイン: ログインボタン表示、プロフィール非表示
+            loginBtn.style.removeProperty('display');  // CSS の display: block !important に戻す
+            if (menuProfile) menuProfile.style.setProperty('display', 'none', 'important');
+            console.log(`🎨 UI更新: 未ログイン`);
         }
     }
 
@@ -459,22 +492,26 @@ class AuthManager {
     }
 
     _handleLogout() {
-        // ログアウト前に現在のセッションドキュメントを削除
         const sessionId = localStorage.getItem('legallife_session_id');
-        if (sessionId && this.currentUser) {
-            deleteDoc(doc(db, "users", this.currentUser.uid, "sessions", sessionId))
-                .catch(e => console.warn("セッション削除失敗:", e));
-        }
-        localStorage.removeItem('legallife_session_id');
+        const uid       = this.currentUser?.uid;
 
-        signOut(auth)
-            .then(() => {
-                console.log("👋 ログアウトしました");
-                this.updateUI(null);
-                const overlay = document.getElementById("auth-modal-overlay");
-                if (overlay?.style.display === "flex") this._showModalView('select');
-            })
-            .catch(e => console.error("❌ ログアウト失敗:", e));
+        // セッションドキュメントを削除してからサインアウト
+        const cleanup = uid && sessionId
+            ? deleteDoc(doc(db, "users", uid, "sessions", sessionId))
+                  .catch(e => console.warn("セッション削除失敗:", e))
+            : Promise.resolve();
+
+        cleanup.finally(() => {
+            localStorage.removeItem('legallife_session_id');
+            signOut(auth)
+                .then(() => {
+                    console.log("👋 ログアウトしました");
+                    this.updateUI(null);
+                    const overlay = document.getElementById("auth-modal-overlay");
+                    if (overlay?.style.display === "flex") this._showModalView('select');
+                })
+                .catch(e => console.error("❌ ログアウト失敗:", e));
+        });
     }
 
     // ========================================
@@ -484,35 +521,47 @@ class AuthManager {
     //      uid=サブコレクション名, docId=メッセージドキュメント
     // ========================================
     async saveToCloud(input, response, category) {
-        if (!this.currentUser) return null;
+        if (!this.currentUser) {
+            console.warn("⚠️ saveToCloud: ユーザー未ログイン - 保存をスキップ");
+            return null;
+        }
+        if (!db) {
+            console.error("❌ saveToCloud: Firestore未初期化");
+            return null;
+        }
 
         try {
-            const docId = Date.now().toString();
-            await setDoc(
-                doc(db, "content", "chat", this.currentUser.uid, docId),
-                {
-                    userInput:  input,
-                    aiResponse: response,
-                    category:   category,
-                    timestamp:  serverTimestamp(),
-                }
-            );
+            const docId   = Date.now().toString();
+            const docPath = doc(db, "content", "chat", this.currentUser.uid, docId);
+            console.log("📤 Firestore書き込み開始:", docPath.path);
+            await setDoc(docPath, {
+                userInput:  input,
+                aiResponse: response,
+                category:   category,
+                timestamp:  serverTimestamp(),
+            });
+            console.log("✅ チャット保存成功:", docId);
             return docId;
         } catch (error) {
-            console.error("❌ 保存失敗:", error);
+            console.error("❌ チャット保存失敗:", error.code, error.message, error);
             return null;
         }
     }
 
+    // deleteConsultation / deleteChat は同一メソッド（chat.js側の呼び名に対応）
     async deleteConsultation(docId) {
-        if (!docId || !this.currentUser) return;
-
+        if (!docId || !this.currentUser || !db) return;
         try {
             await deleteDoc(doc(db, "content", "chat", this.currentUser.uid, docId));
-            console.log("🗑️ クラウドから削除成功");
+            console.log("🗑️ クラウドから削除成功:", docId);
         } catch (error) {
             console.error("❌ 削除失敗:", error);
         }
+    }
+
+    // chat.js から deleteChat で呼ばれる場合の互換エイリアス
+    async deleteChat(docId) {
+        return this.deleteConsultation(docId);
     }
 }
 
@@ -523,7 +572,7 @@ window.authApp = new AuthManager();
 window._firebaseDb      = { db };
 window._firebaseModules = { addDoc, collection, serverTimestamp };
 // Realtime Database（アクセスログ用）
-window._firebaseRTDB = { rtdb, ref: rtdbRef, push: rtdbPush, set: rtdbSet };
+window._firebaseRTDB = { rtdb, ref: rtdbRef, push: rtdbPush, set: rtdbSet, remove: rtdbRemove };
 
 // ========================================
 // ヘッダー・フッター 挿入
@@ -538,6 +587,12 @@ layoutPromise
         _initThemeToggle();
         _initHamburgerMenu();
         _loadCookieScript();
+
+        // ヘッダー注入後の認証UI反映
+        // - 0ms: MutationObserver（_tryBindModal → updateUI）が発火する
+        // - 300ms: Firebase Auth のトークン検証完了を待つ安全マージン
+        setTimeout(() => window.authApp?.updateUI(window.authApp?.currentUser), 0);
+        setTimeout(() => window.authApp?.updateUI(window.authApp?.currentUser), 300);
     })
     .catch(err => console.error('important.js_load-error:', err));
 

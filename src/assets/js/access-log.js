@@ -1,16 +1,43 @@
-// access-log.js v2 — Realtime Database 版アクセスログ
-// 保存先: analytics/{YYYY-MM-DD}/{pushId}
-// 収集情報: GA4 相当（ページビュー・スクロール・クリック・滞在時間・デバイス・地域）
-// ※ UID など個人情報は一切保存しない
+// access-log.js v3 — Realtime Database 版アクセスログ
+// ================================================================
+// 保存構造:
+//   analytics/
+//     {YYYY-MM-DD}/          ← 日付キー
+//       summary/             ← その日の集計（累積カウント）
+//         page_views: N
+//         unique_sessions: N
+//         events: N
+//       logs/                ← 個別イベントログ
+//         {pushId}/
+//           type, path, ts, browser, os, device, ...
+//
+// 自動クリーンアップ:
+//   - クライアント起動時に90日以上前のデータを削除
+//   - RTDB Spark プランの 1GB 上限に対する安全弁
+// ================================================================
 
 (function () {
     'use strict';
 
-    const VISITOR_KEY      = 'll_visitor'; // 初回訪問日時（localStorage）
-    const SESSION_KEY      = 'll_session'; // セッション開始（sessionStorage）
+    const VISITOR_KEY       = 'll_visitor';
+    const SESSION_KEY       = 'll_session';
     const SCROLL_MILESTONES = [25, 50, 75, 100];
+    const RETENTION_DAYS    = 90; // 保持する日数
 
-    // ---- セッション・訪問者判定 ----
+    // ========================================
+    // 日付ユーティリティ
+    // ========================================
+    const toDateKey = (d) => d.toISOString().slice(0, 10); // "2026-04-28"
+
+    function getDateKeysBefore(days) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        return toDateKey(cutoff); // この日付より古いものを削除
+    }
+
+    // ========================================
+    // セッション・訪問者判定
+    // ========================================
     function getVisitorInfo() {
         const now = Date.now();
         const isNewVisitor = !localStorage.getItem(VISITOR_KEY);
@@ -20,7 +47,9 @@
         return { isNewVisitor, isNewSession };
     }
 
-    // ---- UA パーサー ----
+    // ========================================
+    // UA パーサー
+    // ========================================
     function parseUA() {
         const ua = navigator.userAgent;
         let browser = 'Other';
@@ -41,19 +70,76 @@
         return { browser, os, device };
     }
 
-    // ---- IP ジオロケーション（3秒タイムアウト）----
+    // ========================================
+    // IP ジオロケーション（プライマリ + フォールバック）
+    // ========================================
     async function fetchLocation() {
-        try {
-            const ctrl = new AbortController();
-            setTimeout(() => ctrl.abort(), 3000);
-            const res = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
-            if (!res.ok) return {};
-            const d = await res.json();
-            return { country: d.country_name || null, region: d.region || null, city: d.city || null };
-        } catch { return {}; }
+        const apis = [
+            {
+                url:   'https://ipwho.is/',
+                parse: d => ({ country: d.country || '不明', region: d.region || '不明', city: d.city || '不明' }),
+                check: d => d.success !== false,
+            },
+            {
+                url:   'https://freeipapi.com/api/json',
+                parse: d => ({ country: d.countryName || '不明', region: d.regionName || '不明', city: d.cityName || '不明' }),
+                check: () => true,
+            },
+        ];
+
+        for (const api of apis) {
+            try {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 3000);
+                const res = await fetch(api.url, { signal: ctrl.signal });
+                clearTimeout(timer);
+                if (!res.ok) continue;
+                const data = await res.json();
+                if (!api.check(data)) continue;
+                return api.parse(data);
+            } catch { /* 次のAPIへ */ }
+        }
+        return { country: '不明', region: '不明', city: '不明' };
     }
 
-    // ---- スクロール深度 ----
+    // ========================================
+    // 古いデータの自動クリーンアップ
+    // ========================================
+    async function cleanupOldData(rtdb, ref, remove) {
+        // 週1回だけ実行（localStorageで管理）
+        const CLEANUP_KEY = 'll_cleanup';
+        const lastCleanup = localStorage.getItem(CLEANUP_KEY);
+        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        if (lastCleanup && Number(lastCleanup) > weekAgo) return;
+
+        try {
+            localStorage.setItem(CLEANUP_KEY, String(Date.now()));
+            const cutoffKey  = getDateKeysBefore(RETENTION_DAYS);
+            const rootRef    = ref(rtdb, 'analytics');
+
+            // RTDB から日付一覧を取得して古いものを削除
+            const { get } = await import('https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js');
+            const snap = await get(rootRef);
+            if (!snap.exists()) return;
+
+            const dates     = Object.keys(snap.val() || {});
+            const oldDates  = dates.filter(d => d < cutoffKey);
+
+            for (const d of oldDates) {
+                await remove(ref(rtdb, `analytics/${d}`));
+                console.log(`🗑️ access-log: 古いデータを削除 (${d})`);
+            }
+            if (oldDates.length > 0) {
+                console.log(`✅ access-log: ${oldDates.length}件の古いデータを削除しました`);
+            }
+        } catch (e) {
+            console.warn('access-log: クリーンアップ失敗:', e.message);
+        }
+    }
+
+    // ========================================
+    // スクロール深度トラッキング
+    // ========================================
     function setupScrollTracking(logEvent) {
         const reached = new Set();
         window.addEventListener('scroll', () => {
@@ -70,7 +156,9 @@
         }, { passive: true });
     }
 
-    // ---- 滞在時間（beforeunload + visibilitychange）----
+    // ========================================
+    // 滞在時間トラッキング
+    // ========================================
     function setupTimeTracking(logEvent) {
         const start = Date.now();
         const send = () => {
@@ -84,19 +172,21 @@
         });
     }
 
-    // ---- クリックトラッキング ----
+    // ========================================
+    // クリックトラッキング
+    // ========================================
     function setupClickTracking(logEvent) {
         const targets = [
             { sel: '.chat-send-btn',      label: 'chat_send'       },
-            { sel: '#clearAllButton',      label: 'chat_clear'      },
-            { sel: '#searchButton',        label: 'law_search'      },
-            { sel: '.siteindex_btn_link',  label: 'top_cta'         },
-            { sel: '.hamberger-btn',       label: 'menu_open'       },
-            { sel: '#cookie-accept',       label: 'cookie_accept'   },
-            { sel: '#cookie-reject',       label: 'cookie_reject'   },
-            { sel: '#auth-google-btn',     label: 'login_google'    },
-            { sel: '#auth-submit-btn',     label: 'login_email'     },
-            { sel: '.lawapi-view-button',  label: 'law_detail_open' },
+            { sel: '#clearAllButton',     label: 'chat_clear'      },
+            { sel: '#searchButton',       label: 'law_search'      },
+            { sel: '.siteindex_btn_link', label: 'top_cta'         },
+            { sel: '.hamberger-btn',      label: 'menu_open'       },
+            { sel: '#cookie-accept',      label: 'cookie_accept'   },
+            { sel: '#cookie-reject',      label: 'cookie_reject'   },
+            { sel: '#auth-google-btn',    label: 'login_google'    },
+            { sel: '#auth-submit-btn',    label: 'login_email'     },
+            { sel: '.lawapi-view-button', label: 'law_detail_open' },
         ];
         document.addEventListener('click', e => {
             for (const { sel, label } of targets) {
@@ -108,50 +198,70 @@
         }, { passive: true });
     }
 
-    // ---- メイン ----
-    async function init(rtdb, ref, push, set) {
-        const today   = new Date().toISOString().slice(0, 10);
+    // ========================================
+    // メイン処理
+    // ========================================
+    async function init(rtdb, ref, push, set, remove) {
+        const today   = toDateKey(new Date());
         const session = getVisitorInfo();
         const ua      = parseUA();
         const loc     = await fetchLocation();
 
+        // ---- ログ書き込みヘルパー ----
         const logEvent = (type, extra = {}) => {
             try {
-                const logRef = push(ref(rtdb, `analytics/${today}`));
+                // logs/ 配下に個別イベントを追記
+                const logRef = push(ref(rtdb, `analytics/${today}/logs`));
                 set(logRef, {
                     type,
                     path:    location.pathname,
                     ts:      Date.now(),
+                    // デバイス情報
                     browser: ua.browser,
                     os:      ua.os,
                     device:  ua.device,
+                    // 表示環境
                     screen:  `${window.innerWidth}x${window.innerHeight}`,
                     lang:    navigator.language,
                     theme:   window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-                    ...(Object.keys(loc).length ? loc : {}),
+                    // 地域情報
+                    country: loc.country,
+                    region:  loc.region,
+                    city:    loc.city,
+                    // 追加データ
                     ...extra,
                 });
             } catch (_) { /* ログ失敗は無視 */ }
         };
 
-        // ページビュー
+        // ---- ページビュー ----
         logEvent('page_view', {
             title:        document.title || null,
-            referrer:     document.referrer || null,
+            referrer:     document.referrer || '直接アクセス',
             isNewVisitor: session.isNewVisitor,
             isNewSession: session.isNewSession,
         });
 
-        // 行動イベント
+        // ---- 行動イベント ----
         setupScrollTracking(logEvent);
         setupTimeTracking(logEvent);
         setupClickTracking(logEvent);
+
+        // ---- 古いデータのクリーンアップ（バックグラウンド）----
+        cleanupOldData(rtdb, ref, remove).catch(() => {});
     }
 
-    function waitAndInit(attempt = 0) {
+    // ========================================
+    // Firebase RTDB 初期化を待って起動
+    // ========================================
+    async function waitAndInit(attempt = 0) {
         if (window._firebaseRTDB?.rtdb) {
             const { rtdb, ref, push, set } = window._firebaseRTDB;
-            init(rtdb, ref, push, set);
+            // remove は動的インポート
+            const { remove } = await import(
+                'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js'
+            );
+            init(rtdb, ref, push, set, remove);
         } else if (attempt < 50) {
             setTimeout(() => waitAndInit(attempt + 1), 100);
         }
