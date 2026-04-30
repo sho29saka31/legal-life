@@ -1,0 +1,77 @@
+/* 詳細ページのメインコンテナ */
+.info-detail-container {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* お知らせのタイトル */
+.info-detail-title {
+    font-size: 1.8rem;
+    color: #333;
+    border-left: 5px solid #7ddce8; /* アクセントの左線 */
+    padding-left: 15px;
+    margin-bottom: 10px;
+}
+
+/* 公開日 */
+.info-detail-date {
+    display: block;
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* 本文エリア */
+.info-detail-content {
+    line-height: 1.8;
+    color: #444;
+    font-size: 1.05rem;
+}
+
+.info-detail-content p {
+    margin-bottom: 1.5em;
+}
+
+/* 重要な強調テキスト */
+.info-detail-content strong {
+    color: #0076a3;
+    background: linear-gradient(transparent 70%, #b2e2e8 70%); /* 下線風のハイライト */
+}
+
+/* 一覧へ戻るボタン */
+.back-to-list {
+    display: block;
+    width: fit-content;
+    margin: 50px auto 0;
+    padding: 12px 30px;
+    background-color: #f0fbfc;
+    color: #0076a3;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: bold;
+    border: 1px solid #7ddce8;
+    transition: all 0.3s ease;
+}
+
+.back-to-list:hover {
+    background-color: #7ddce8;
+    color: #fff;
+    transform: translateX(-5px); /* 左に少し動くアニメーション */
+}
+
+/* スマホ対応 */
+@media (max-width: 600px) {
+    .info-detail-container {
+        margin: 20px;
+        padding: 20px;
+    }
+    .info-detail-title {
+        font-size: 1.4rem;
+    }
+}

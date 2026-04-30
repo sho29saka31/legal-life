@@ -24,7 +24,7 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gst
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260416-2300";
+const LAYOUT_VERSION = "260501-0000";
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;

@@ -47,6 +47,12 @@
         line-height: 1.8;
     }
 
+    /*注意書き文章*/
+    .about_text_important {
+        text-align: center;
+        background-color: #fff3cd;
+    }
+
     /* リスト共通設定 */
     .about_list {
         list-style: none;
@@ -86,12 +92,6 @@
         position: absolute;
         left: 5px;
         font-weight: bold;
-    }
-
-    /* リンク */
-    .about_link {
-        color: #007bff;
-        text-decoration: underline;
     }
 
     /* レスポンシブ */
