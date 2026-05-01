@@ -24,7 +24,7 @@ import {
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "2605010800";
+const LAYOUT_VERSION = "2605011010";
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;

@@ -1,3 +1,33 @@
+/* お知らせ一覧の見出し行（ヘッダー） */
+.home_info_item_header {
+    display: flex;
+    align-items: center;
+    padding: 15px 10px;
+    border-bottom: 2px solid #7ddce8; /* 少し太めの水色の線で区切る */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* ヘッダー内の各ラベルの幅設定（データ行の col-date 等と完全に一致させる） */
+.home_info_item_header .col-date {
+    width: 130px; /* 前回の col-date の設定と合わせる */
+    flex-shrink: 0;
+}
+
+.home_info_item_header .col-text {
+    flex-grow: 1;
+    padding-right: 20px;
+    text-align: left;
+}
+
+.home_info_item_header .col-link {
+    width: 100px; /* 前回のリンク列の幅と合わせる */
+    flex-shrink: 0;
+    text-align: center;
+}
+
 /* お知らせ一覧のメインコンテナ */
 .home_info_section {
     max-width: 900px;
@@ -58,8 +88,16 @@
     text-decoration: underline; /* ホバー時に下線を表示 */
 }
 
+.home_info_link:visited {
+    color: #0076a3;
+}
+
 /* --- レスポンシブ対応（スマホ表示） --- */
 @media (max-width: 650px) {
+    .home_info_item_header {
+        display: none;
+    }
+
     .home_info_item {
         flex-direction: column; /* 縦並びに変更 */
         align-items: flex-start; /* 左寄せ */
