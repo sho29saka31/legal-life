@@ -71,34 +71,42 @@
     }
 
     // ========================================
-    // IP ジオロケーション（プライマリ + フォールバック）
+    // IP ジオロケーション
+    //   プライマリ:  ipapi.run    (無料・CORS対応・制限なし)
+    //   フォールバック: Cloudflare /cdn-cgi/trace (国のみ取得可)
     // ========================================
     async function fetchLocation() {
-        const apis = [
-            {
-                url:   'https://ipwho.is/',
-                parse: d => ({ country: d.country || '不明', region: d.region || '不明', city: d.city || '不明' }),
-                check: d => d.success !== false,
-            },
-            {
-                url:   'https://freeipapi.com/api/json',
-                parse: d => ({ country: d.countryName || '不明', region: d.regionName || '不明', city: d.cityName || '不明' }),
-                check: () => true,
-            },
-        ];
+        // ---- プライマリ: ipapi.run ----
+        try {
+            const ctrl  = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 3000);
+            const res   = await fetch('https://ipapi.run/json', { signal: ctrl.signal });
+            clearTimeout(timer);
+            if (res.ok) {
+                const d = await res.json();
+                if (d && d.country_name) {
+                    return {
+                        country: d.country_name || '不明',
+                        region:  d.region       || '不明',
+                        city:    d.city         || '不明',
+                    };
+                }
+            }
+        } catch (_) { /* フォールバックへ */ }
 
-        for (const api of apis) {
-            try {
-                const ctrl = new AbortController();
-                const timer = setTimeout(() => ctrl.abort(), 3000);
-                const res = await fetch(api.url, { signal: ctrl.signal });
-                clearTimeout(timer);
-                if (!res.ok) continue;
-                const data = await res.json();
-                if (!api.check(data)) continue;
-                return api.parse(data);
-            } catch { /* 次のAPIへ */ }
-        }
+        // ---- フォールバック: Cloudflare trace（国コードのみ）----
+        try {
+            const ctrl  = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 2000);
+            const res   = await fetch('https://cloudflare.com/cdn-cgi/trace', { signal: ctrl.signal });
+            clearTimeout(timer);
+            if (res.ok) {
+                const text = await res.text();
+                const loc  = text.match(/loc=([A-Z]{2})/)?.[1];
+                if (loc) return { country: loc, region: '不明', city: '不明' };
+            }
+        } catch (_) { /* 両方失敗 */ }
+
         return { country: '不明', region: '不明', city: '不明' };
     }
 
