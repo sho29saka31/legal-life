@@ -948,3 +948,25 @@ main {
 .custom-popup-close-btn:hover {
     background-color: #0056b3;
 }
+
+/*開発中コンテンツバッチ*/
+    /* バッジの基本スタイル*/
+    .badge-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.2;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-transform: uppercase;
+    }
+
+    /* 「開発中」専用のスタイル*/
+    .badge-status.is-developing {
+        color: #9a3412;           /* 濃い茶オレンジ（文字） */
+        background-color: #ffedd5; /* 薄いオレンジ（背景） */
+        border: 1px solid #fed7aa; /* 中間のオレンジ（枠線） */
+    }

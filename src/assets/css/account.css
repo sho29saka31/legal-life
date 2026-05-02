@@ -1,5 +1,4 @@
 /* account.css - アカウント設定ページ専用スタイル */
-
 .settings-container {
     max-width: 580px;
     margin: 40px auto;
@@ -91,8 +90,6 @@
     flex-shrink: 0;
 }
 .provider-icon.google  { background: #f1f3f4; }
-.provider-icon.twitter { background: #000; }
-.provider-icon.line    { background: #06C755; }
 .provider-icon.email   { background: #e0f7fb; }
 .provider-label { font-size: 14px; font-weight: 700; color: #333; }
 .provider-status {
@@ -471,7 +468,6 @@ body.otp-modal-open {
 
 /* ========================================
    最近のアクション（セッション一覧）
-   account.css に追記
    ======================================== */
 
 /* リスト全体 */
@@ -480,6 +476,13 @@ body.otp-modal-open {
     flex-direction: column;
     gap: 10px;
     margin-top: 4px;
+}
+/* タイトル要素を横並びにするための調整 */
+.sessions-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* アイコン+テキストとバッジの間の隙間 */
+    margin-bottom: 12px;
 }
 
 /* ローディング・空状態 */
