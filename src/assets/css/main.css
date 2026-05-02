@@ -889,3 +889,62 @@ main {
 .search-clear:hover {
     color: #0f172a;
 }
+
+/* 開発中ウィンドウ */
+/* ポップアップ全体のコンテナ */
+.custom-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* 背景を暗くする */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    visibility: hidden; /* 初期状態は隠す */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* ポップアップがアクティブな時の表示 */
+.custom-popup-overlay.is-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ポップアップの中身 */
+.custom-popup-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* メッセージのテキスト */
+.custom-popup-text {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* 閉じるボタンのデザイン */
+.custom-popup-close-btn {
+    display: inline-block;
+    padding: 10px 25px;
+    background-color: #007bff; /* お好みの色に変更してください */
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-popup-close-btn:hover {
+    background-color: #0056b3;
+}

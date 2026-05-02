@@ -10,21 +10,10 @@ import {
     updateProfile, fetchSignInMethodsForEmail,
     linkWithCredential, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-// App Check: 現在無効（reCAPTCHA設定完了後に再有効化予定）
-
-// ========================================
-// ダークモード初期化（最優先で実行）
-// ========================================
-(function () {
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    }
-})();
-
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "2605011010";
+const LAYOUT_VERSION = "2605022050";
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;
@@ -743,6 +732,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// ========================================
+// 開発中ページ開けませんウィンドウ (複数対応・監視型)
+// ========================================
+(function() {
+    const TARGET_CLASS = 'js-popup-show'; // IDではなくCLASSを指定
+    const MESSAGE = '先ほど選択いただいたページは現在作成中です。<br>公開までしばらくお待ちください！';
+    const CLOSE_TEXT = '閉じる';
+
+    // 1. ポップアップの土台作成（変更なし）
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-popup-overlay';
+    overlay.innerHTML = `
+        <div class="custom-popup-content">
+            <p class="custom-popup-text">${MESSAGE}</p>
+            <div class="custom-popup-close-btn">${CLOSE_TEXT}</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.custom-popup-close-btn');
+    closeBtn.addEventListener('click', () => overlay.classList.remove('is-visible'));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('is-visible'); });
+
+    // 2. ボタンにイベントを付与する関数 (querySelectorAllで全てに適用)
+    const bindPopups = () => {
+        const triggers = document.querySelectorAll(`.${TARGET_CLASS}`);
+        triggers.forEach(el => {
+            if (!el.dataset.popupBound) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    overlay.classList.add('is-visible');
+                });
+                el.dataset.popupBound = "true"; // 二重登録防止
+            }
+        });
+    };
+
+    // 3. DOMを監視して、新しいボタンが現れたら即座に機能を付与
+    const observer = new MutationObserver(bindPopups);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // 初回実行
+    bindPopups();
+})();
 
 console.log('%c警告!', 'color: red; font-size: 1.2em; font-weight: bold;',
     '\n不用意なコード実行は避けてください。');

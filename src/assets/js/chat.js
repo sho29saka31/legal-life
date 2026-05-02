@@ -127,9 +127,7 @@ class LegalChatApp {
 <div class="chat-ai-container">
     <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon"
          onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-    <div class="chat-message consult-ai-message">
-        こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？
-    </div>
+    <div class="chat-message chat-ai-message">こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？</div>
 </div>`;
             return;
         }
@@ -137,12 +135,12 @@ class LegalChatApp {
         this.el.responseArea.innerHTML = this.history.map(item => `
 <div class="chat-user-container">
     <button class="chat-delete-btn" onclick="chatApp.deleteItem('${item.id}')">🗑️</button>
-    <div class="chat-message consult-user-message">${escapeHtml(item.question)}</div>
+    <div class="chat-message chat-user-message">${escapeHtml(item.question)}</div>
 </div>
 <div class="chat-ai-container">
     <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon"
          onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
-    <div class="chat-message consult-ai-message">${escapeHtml(item.answer).trim().replace(/\n/g, '<br>')}</div>
+    <div class="chat-message chat-ai-message">${escapeHtml(item.answer).trim().replace(/\n/g, '<br>')}</div>
 </div>`).join('');
     }
 
@@ -219,7 +217,7 @@ class LegalChatApp {
         this.el.responseArea.insertAdjacentHTML('beforeend', `
 <div class="chat-user-container" data-temp-id="${tempId}">
     <button class="chat-delete-btn" style="visibility:hidden;">🗑️</button>
-    <div class="chat-message consult-user-message">${escapeHtml(text)}</div>
+    <div class="chat-message chat-user-message">${escapeHtml(text)}</div>
 </div>`);
 
         document.querySelector(`[data-temp-id="${tempId}"]`)
@@ -261,7 +259,7 @@ class LegalChatApp {
         if (!confirmed) return;
 
         if (item?.docId && window.authApp) {
-            await window.authApp.deleteConsultation(item.docId);
+            await window.authApp.deletechatation(item.docId);
         }
 
         this.history = this.history.filter(i => i.id !== id);
@@ -280,7 +278,7 @@ class LegalChatApp {
         if (window.authApp?.currentUser) {
             const deletePromises = this.history
                 .filter(item => item.docId)
-                .map(item => window.authApp.deleteConsultation(item.docId));
+                .map(item => window.authApp.deletechatation(item.docId));
             await Promise.allSettled(deletePromises);
         }
 
@@ -382,7 +380,7 @@ class LegalChatApp {
             this.el.responseArea.insertAdjacentHTML('beforeend', `
 <div id="loading-bubble" class="chat-ai-container">
     <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
-    <div class="chat-message consult-ai-message">
+    <div class="chat-message chat-ai-message">
         <div class="chat-loading-dots">考え中...</div>
     </div>
 </div>`);
@@ -395,7 +393,7 @@ class LegalChatApp {
         this.el.responseArea.insertAdjacentHTML('beforeend', `
 <div class="chat-ai-container">
     <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon">
-    <div class="chat-message consult-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
+    <div class="chat-message chat-ai-message" style="color:red; border-color:red;">⚠️ ${msg}</div>
 </div>`);
     }
 
