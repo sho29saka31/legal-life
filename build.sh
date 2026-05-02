@@ -11,9 +11,7 @@ mkdir -p ./dist
 cp -r ./src/. ./dist/
 
 # ========================================
-# Gemini APIキーの注入
-# ----------------------------------------
-# sed を使用（文字列はシンプルなので問題なし）
+# Gemini APIキーの注入（sedで問題なし）
 # ========================================
 if [ -n "$GEMINI_API_KEY" ]; then
     sed -i "s|__GEMINI_API_KEY__|${GEMINI_API_KEY}|g" \
@@ -24,11 +22,20 @@ else
 fi
 
 # ========================================
+# reCAPTCHA v3 サイトキーの注入
+# ========================================
+if [ -n "$RECAPTCHA_SITE_KEY" ]; then
+    sed -i "s|__RECAPTCHA_SITE_KEY__|${RECAPTCHA_SITE_KEY}|g" \
+        ./dist/assets/js/important.js
+    echo "✅ reCAPTCHA v3 サイトキー注入完了"
+else
+    echo "⚠️ RECAPTCHA_SITE_KEY が設定されていません"
+fi
+
+# ========================================
 # Firebase設定の注入
 # ----------------------------------------
-# 理由: Firebase Config は JSON 形式で `/`, `&`, `{`, `}`, `"` などの
-#       sed で問題になる特殊文字を多数含むため、Python を使って
-#       単純な文字列置換を行う（エスケープ不要で確実）
+# Firebase Config は JSON 形式で特殊文字を含むため Python を使用
 # ========================================
 if [ -n "$FIREBASE_CONFIG" ]; then
     python3 - "$FIREBASE_CONFIG" << 'PYEOF'
