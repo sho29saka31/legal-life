@@ -37,72 +37,67 @@
             </div>
             <nav class="sitemap-nav">
                 <div class="sitemap-category">
-                    <h3>主要ページ</h3>
+                    <h3>/</h3>
                     <a href="/">🏠 ホーム</a>
-                    <a href="/content/">🏠 コンテンツホーム</a>
-                    <a href="/content/chat/">💬 チャット</a>
-                    <a href="/content/study/" class=" js-popup-show">📖 法令学習</a>
-                    <a href="/content/search/">🔍 法令検索</a>
-                    <a href="/content/news/" class=" js-popup-show">📰 ニュース</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>サイト情報ページ</h3>
+                    <h3>/content</h3>
+                    <a href="/content/">🏠 コンテンツホーム</a>
+                    <a href="/content/chat/">💬 チャット</a>
+                    <a href="/content/study/">📖 法令学習</a>
+                    <a href="/content/search/">🔍 法令検索</a>
+                    <a href="/content/news/">📰 ニュース</a>
+                </div>
+                <div class="sitemap-category">
+                    <h3>/info</h3>
                     <a href="/info/about/">🏢 サイト概要</a>
-                    <a href="/info/history/" class=" js-popup-show">📜 沿革</a>
+                    <a href="/info/history/">📜 沿革</a>
                     <a href="/info/">ⓘ お知らせ</a>
                     <a href="/info/faq/">❓ よくある質問</a>
                     <a href="/info/contact/">✉️ お問い合わせ</a>
+                    <a href="/info/map/">🗺 サイトマップ</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>法的情報ページ</h3>
+                    <h3>/law</h3>
                     <a href="/law/privacy/">🔒 プライバシーポリシー</a>
                     <a href="/law/terms/">📋 利用規約</a>
                     <a href="/law/disclaimer/">⚠️ 免責事項</a>
                     <a href="/law/cookie/">🍪 クッキーポリシー</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>その他</h3>
-                    <a href="/info/map/">🗺 サイトマップ</a>
-                    <a href="/z[dev--tool]/" class="is-hidden"></a>
+                    <h3>/parts</h3>
+                    <a href="/parts/header.html">㊙header</a>
+                    <a href="/parts/footer.html">㊙footer</a>
+                </div>
+                <div class="sitemap-category">
+                    <h3>/error</h3>
+                    <a href="/404.html">404-直下</a>
+                    <a href="/error/401.html">401</a>
+                    <a href="/error/404.html">404</a>
+                    <a href="/error/503.html">503</a>
+                </div>
+                <div class="sitemap-category">
+                    <h3>DevTools</h3>
+                    <a href="/z[dev--tool]/">開発者サイトマップ</a>
+                    <a href="/z[dev--tool]/temp-page-html/all-page-temp.html">全ページﾃﾝﾌﾟﾚ</a>
+                    <a href="/z[dev--tool]/temp-page-html/content-study-temp.html">学習ﾃﾝﾌﾟﾚ</a>
+                    <a href="/z[dev--tool]/temp-page-html/info-news-temp.html">お知らせﾃﾝﾌﾟﾚ</a>
                 </div>
             </nav>
         </main>
         
         <div id="footer"></div>
         <script type="module" src="/assets/js/important.js"></script>
-        <script defer src="/assets/js/access-log.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const trigger = document.getElementById('sitemap-trigger');
-                const secretLinks = document.querySelectorAll('.is-hidden');
-                let tapCount = 0;
-                let lastTapTime = 0;
-
-                if (trigger) {
-                    trigger.addEventListener('click', () => {
-                        const currentTime = new Date().getTime();
-                        const tapInterval = currentTime - lastTapTime;
-
-                        // 0.5秒以内の連続タップか判定
-                        if (tapInterval < 500) {
-                            tapCount++;
-                        } else {
-                            tapCount = 1;
-                        }
-
-                        lastTapTime = currentTime;
-
-                        // 3回連続タップで実行
-                        if (tapCount === 5) {
-                            secretLinks.forEach(link => {
-                                link.classList.remove('is-hidden');
-                                link.classList.add('is-show-secret');
-                            });
-                            tapCount = 0; // カウントリセット
-                        }
-                    });
-                }
-            });
-        </script>
+<script>
+    (function() {
+        const COOKIE_NAME = "dev_access_allowed";
+        const LOGIN_PAGE = "/z[dev--tool]/";
+        
+        // Cookieがない場合はログイン画面へリダイレクト
+        if (!document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '=true'))) {
+            window.location.replace(LOGIN_PAGE);
+        }
+    })();
+</script>
     </body>
 </html>
