@@ -61,8 +61,6 @@
 
 .is-show-secret {
     display: block !important;
-    background-color: #fff4e6 !important;
-    border: 1px dashed #ffa94d;
     animation: sitemapFadeIn 0.5s ease forwards;
 }
 
