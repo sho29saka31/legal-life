@@ -32,20 +32,12 @@
         <div id="header"></div>
 
         <main class="info-detail-container">
-            <h1 class="info-detail-title">Firebase機能の追加に関して</h1>
-            <span class="info-detail-date">公開日: 2026/1</span>
+            <h1 class="info-detail-title">お知らせのタイトルがここに入ります</h1>
+            <span class="info-detail-date">公開日: </span>
 
             <div class="info-detail-content">
-                <p>
-                    Google社のFirebaseをサイトに追加しました。
-                    <br>現在の利用方針はAuthenticationを活用しアカウントログイン機能の実装並びに、Firestoreを活用しチャット履歴の保存機能の利用、AppCheckによる不正アクセス防止の取り組みを実施いたします。
-                    <br>上記のみのFirebase利用に当面の間は限定いたします。
-                </p>
-                <p>
-                    それに伴い法令文の改定を行いました。ご確認ください。
-                </p>
-                <p>追加機能 : <strong>ログイン機能, チャット履歴保存機能</strong></p>
-                <p>変更対象ページ : <strong>チャットページ</strong></p>
+                <p>ここに詳細な内容を記述します。</p>
+                <p><strong>強調したい部分</strong>はこのように表示されます。</p>
             </div>
 
             <a href="/info/" class="back-to-list">&larr; お知らせ一覧に戻る</a>
@@ -53,6 +45,17 @@
 
         <div id="footer"></div>
         <script type="module" src="/assets/js/important.js"></script>
-        <script defer src="/assets/js/access-log.js"></script>
+        <!--<script defer src="/assets/js/access-log.js"></script>-->
+        <script>
+    (function() {
+        const COOKIE_NAME = "dev_access_allowed";
+        const HOME_URL = "https://legal-life.pages.dev/";
+        
+        // Cookieがない場合は即座にリダイレクト（履歴に残さない）
+        if (!document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '=true'))) {
+            window.location.replace(HOME_URL);
+        }
+    })();
+</script>
     </body>
 </html>

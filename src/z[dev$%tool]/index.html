@@ -37,82 +37,93 @@
             </div>
             <nav class="sitemap-nav">
                 <div class="sitemap-category">
-                    <h3>主要ページ</h3>
+                    <h3>/</h3>
                     <a href="/">🏠 ホーム</a>
-                    <a href="/content/">🏠 コンテンツホーム</a>
-                    <a href="/content/chat/">💬 チャット</a>
-                    <a href="/content/study/" class=" js-popup-show">📖 法令学習</a>
-                    <a href="/content/search/">🔍 法令検索</a>
-                    <a href="/content/news/" class=" js-popup-show">📰 ニュース</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>サイト情報ページ</h3>
+                    <h3>/content</h3>
+                    <a href="/content/">🏠 コンテンツホーム</a>
+                    <a href="/content/chat/">💬 チャット</a>
+                    <a href="/content/study/">📖 法令学習</a>
+                    <a href="/content/search/">🔍 法令検索</a>
+                    <a href="/content/news/">📰 ニュース</a>
+                </div>
+                <div class="sitemap-category">
+                    <h3>/info</h3>
                     <a href="/info/about/">🏢 サイト概要</a>
-                    <a href="/info/history/" class=" js-popup-show">📜 沿革</a>
+                    <a href="/info/history/">📜 沿革</a>
                     <a href="/info/">ⓘ お知らせ</a>
                     <a href="/info/faq/">❓ よくある質問</a>
                     <a href="/info/contact/">✉️ お問い合わせ</a>
+                    <a href="/info/map/">🗺 サイトマップ</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>法的情報ページ</h3>
+                    <h3>/law</h3>
                     <a href="/law/privacy/">🔒 プライバシーポリシー</a>
                     <a href="/law/terms/">📋 利用規約</a>
                     <a href="/law/disclaimer/">⚠️ 免責事項</a>
                     <a href="/law/cookie/">🍪 クッキーポリシー</a>
                 </div>
-                <div class="sitemap-category is-hidden">
-                    <h3>サイトパーツ</h3>
+                <div class="sitemap-category">
+                    <h3>/parts</h3>
                     <a href="/parts/header.html">㊙header</a>
                     <a href="/parts/footer.html">㊙footer</a>
                 </div>
-                <div class="sitemap-category is-hidden">
-                    <h3>エラーページ</h3>
-                    <a href="/error/401.html">㊙401エラー</a>
-                    <a href="/error/404.html">㊙404エラー</a>
-                    <a href="/error/503.html">㊙503エラー</a>
+                <div class="sitemap-category">
+                    <h3>/error</h3>
+                    <a href="/404.html">404-直下</a>
+                    <a href="/error/401.html">401</a>
+                    <a href="/error/404.html">404</a>
+                    <a href="/error/503.html">503</a>
                 </div>
                 <div class="sitemap-category">
-                    <h3>その他</h3>
-                    <a href="/info/map/">🗺 サイトマップ</a>
+                    <h3>DevTools</h3>
+                    <a href="/zzz/">開発者サイトマップ</a>
+                    <a href="/zzz/temp-page-html/all-page-temp.html">全ページﾃﾝﾌﾟﾚ</a>
+                    <a href="/zzz/temp-page-html/content-study-temp.html">学習ﾃﾝﾌﾟﾚ</a>
+                    <a href="/zzz/temp-page-html/info-news-temp.html">お知らせﾃﾝﾌﾟﾚ</a>
                 </div>
             </nav>
         </main>
         
         <div id="footer"></div>
         <script type="module" src="/assets/js/important.js"></script>
-        <script defer src="/assets/js/access-log.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const trigger = document.getElementById('sitemap-trigger');
-                const secretLinks = document.querySelectorAll('.is-hidden');
-                let tapCount = 0;
-                let lastTapTime = 0;
+            (function() {
+    const AUTH_PATH = "/z[dev$%tool]/";
+    const HOME_URL = "https://legal-life.pages.dev/";
+    const COOKIE_NAME = "dev_access_allowed";
+    const CORRECT_PASSWORD = "your_password_here"; // ここにパスワードを設定
 
-                if (trigger) {
-                    trigger.addEventListener('click', () => {
-                        const currentTime = new Date().getTime();
-                        const tapInterval = currentTime - lastTapTime;
+    // 現在のパスが制限対象ディレクトリか確認
+    if (window.location.pathname.startsWith(AUTH_PATH)) {
+        
+        // 1. サブディレクトリ(/**/)への直接アクセスをルートに飛ばす処理
+        // 例: /z[dev$%tool]/page1 -> /z[dev$%tool]/ へ移動
+        if (window.location.pathname !== AUTH_PATH) {
+            window.location.replace(AUTH_PATH);
+            return;
+        }
 
-                        // 0.5秒以内の連続タップか判定
-                        if (tapInterval < 500) {
-                            tapCount++;
-                        } else {
-                            tapCount = 1;
-                        }
+        // 2. Cookieの確認
+        const isAuthorized = document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '=true'));
 
-                        lastTapTime = currentTime;
+        if (!isAuthorized) {
+            // 3. パスワード入力
+            const userInput = prompt("パスワードを入力してください:");
 
-                        // 3回連続タップで実行
-                        if (tapCount === 5) {
-                            secretLinks.forEach(link => {
-                                link.classList.remove('is-hidden');
-                                link.classList.add('is-show-secret');
-                            });
-                            tapCount = 0; // カウントリセット
-                        }
-                    });
-                }
-            });
+            if (userInput === CORRECT_PASSWORD) {
+                // 成功：Cookieを付与（有効期限1日、パス指定）
+                document.cookie = `${COOKIE_NAME}=true; path=/; max-age=86400; SameSite=Strict`;
+                console.log("Access Granted");
+            } else {
+                // 失敗：履歴を残さずホームへ飛ばす
+                alert("パスワードが違います。");
+                window.location.replace(HOME_URL);
+            }
+        }
+    }
+})();
         </script>
     </body>
 </html>
