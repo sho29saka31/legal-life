@@ -43,7 +43,7 @@
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("https://ipapi.run/json", {
+      const res = await fetch("https://ipapi.co/json", {
         signal: ctrl.signal,
       });
       clearTimeout(timer);

@@ -52,3 +52,27 @@ button#submit {
 button#submit:hover {
   background-color: #555;
 }
+.back-to-home {
+    margin-top: 20px;
+    text-align: center;
+}
+.back-to-home a {
+    color: #666; /* 目立ちすぎないグレー */
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.3s;
+}
+.back-to-home a:hover {
+    color: #00C8E9; /* ホバー時にサイトのテーマカラーに */
+    text-decoration: underline;
+}
+#backToHome {
+    margin-top: 20px;
+    display: inline-block;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+#backToHome:hover {
+    color: #00C8E9 !important;
+    text-decoration: underline;
+}

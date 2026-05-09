@@ -36,18 +36,7 @@
         </main>
 
         <div id="footer"></div>
-        <script type="module" src="/assets/js/important.js"></script>
-        <!--<script defer src="/assets/js/access-log.js"></script>-->
-<script>
-    (function() {
-        const COOKIE_NAME = "dev_access_allowed";
-        const LOGIN_PAGE = "/z[dev--tool]/";
-        
-        // Cookieがない場合はログイン画面へリダイレクト
-        if (!document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '=true'))) {
-            window.location.replace(LOGIN_PAGE);
-        }
-    })();
-</script>
+        <script src="/assets/js/devlop.js"></script>
+        <!--<script type="module" src="/assets/js/important.js"></script>-->
     </body>
 </html>
