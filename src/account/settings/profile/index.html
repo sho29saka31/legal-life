@@ -1,0 +1,101 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>プロフィール|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "プロフィール|legal&life",
+            "url": "https://legal-life.pages.dev/account/settings/profile"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="プロフィール|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/site_icon_white.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main>
+            <div class="account-container activity-wide">
+                <h1 class="home-title">プロフィール</h1>
+                <p class="subtitle">あなたのアカウント情報と学習の進捗</p>
+
+                <!-- アカウント基本情報 -->
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        <svg viewBox="0 0 24 24" width="64" height="64">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#dadce0"/>
+                        </svg>
+                    </div>
+                    <div class="profile-info-main">
+                        <h2 class="user-display-name">ユーザー名</h2>
+                        <p class="user-email">example@mail.com</p>
+                        <button class="btn-text-only" style="padding: 0; margin-top: 8px;">基本情報を編集</button>
+                    </div>
+                </div>
+
+                <div class="divider">コンテンツ進捗状況</div>
+
+                <!-- 学習進捗一覧（未来実装予定のプレースホルダー） -->
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="content-name">憲法 基礎講座</span>
+                            <span class="progress-percentage">45%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 45%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="content-name">民法 判例集</span>
+                            <span class="progress-percentage">12%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 12%;"></div>
+                        </div>
+                    </div>
+                    
+                    <p class="info-text" style="text-align: center; margin-top: 16px;">
+                        ※詳細な進捗管理機能は順次アップデート予定です
+                    </p>
+                </div>
+
+                <div class="divider">危険な操作</div>
+
+                <!-- アカウント削除への導線 -->
+                <div class="danger-zone">
+                    <p class="danger-description">
+                        アカウントを削除すると、すべてのデータが完全に消去されます。
+                    </p>
+                    <a href="/account/delete" class="btn-secondary danger-text" style="display: block; text-align: center; text-decoration: none;">
+                        アカウントの削除...
+                    </a>
+                </div>
+
+                <div class="link-group">
+                    <a href="/account/settings" class="link-item">アカウント設定へ戻る</a>
+                </div>
+            </div>
+        </main>
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>

@@ -1002,7 +1002,7 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   const TARGET_CLASS = "js-popup-show"; // IDではなくCLASSを指定
   const MESSAGE =
-    "先ほど選択いただいたページは現在作成中です。<br>公開までしばらくお待ちください！";
+    "選択いただいたページは現在メンテナンス中です<br>メンテナンス終了までしばらくお待ちください";
   const CLOSE_TEXT = "閉じる";
 
   // 1. ポップアップの土台作成（変更なし）

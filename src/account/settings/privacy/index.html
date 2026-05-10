@@ -1,0 +1,89 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>プライバシー設定|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "プライバシー設定|legal&life",
+            "url": "https://legal-life.pages.dev/account/settings/privacy"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="プライバシー設定|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/site_icon_white.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main>
+        <div class="account-container activity-wide">
+            <h1 class="home-title">プライバシー設定</h1>
+            <p class="subtitle">メール通知や情報の取り扱いに関する設定</p>
+
+            <form action="/auth/update-privacy" method="POST">
+                <div class="settings-group">
+                    <h2 class="settings-group-title">メール通知設定</h2>
+                    
+                    <div class="setting-toggle-item">
+                        <div class="setting-text">
+                            <span class="setting-label">セキュリティ通知</span>
+                            <p class="setting-description">新しい端末からのログインやパスワード変更時に通知を受け取ります（推奨）</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="notify_security" checked disabled>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-toggle-item">
+                        <div class="setting-text">
+                            <span class="setting-label">学習進捗リマインダー</span>
+                            <p class="setting-description">週ごとの学習記録やおすすめの法律トピックを受け取ります</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="notify_learning" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-toggle-item">
+                        <div class="setting-text">
+                            <span class="setting-label">ニュースレター</span>
+                            <p class="setting-description">legal&life Platform からの最新ニュースやアップデート情報を受け取ります</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="notify_newsletter">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="action-area">
+                    <button type="submit" class="btn-primary">設定を保存</button>
+                </div>
+            </form>
+
+            <div class="link-group">
+                <a href="/account/settings" class="link-item">アカウント設定へ戻る</a>
+            </div>
+        </div>
+        </main>
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>

@@ -1,0 +1,90 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>***|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "***|legal&life",
+            "url": "https://legal-life.pages.dev/***"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="***|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/site_icon_white.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main>
+            <div class="account-container">
+                <h1 class="home-title">アカウントの削除</h1>
+                <p class="subtitle">legal&life Platform アカウントを完全に削除します</p>
+
+                <div class="alert-box">
+                    <p class="alert-title">⚠️ 注意事項を確認してください</p>
+                    <ul class="alert-list">
+                        <li>保存されているすべての学習進捗データが失われます。</li>
+                        <li>相談履歴や設定情報は復元できません。</li>
+                        <li>同一メールアドレスでの再登録に制限がかかる場合があります。</li>
+                    </ul>
+                </div>
+
+                <form action="/auth/delete" method="POST" id="delete-form">
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="agree" name="agree" class="form-checkbox" required>
+                        <label for="agree" class="checkbox-label">
+                            上記の注意事項を理解し、アカウントの削除に同意します。
+                        </label>
+                    </div>
+
+                    <p class="countdown-text" id="countdown-display">
+                        安全のため、あと <span id="seconds">10</span> 秒お待ちください
+                    </p>
+
+                    <button type="submit" class="btn-danger" id="delete-btn" disabled>
+                        アカウントを永久に削除する
+                    </button>
+                </form>
+
+                <div class="link-group">
+                    <a href="/account/settings/profile" class="link-item">削除せずに戻る</a>
+                </div>
+            </div>
+        </main>
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+        <!-- 削除カウントダウン用スクリプト（簡易版） -->
+        <script>
+            let timeLeft = 10;
+            const btn = document.getElementById('delete-btn');
+            const secDisplay = document.getElementById('seconds');
+            const textDisplay = document.getElementById('countdown-display');
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                secDisplay.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    textDisplay.innerText = "削除が可能になりました";
+                    textDisplay.classList.add('ready');
+                }
+            }, 1000);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,80 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>アカウント二段階認証|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "アカウント二段階認証|legal&life",
+            "url": "https://legal-life.pages.dev/account/security/2fa/backup-codes"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="アカウント二段階認証|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/site_icon_white.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main>
+            <div class="account-container">
+                <h1 class="home-title">バックアップコード</h1>
+                <p class="subtitle">スマートフォンを紛失した際などに使用します</p>
+
+                <div class="alert-box">
+                    <p class="alert-title">安全な場所に保管してください</p>
+                    <p class="info-text" style="font-size: 12px; margin-top: 5px;">
+                        各コードは1回のみ使用可能です。誰にも教えないでください。
+                    </p>
+                </div>
+
+                <div class="backup-codes-grid">
+                    <!-- 8桁〜10桁程度のコードを想定 -->
+                    <div class="code-item">1234 5678</div>
+                    <div class="code-item">2345 6789</div>
+                    <div class="code-item">3456 7890</div>
+                    <div class="code-item">4567 8901</div>
+                    <div class="code-item">5678 9012</div>
+                    <div class="code-item">6789 0123</div>
+                    <div class="code-item">7890 1234</div>
+                    <div class="code-item">8901 2345</div>
+                    <div class="code-item">9012 3456</div>
+                    <div class="code-item">0123 4567</div>
+                </div>
+
+                <div class="action-grid">
+                    <button type="button" class="btn-secondary" onclick="window.print()">
+                        印刷する
+                    </button>
+                    <button type="button" class="btn-secondary">
+                        コードをコピー
+                    </button>
+                </div>
+
+                <button type="button" class="btn-primary" style="margin-top: 16px;">
+                    新しいコードを生成
+                </button>
+
+                <div class="link-group">
+                    <a href="/account/security/2fa" class="link-item">二段階認証設定へ戻る</a>
+                </div>
+            </div>
+        </main>
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>

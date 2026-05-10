@@ -33,7 +33,7 @@ async function fetchRecentInformation(url) {
     console.log("取得できたアイテム数:", allItems.length);
 
     if (allItems.length > 0) {
-      const recentItems = allItems.slice(0, 3);
+      const recentItems = allItems.slice(0, 5);
       container.innerHTML = "";
       recentItems.forEach((item) => {
         container.appendChild(item.cloneNode(true));

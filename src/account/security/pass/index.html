@@ -1,0 +1,74 @@
+<html>
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>パスワード変更|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "パスワード変更|legal&life",
+            "url": "https://legal-life.pages.dev/account/security/pass"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="パスワード変更|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/site_icon_white.jpg?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main>
+            <div class="account-container">
+                <h1 class="home-title">パスワードの変更</h1>
+                <p class="subtitle">安全なパスワードを設定してアカウントを保護しましょう</p>
+
+                <form action="/auth/update-password" method="POST">
+                    <div class="form-group">
+                        <label class="form-label" for="current-password">現在のパスワード</label>
+                        <input type="password" id="current-password" name="current-password" class="form-input" required autofocus>
+                    </div>
+
+                    <div class="divider">新しいパスワードの設定</div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="new-password">新しいパスワード</label>
+                        <input type="password" id="new-password" name="new-password" class="form-input" required minlength="8">
+                        <!-- パスワード強度メーター（任意でJS制御） -->
+                        <div class="password-strength">
+                            <div class="strength-bar" id="strength-meter"></div>
+                        </div>
+                        <p class="form-hint">8文字以上の英数字を組み合わせてください</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirm-password">新しいパスワード（確認）</label>
+                        <input type="password" id="confirm-password" name="confirm-password" class="form-input" required minlength="8">
+                    </div>
+
+                    <div class="action-area">
+                        <button type="submit" class="btn-primary">パスワードを更新</button>
+                    </div>
+                </form>
+
+                <div class="link-group">
+                    <a href="/account/security" class="link-item">キャンセルして戻る</a>
+                </div>
+            </div>
+        </main>
+        <div id="footer"></div>
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>
