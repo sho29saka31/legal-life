@@ -72,15 +72,15 @@
 
   // ========================================
   // IP ジオロケーション
-  //   プライマリ:  ipapi.run    (無料・CORS対応・制限なし)
+  //   プライマリ:  ipapi.co    (無料・CORS対応・制限なし)
   //   フォールバック: Cloudflare /cdn-cgi/trace (国のみ取得可)
   // ========================================
   async function fetchLocation() {
-    // ---- プライマリ: ipapi.run ----
+    // ---- プライマリ: ipapi.co ----
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("https://ipapi.run/json", {
+      const res = await fetch("https://ipapi.co/json", {
         signal: ctrl.signal,
       });
       clearTimeout(timer);

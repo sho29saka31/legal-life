@@ -13,7 +13,7 @@ import { initializeAppCheck, ReCaptchaV3Provider,
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260510-01";
+const LAYOUT_VERSION = "260510-i";
 
 function fetchWithCache(url) {
   const key = `cache:${url}:v${LAYOUT_VERSION}`;
@@ -204,14 +204,14 @@ _start() {
   }
 
   // ---- IPジオロケーションで都市・国を取得（失敗時は"不明"）----
-  //   プライマリ:  ipapi.run    (無料・CORS対応・制限なし)
+  //   プライマリ:  ipapi.co    (無料・CORS対応・制限なし)
   //   フォールバック: Cloudflare /cdn-cgi/trace (国コードのみ)
   async _fetchLocation() {
-    // プライマリ: ipapi.run
+    // プライマリ: ipapi.co
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("https://ipapi.run/json", {
+      const res = await fetch("https://ipapi.co/json", {
         signal: ctrl.signal,
       });
       clearTimeout(timer);
