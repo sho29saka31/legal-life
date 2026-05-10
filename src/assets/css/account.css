@@ -600,6 +600,55 @@ body.otp-modal-open {
     background: #c0392b;
 }
 
+/* ─── 削除チェックリスト ─── */
+.deletion-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.deletion-check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #f0e0e0;
+    background: #fafafa;
+    transition: background 0.15s;
+}
+
+.deletion-check-item:hover {
+    background: #fff5f5;
+}
+
+.deletion-check-item input[type="checkbox"] {
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: #e74c3c;
+    cursor: pointer;
+}
+
+/* ─── セッション削除ペンディング表示 ─── */
+.session-item[style*="opacity: 0.5"] {
+    pointer-events: none;
+}
+
+/* ─── 通知トグルの間隔調整 ─── */
+#notification-settings-container .two-factor-row:last-child {
+    border-bottom: none;
+}
+
 /* スマホ対応 */
 @media (max-width: 520px) {
     .session-item {

@@ -413,6 +413,113 @@
     transform: translateY(-2px);
 }
 
+/* --- 一時保存バナーとトグルスイッチ --- */
+.storage-banner {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 40px;
+    transition: background 0.3s ease;
+}
+
+.storage-banner.is-active {
+    background: #f0fdfa; /* 有効時はスッキリした青緑系に */
+    border-bottom-color: #ccfbf1;
+}
+
+.storage-banner-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.storage-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    min-width: 32px;
+    text-align: right;
+}
+
+.storage-banner.is-active .status-text {
+    color: #0d9488;
+}
+
+/* トグルスイッチ本体 */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider {
+    background-color: #00C8E9;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* 送信エリアのボタン配置 */
+.submit-action-flex {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-clear-form {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.btn-clear-form:hover {
+    color: #e74c3c;
+}
+
 /* ========================================
    レスポンシブ
    ======================================== */
@@ -446,4 +553,6 @@
     #contact-success {
         padding: 40px 24px;
     }
+
+    .storage-banner { padding: 16px 20px; }
 }

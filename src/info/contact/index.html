@@ -44,9 +44,24 @@
 
             <!-- === フォーム本体 === -->
             <div id="contact-form-wrapper">
-
-                <!-- 1.基本情報 -->
+                <div id="storage-consent-banner" class="storage-banner">
+                    <div class="storage-banner-content">
+                        <p class="storage-text">
+                            <strong>入力内容の一時保存</strong><br>
+                            利便性向上のため、入力内容をブラウザに30日間保存できます。
+                        </p>
+                        <div class="storage-switch-container">
+                            <span id="storage-status-text" class="status-text">無効</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="storage-consent-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="contact-section">
+                    <!-- 1.基本情報 -->
                     <div class="contact-section-title">
                         <span class="section-badge">1</span>
                         <h3>基本情報</h3>
@@ -187,17 +202,7 @@
                         <label class="form-label" for="question-category">
                             質問はどの分野が該当しますか？<span class="required-mark">＊必須</span>
                         </label>
-                        <select id="question-category" class="form-select" required>
-                            <option value="">選択してください</option>
-                            <option value="サイト全般について">サイト全般について</option>
-                            <option value="法令学習コンテンツについて">法令学習コンテンツについて</option>
-                            <option value="チャットコンテンツについて">チャットコンテンツについて</option>
-                            <option value="法令検索コンテンツについて">法令検索コンテンツについて</option>
-                            <option value="ニュースコンテンツについて">ニュースコンテンツについて</option>
-                            <option value="アカウント機能について">アカウント機能について</option>
-                            <option value="法的文章について">法的文章について（プライバシーポリシー・利用規約・免責事項・クッキーポリシー）</option>
-                            <option value="その他の分野・ページ">その他の分野・ページ</option>
-                        </select>
+                        <select id="question-category" class="form-select js-category-select" required></select>
                         <span class="field-error" id="question-category-error"></span>
                     </div>
                     <div class="form-field">
@@ -227,17 +232,7 @@
                         <label class="form-label" for="bug-category">
                             バグや不具合はどの分野が該当しますか？<span class="required-mark">＊必須</span>
                         </label>
-                        <select id="bug-category" class="form-select" required>
-                            <option value="">選択してください</option>
-                            <option value="サイト全般について">サイト全般について</option>
-                            <option value="法令学習コンテンツについて">法令学習コンテンツについて</option>
-                            <option value="チャットコンテンツについて">チャットコンテンツについて</option>
-                            <option value="法令検索コンテンツについて">法令検索コンテンツについて</option>
-                            <option value="ニュースコンテンツについて">ニュースコンテンツについて</option>
-                            <option value="アカウント機能について">アカウント機能について</option>
-                            <option value="法的文章について">法的文章について（プライバシーポリシー・利用規約・免責事項・クッキーポリシー）</option>
-                            <option value="その他の分野・ページ">その他の分野・ページ</option>
-                        </select>
+                        <select id="bug-category" class="form-select js-category-select" required></select>
                         <span class="field-error" id="bug-category-error"></span>
                     </div>
                     <div class="form-field">
@@ -267,17 +262,7 @@
                         <label class="form-label" for="feature-category">
                             新機能のリクエストはどの分野が該当しますか？<span class="required-mark">＊必須</span>
                         </label>
-                        <select id="feature-category" class="form-select" required>
-                            <option value="">選択してください</option>
-                            <option value="サイト全般について">サイト全般について</option>
-                            <option value="法令学習コンテンツについて">法令学習コンテンツについて</option>
-                            <option value="チャットコンテンツについて">チャットコンテンツについて</option>
-                            <option value="法令検索コンテンツについて">法令検索コンテンツについて</option>
-                            <option value="ニュースコンテンツについて">ニュースコンテンツについて</option>
-                            <option value="アカウント機能について">アカウント機能について</option>
-                            <option value="法的文章について">法的文章について（プライバシーポリシー・利用規約・免責事項・クッキーポリシー）</option>
-                            <option value="その他の分野・ページ">その他の分野・ページ</option>
-                        </select>
+                        <select id="feature-category" class="form-select js-category-select" required></select>
                         <span class="field-error" id="feature-category-error"></span>
                     </div>
                     <div class="form-field">
@@ -324,13 +309,14 @@
                 <div class="contact-submit-area">
                     <div id="submit-error" hidden>
                         ⚠️ 送信に失敗しました。<br>時間をおいて再度お試しいただくか、
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd5KV3McCNbEruOD9doiHXh75QFV0rWGv0Lbug6olCfi_84FQ/viewform" target="_blank" rel="noopener">こちらのフォーム</a>
-                        よりお問い合わせください。
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd5KV3McCNbEruOD9doiHXh75QFV0rWGv0Lbug6olCfi_84FQ/viewform" target="_blank" rel="noopener">こちら</a>
+                        からお問い合わせください。
                     </div>
                     <button type="button" id="contact-submit">送信する</button>
+                    <button type="button" id="contact-clear" class="btn-clear-form">入力をクリア</button>
                     <p class="privacy-note">
-                        送信することで <a href="/law/privacy/" target="_blank">プライバシーポリシー</a> および
-                        <a href="/law/terms/" target="_blank">利用規約</a> に同意したものとみなされます。
+                        送信することで <a href="/law/privacy/">プライバシーポリシー</a> および
+                        <a href="/law/terms/">利用規約</a> に同意したものとみなされます。
                     </p>
                 </div>
 
@@ -354,12 +340,21 @@
         </main>
 
         <div id="footer"></div>
-
+        <template id="category-options-template">
+            <option value="" disabled selected hidden>選択してください</option>
+            <option value="サイト全般について">サイト全般について</option>
+            <option value="法令学習コンテンツについて">法令学習コンテンツについて</option>
+            <option value="チャットコンテンツについて">チャットコンテンツについて</option>
+            <option value="法令検索コンテンツについて">法令検索コンテンツについて</option>
+            <option value="ニュースコンテンツについて">ニュースコンテンツについて</option>
+            <option value="アカウント機能について">アカウント機能について</option>
+            <option value="法的文章について">法的文章について（プライバシーポリシー・利用規約・免責事項・クッキーポリシー）</option>
+            <option value="その他の分野・ページ">その他の分野・ページ</option>
+        </template>
         <!-- EmailJS SDK -->
         <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script src="/assets/js/contact.js" defer></script>
         <script type="module" src="/assets/js/important.js"></script>
         <script defer src="/assets/js/access-log.js"></script>
-        <!-- お問い合わせフォームスクリプト -->
-        <script src="/assets/js/contact.js" defer></script>
     </body>
 </html>

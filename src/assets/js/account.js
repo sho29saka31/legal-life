@@ -1,14 +1,14 @@
 // account.js - アカウント設定ページ専用スクリプト
-import { getApp
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, EmailAuthProvider, linkWithPopup, linkWithCredential, unlink, reauthenticateWithCredential, updatePassword, updateEmail, updateProfile, deleteUser,
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, Timestamp, collection, getDocs, query, orderBy, limit,
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import {
+  getApp
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, GoogleAuthProvider, EmailAuthProvider, linkWithPopup, linkWithCredential, unlink, reauthenticateWithCredential, updatePassword, updateEmail, updateProfile, deleteUser,sendEmailVerification,
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc, Timestamp, collection, getDocs, query, orderBy, limit,
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-// ========================================
-// Firebase 初期化待ち
-// ========================================
 async function waitForAuth() {
   return new Promise((resolve) => {
     const check = () => {
@@ -30,20 +30,18 @@ const db = getFirestore(getApp());
 // EmailJS 設定
 // ========================================
 const EMAILJS_SERVICE_ID = "service_glirsis";
-const EMAILJS_TEMPLATE_ID = "template_w2ile0p";
+const EMAILJS_OTP_TEMPLATE = "template_w2ile0p";
+const EMAILJS_NOTIFY_TEMPLATE = "template_w2ile0p"; // 通知用テンプレ（別途作成推奨）
 const EMAILJS_PUBLIC_KEY = "eG7KMS7F3Fh0PziYy";
 
 window.emailjs.init(EMAILJS_PUBLIC_KEY);
 
 // ========================================
-// OTP 定数
+// OTP 定数・ユーティリティ
 // ========================================
 const OTP_EXPIRY_MINUTES = 5;
 const OTP_DIGITS = 6;
 
-// ========================================
-// OTP ユーティリティ
-// ========================================
 function generateOTP() {
   return String(Math.floor(Math.random() * 10 ** OTP_DIGITS)).padStart(
     OTP_DIGITS,
@@ -52,7 +50,6 @@ function generateOTP() {
 }
 
 async function saveOTP(uid, code, purpose) {
-  // Firestore Timestamp で保存 → Firebase TTLポリシーで自動削除対象になる
   const expiryTs = Timestamp.fromMillis(
     Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000,
   );
@@ -60,7 +57,7 @@ async function saveOTP(uid, code, purpose) {
     doc(db, "users", uid, "security", "twoFactor"),
     {
       otpCode: code,
-      otpExpiry: expiryTs, // Firestore Timestamp（TTLポリシーのターゲットフィールド）
+      otpExpiry: expiryTs,
       otpPurpose: purpose,
     },
     { merge: true },
@@ -74,12 +71,10 @@ async function verifyOTP(uid, inputCode, purpose) {
   const { otpCode, otpExpiry, otpPurpose } = snap.data();
   if (otpPurpose !== purpose)
     return { ok: false, reason: "用途が一致しません" };
-  // Firestore Timestamp → JS Date に変換して比較
   if (new Date() > otpExpiry.toDate())
     return { ok: false, reason: "コードの有効期限が切れています" };
   if (otpCode !== inputCode)
     return { ok: false, reason: "コードが正しくありません" };
-
   return { ok: true };
 }
 
@@ -96,7 +91,7 @@ async function clearOTP(uid) {
 }
 
 async function sendOTPEmail(user, code, purposeText) {
-  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_OTP_TEMPLATE, {
     to_email: user.email,
     to_name: user.displayName || "ユーザー",
     otp_code: code,
@@ -110,8 +105,58 @@ async function getTwoFactorEnabled(uid) {
   return snap.exists() ? (snap.data().enabled ?? false) : false;
 }
 
+// ★ 追加: アクション通知メール送信ヘルパー
+async function sendActionNotification(user, actionType, detail = "") {
+  try {
+    // 通知設定を取得
+    const prefSnap = await getDoc(
+      doc(db, "users", user.uid, "settings", "notifications"),
+    );
+    const prefs = prefSnap.exists() ? prefSnap.data() : {};
+
+    // 未確認メールや通知OFF の場合はスキップ
+    if (!user.email || !user.emailVerified) return;
+    if (prefs[actionType] === false) return;
+
+    const messages = {
+      login: {
+        subject: "ログイン通知",
+        body: `あなたのアカウントにログインがありました。\n\n詳細: ${detail}\n\n身に覚えがない場合は、すぐにパスワードを変更し、他の端末をログアウトしてください。`,
+      },
+      passwordChange: {
+        subject: "パスワード変更通知",
+        body: `パスワードが変更されました。\n\n身に覚えがない場合は、すぐにアカウントの保護を行ってください。`,
+      },
+      otpChange: {
+        subject: "二段階認証設定変更通知",
+        body: `二段階認証の設定が変更されました。(${detail})\n\n身に覚えがない場合は、すぐにパスワードを変更してください。`,
+      },
+      deletionRequest: {
+        subject: "アカウント削除依頼受付",
+        body: `アカウント削除のリクエストを受け付けました。\n30日後に完全削除されます。\nキャンセルはアカウント設定ページから可能です。`,
+      },
+    };
+
+    const msg = messages[actionType];
+    if (!msg) return;
+
+    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_NOTIFY_TEMPLATE, {
+      to_email: user.email,
+      to_name: user.displayName || "ユーザー",
+      subject: msg.subject,
+      message_body: msg.body,
+      otp_code: "", // 通知テンプレートはOTPフィールド不要だが互換性のため
+      expiry_minutes: "",
+      purpose: msg.subject,
+    });
+    console.log(`📧 通知送信: ${actionType}`);
+  } catch (e) {
+    console.warn("通知メール送信失敗（継続）:", e);
+  }
+}
+
 // ========================================
-// OTP 確認モーダル（汎用）
+// ★ FIX 0: OTP確認モーダル（ボタンリセット修正）
 // ========================================
 function showOtpModal(purpose, onVerified) {
   const overlay = document.getElementById("otp-modal-overlay");
@@ -120,17 +165,26 @@ function showOtpModal(purpose, onVerified) {
   const submitBtn = document.getElementById("otp-modal-submit");
   const cancelBtn = document.getElementById("otp-modal-cancel");
 
+  /* ★ FIX: 前回の呼び出し状態を完全リセット */
   msgEl.textContent = "";
   input.value = "";
+  submitBtn.disabled = false;
+  submitBtn.textContent = "確認する";
+  /* onclick 上書きで旧ハンドラを破棄 */
+  submitBtn.onclick = null;
+  cancelBtn.onclick = null;
+  input.onkeydown = null;
+
   overlay.style.display = "flex";
   document.body.classList.add("otp-modal-open");
-  input.focus();
+  setTimeout(() => input.focus(), 50);
 
   const cleanup = () => {
     overlay.style.display = "none";
     document.body.classList.remove("otp-modal-open");
     submitBtn.onclick = null;
     cancelBtn.onclick = null;
+    input.onkeydown = null;
   };
 
   cancelBtn.onclick = cleanup;
@@ -146,13 +200,20 @@ function showOtpModal(purpose, onVerified) {
     submitBtn.textContent = "確認中...";
     msgEl.textContent = "";
 
-    const result = await verifyOTP(auth.currentUser.uid, code, purpose);
-    if (result.ok) {
-      await clearOTP(auth.currentUser.uid);
-      cleanup();
-      await onVerified();
-    } else {
-      msgEl.textContent = result.reason;
+    try {
+      const result = await verifyOTP(auth.currentUser.uid, code, purpose);
+      if (result.ok) {
+        await clearOTP(auth.currentUser.uid);
+        cleanup();
+        await onVerified();
+      } else {
+        msgEl.textContent = result.reason;
+        /* ★ FIX: 失敗時は必ず再活性化 */
+        submitBtn.disabled = false;
+        submitBtn.textContent = "確認する";
+      }
+    } catch (e) {
+      msgEl.textContent = "エラーが発生しました。再試行してください。";
       submitBtn.disabled = false;
       submitBtn.textContent = "確認する";
     }
@@ -166,106 +227,29 @@ function showOtpModal(purpose, onVerified) {
 // ========================================
 // 認証状態監視
 // ========================================
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   document.getElementById("loading-state").style.display = "none";
   if (!user) {
     location.replace("/error/401.html");
     return;
   }
   document.getElementById("settings-content").style.display = "block";
+
+  // ★ アカウント削除スケジュール確認
+  const delSnap = await getDoc(doc(db, "users", user.uid));
+  if (
+    delSnap.exists() &&
+    delSnap.data().scheduledDeletion &&
+    delSnap.data().deletionPending
+  ) {
+    showDeletionPendingBanner(
+      user.uid,
+      delSnap.data().scheduledDeletion.toDate(),
+    );
+  }
+
   renderAll(user);
 });
-
-// ========================================
-// 表示名の編集
-// ========================================
-document
-  .getElementById("settings-edit-name-btn")
-  ?.addEventListener("click", () => {
-    const form = document.getElementById("edit-name-form");
-    const input = document.getElementById("edit-name-input");
-    const current = document.getElementById("settings-user-name")?.textContent;
-    input.value = current === "名前未設定" ? "" : current;
-    form.style.display = "block";
-    input.focus();
-  });
-
-document
-  .getElementById("edit-name-cancel-btn")
-  ?.addEventListener("click", () => {
-    document.getElementById("edit-name-form").style.display = "none";
-    document.getElementById("edit-name-msg").textContent = "";
-  });
-
-document
-  .getElementById("edit-name-save-btn")
-  ?.addEventListener("click", async () => {
-    const input = document.getElementById("edit-name-input");
-    const msgEl = document.getElementById("edit-name-msg");
-    const saveBtn = document.getElementById("edit-name-save-btn");
-    const name = input.value.trim();
-
-    setMsg(msgEl, "", "");
-    if (!name) return setMsg(msgEl, "表示名を入力してください", "error");
-
-    saveBtn.disabled = true;
-    saveBtn.textContent = "保存中...";
-
-    try {
-      await updateProfile(auth.currentUser, { displayName: name });
-      setMsg(msgEl, "✅ 表示名を変更しました", "success");
-      renderUserInfo(auth.currentUser);
-      setTimeout(() => {
-        document.getElementById("edit-name-form").style.display = "none";
-        setMsg(msgEl, "", "");
-      }, 1500);
-    } catch (e) {
-      console.error("❌ 表示名更新失敗:", e);
-      setMsg(msgEl, "変更に失敗しました", "error");
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = "保存する";
-    }
-  });
-
-// ========================================
-// UUID コピー
-// ========================================
-document
-  .getElementById("copy-uuid-btn")
-  ?.addEventListener("click", async () => {
-    const uuid = document.getElementById("settings-user-uuid")?.textContent;
-    if (!uuid) return;
-
-    try {
-      await navigator.clipboard.writeText(uuid);
-      const btn = document.getElementById("copy-uuid-btn");
-      btn.textContent = "✅";
-      setTimeout(() => {
-        btn.textContent = "📋";
-      }, 2000);
-    } catch (e) {
-      console.error("コピー失敗:", e);
-    }
-  });
-
-// ========================================
-// ログアウト（設定ページ内）
-// ========================================
-document
-  .getElementById("settings-logout-btn")
-  ?.addEventListener("click", async () => {
-    if (!confirm("ログアウトしますか？")) return;
-
-    try {
-      const { getAuth, signOut } =
-        await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js");
-      await signOut(getAuth());
-      location.href = "/";
-    } catch (e) {
-      console.error("ログアウト失敗:", e);
-    }
-  });
 
 // ========================================
 // 全体描画
@@ -276,10 +260,11 @@ async function renderAll(user) {
   renderPasswordCard(user);
   renderEmailSetupCard(user);
   await renderTwoFactorToggle(user);
-  renderRecentActivity(user); // fire-and-forget
+  await renderNotificationSettings(user); // ★ 追加
+  renderRecentActivity(user);
 }
 
-// ---- ユーザー情報 ----
+// ★ 修正: ユーザー情報描画（lastSignInTime・メール確認状態を追加）
 function renderUserInfo(user) {
   const avatarWrap = document.getElementById("settings-avatar-wrap");
   avatarWrap.innerHTML = user.photoURL
@@ -293,23 +278,138 @@ function renderUserInfo(user) {
 
   const uuidEl = document.getElementById("settings-user-uuid");
   if (uuidEl) uuidEl.textContent = user.uid;
+
+  // ★ 追加: 最終ログイン日時
+  const lastSignIn = user.metadata?.lastSignInTime;
+  const lastSignInEl = document.getElementById("settings-last-signin");
+  if (lastSignInEl && lastSignIn) {
+    lastSignInEl.textContent = new Date(lastSignIn).toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+    });
+  }
+
+  // ★ 追加: メールアドレス確認バナー
+  const verifyBanner = document.getElementById("email-verify-banner");
+  if (verifyBanner) {
+    const needsVerify =
+      user.email &&
+      !user.emailVerified &&
+      user.providerData.some((p) => p.providerId === "password");
+    verifyBanner.style.display = needsVerify ? "block" : "none";
+  }
 }
 
-// ---- プロバイダー連携状態 ----
+// ========================================
+// ★ 追加: 通知設定描画
+// ========================================
+const NOTIFICATION_KEYS = {
+  login: "ログイン通知",
+  passwordChange: "パスワード変更通知",
+  otpChange: "二段階認証変更通知",
+  deletionRequest: "アカウント削除依頼通知",
+};
+
+async function renderNotificationSettings(user) {
+  const container = document.getElementById("notification-settings-container");
+  if (!container) return;
+
+  const snap = await getDoc(
+    doc(db, "users", user.uid, "settings", "notifications"),
+  );
+  const prefs = snap.exists() ? snap.data() : {};
+
+  container.innerHTML = Object.entries(NOTIFICATION_KEYS)
+    .map(([key, label]) => {
+      const checked = prefs[key] !== false; // デフォルト ON
+      return `
+<div class="two-factor-row" style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+    <div class="two-factor-info">
+        <div class="two-factor-label">${label}</div>
+    </div>
+    <div class="two-factor-toggle-wrap">
+        <label class="toggle-switch">
+            <input type="checkbox" class="notif-toggle" data-key="${key}"
+                   ${checked ? "checked" : ""} ${!user.emailVerified ? "disabled" : ""}>
+            <span class="toggle-slider"></span>
+        </label>
+        <span class="two-factor-status">${checked ? "ON" : "OFF"}</span>
+    </div>
+</div>`;
+    })
+    .join("");
+
+  if (!user.emailVerified) {
+    container.insertAdjacentHTML(
+      "beforeend",
+      `<p style="font-size:12px;color:#e74c3c;margin-top:8px;">
+             ⚠️ メールアドレスが確認済みでないと通知を受け取れません</p>`,
+    );
+  }
+
+  // トグルイベント
+  container.querySelectorAll(".notif-toggle").forEach((toggle) => {
+    toggle.addEventListener("change", async (e) => {
+      const key = e.target.dataset.key;
+      const val = e.target.checked;
+      const label = e.target
+        .closest(".two-factor-row")
+        .querySelector(".two-factor-status");
+      if (label) label.textContent = val ? "ON" : "OFF";
+      await setDoc(
+        doc(db, "users", user.uid, "settings", "notifications"),
+        { [key]: val },
+        { merge: true },
+      );
+    });
+  });
+}
+
+// ========================================
+// ★ 追加: メールアドレス確認メール送信
+// ========================================
+document
+  .getElementById("send-verify-email-btn")
+  ?.addEventListener("click", async () => {
+    const btn = document.getElementById("send-verify-email-btn");
+    const msgEl = document.getElementById("verify-email-msg");
+
+    btn.disabled = true;
+    btn.textContent = "送信中...";
+    setMsg(msgEl, "", "");
+
+    try {
+      await sendEmailVerification(auth.currentUser);
+      setMsg(
+        msgEl,
+        "✅ 確認メールを送信しました。メールをご確認ください。",
+        "success",
+      );
+    } catch (e) {
+      const MSG = {
+        "auth/too-many-requests":
+          "送信が多すぎます。しばらく待ってから再試行してください。",
+      };
+      setMsg(msgEl, MSG[e.code] || "送信に失敗しました。", "error");
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = "確認メールを再送する";
+      }, 60000); // 1分後に再送可能
+    }
+  });
+
+// ========================================
+// プロバイダー連携 (変更なし部分は省略)
+// ========================================
 function renderProviders(user) {
   const ids = user.providerData.map((p) => p.providerId);
   const totalLinked = ids.length;
-
   updateProviderRow("google", "google.com", ids, totalLinked, googleProvider);
   updateEmailProviderRow(ids, totalLinked, user);
 }
 
 function updateProviderRow(
-  key,
-  providerId,
-  providerIds,
-  totalLinked,
-  provider,
+  key, providerId, providerIds, totalLinked, provider,
 ) {
   const isLinked = providerIds.includes(providerId);
   const statusEl = document.getElementById(`status-${key}`);
@@ -359,7 +459,6 @@ function updateEmailProviderRow(providerIds, totalLinked, user) {
   }
 }
 
-// ---- パスワードカード ----
 function renderPasswordCard(user) {
   const hasPassword = user.providerData.some(
     (p) => p.providerId === "password",
@@ -392,7 +491,6 @@ function showPasswordCard() {
     .scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// ---- メールアドレス設定カード ----
 function renderEmailSetupCard(user) {
   const emailCard = document.getElementById("email-setup-card");
   emailCard.classList.toggle("hidden", !!user.email);
@@ -444,9 +542,7 @@ document
       showOtpModal(purpose, async () => {
         await setDoc(
           doc(db, "users", user.uid, "security", "twoFactor"),
-          {
-            enabled: newState,
-          },
+          { enabled: newState },
           { merge: true },
         );
         toggle.checked = newState;
@@ -455,6 +551,13 @@ document
           msgEl,
           `✅ 二段階認証を${newState ? "有効" : "無効"}にしました`,
           "success",
+        );
+
+        // ★ 通知送信
+        await sendActionNotification(
+          user,
+          "otpChange",
+          newState ? "有効化" : "無効化",
         );
       });
     } catch (err) {
@@ -470,7 +573,7 @@ document
   });
 
 // ========================================
-// プロバイダー連携
+// プロバイダー連携処理
 // ========================================
 async function handleLinkWithPopup(provider, providerId) {
   const keyMap = { "google.com": "google" };
@@ -492,7 +595,6 @@ async function handleLinkWithPopup(provider, providerId) {
       "auth/credential-already-in-use":
         "このアカウントはすでに別のユーザーと連携されています",
       "auth/popup-closed-by-user": "ポップアップが閉じられました",
-      "auth/cancelled-popup-request": "ポップアップがキャンセルされました",
     };
     setMsg(msgEl, MSG[e.code] || "連携に失敗しました", "error");
     renderAll(auth.currentUser);
@@ -508,7 +610,6 @@ async function handleUnlink(providerId) {
     setMsg(msgEl, "✅ 連携を解除しました", "success");
     renderAll(auth.currentUser);
   } catch (e) {
-    console.error(`❌ ${providerId} 解除失敗:`, e);
     setMsg(msgEl, "解除に失敗しました", "error");
   }
 }
@@ -531,16 +632,19 @@ document.getElementById("set-email-btn").addEventListener("click", async () => {
 
   try {
     await updateEmail(auth.currentUser, email);
-    setMsg(msgEl, "✅ メールアドレスを設定しました", "success");
+    await sendEmailVerification(auth.currentUser); // ★ 設定後すぐに確認メールを送信
+    setMsg(
+      msgEl,
+      "✅ メールアドレスを設定しました。確認メールをご確認ください。",
+      "success",
+    );
     document.getElementById("set-email-input").value = "";
     renderAll(auth.currentUser);
   } catch (e) {
-    console.error("❌ メール設定失敗:", e);
     const MSG = {
       "auth/email-already-in-use": "このメールアドレスはすでに使用されています",
       "auth/invalid-email": "メールアドレスの形式が正しくありません",
-      "auth/requires-recent-login":
-        "セキュリティのため再ログインが必要です。一度ログアウトして再ログインしてください",
+      "auth/requires-recent-login": "セキュリティのため再ログインが必要です",
     };
     setMsg(msgEl, MSG[e.code] || "設定に失敗しました", "error");
   } finally {
@@ -553,12 +657,7 @@ document.getElementById("set-email-btn").addEventListener("click", async () => {
 // パスワード変更・設定
 // ========================================
 async function executePasswordChange(
-  user,
-  currentPassword,
-  newPassword,
-  confirmPassword,
-  msgEl,
-  submitBtn,
+  user, currentPassword, newPassword, confirmPassword, msgEl, submitBtn,
 ) {
   setMsg(msgEl, "", "");
 
@@ -587,11 +686,7 @@ async function executePasswordChange(
     } else {
       const cred = EmailAuthProvider.credential(user.email, newPassword);
       await linkWithCredential(user, cred);
-      setMsg(
-        msgEl,
-        "✅ パスワードを設定しました。次回からメール＋パスワードでもログインできます",
-        "success",
-      );
+      setMsg(msgEl, "✅ パスワードを設定しました", "success");
     }
 
     document.getElementById("current-password").value = "";
@@ -599,16 +694,14 @@ async function executePasswordChange(
     document.getElementById("confirm-password").value = "";
     renderAll(auth.currentUser);
 
-    // パスワード変更後：他の端末のログアウトを提案
+    // ★ 通知
+    await sendActionNotification(user, "passwordChange");
     showLogoutOthersDialog(user.uid);
   } catch (e) {
-    console.error("❌ パスワード処理失敗:", e);
     const MSG = {
       "auth/wrong-password": "現在のパスワードが間違っています",
       "auth/weak-password": "パスワードは6文字以上にしてください",
       "auth/requires-recent-login": "セキュリティのため再ログインが必要です",
-      "auth/email-already-in-use":
-        "このメールアドレスはすでにパスワードと紐付けられています",
     };
     setMsg(msgEl, MSG[e.code] || "エラーが発生しました", "error");
   } finally {
@@ -651,41 +744,75 @@ document
 
       showOtpModal("password_change", async () => {
         await executePasswordChange(
-          user,
-          currentPassword,
-          newPassword,
-          confirmPassword,
-          msgEl,
-          submitBtn,
+          user, currentPassword, newPassword, confirmPassword, msgEl, submitBtn,
         );
       });
       return;
     }
 
     await executePasswordChange(
-      user,
-      currentPassword,
-      newPassword,
-      confirmPassword,
-      msgEl,
-      submitBtn,
+      user, currentPassword, newPassword, confirmPassword, msgEl, submitBtn,
     );
   });
 
 // ========================================
-// アカウント削除
+// ★ 修正: アカウント削除（30日猶予 + チェックリスト）
 // ========================================
 
-/** 削除確認モーダルの開閉 */
+// 削除ペンディングバナーの表示
+function showDeletionPendingBanner(uid, scheduledDate) {
+  const banner = document.getElementById("deletion-pending-banner");
+  const dateEl = document.getElementById("deletion-scheduled-date");
+  const cancelBtn = document.getElementById("cancel-deletion-btn");
+  if (!banner) return;
+
+  banner.style.display = "block";
+  if (dateEl) {
+    dateEl.textContent = scheduledDate.toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+    });
+  }
+
+  cancelBtn?.addEventListener("click", async () => {
+    if (!confirm("アカウント削除をキャンセルしますか？")) return;
+    await setDoc(
+      doc(db, "users", uid),
+      {
+        deletionPending: false,
+        scheduledDeletion: null,
+      },
+      { merge: true },
+    );
+    banner.style.display = "none";
+    alert("✅ アカウント削除をキャンセルしました。");
+  });
+}
+
+// 削除ボタン → 確認モーダルを開く
 document.getElementById("delete-account-btn").addEventListener("click", () => {
   document.getElementById("delete-msg").textContent = "";
+
+  // チェックボックスをリセット
+  document.querySelectorAll(".deletion-checkbox").forEach((cb) => {
+    cb.checked = false;
+  });
+  document.getElementById("delete-execute-btn").disabled = true;
   document.getElementById("delete-confirm-overlay").style.display = "flex";
+});
+
+// チェックボックスで削除ボタンを活性化
+document.querySelectorAll(".deletion-checkbox").forEach((cb) => {
+  cb.addEventListener("change", () => {
+    const allChecked = [
+      ...document.querySelectorAll(".deletion-checkbox"),
+    ].every((c) => c.checked);
+    document.getElementById("delete-execute-btn").disabled = !allChecked;
+  });
 });
 
 document.getElementById("delete-cancel-btn").addEventListener("click", () => {
   document.getElementById("delete-confirm-overlay").style.display = "none";
 });
-
 document
   .getElementById("delete-confirm-overlay")
   .addEventListener("click", (e) => {
@@ -694,31 +821,47 @@ document
     }
   });
 
-/** 削除実行（2FA チェック後に呼ばれる） */
-async function executeDeleteAccount() {
+// ★ 修正: 即時削除 → 30日後削除スケジュール
+async function executeScheduleDeletion() {
   const msgEl = document.getElementById("delete-msg");
   const execBtn = document.getElementById("delete-execute-btn");
 
   execBtn.disabled = true;
-  execBtn.textContent = "削除中...";
+  execBtn.textContent = "処理中...";
 
   try {
-    await deleteUser(auth.currentUser);
-    alert("アカウントを削除しました。ご利用ありがとうございました。");
-    location.href = "/";
+    const user = auth.currentUser;
+    const scheduledAt = Timestamp.fromMillis(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ); // 30日後
+
+    // Firestoreにスケジュールを記録
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        deletionPending: true,
+        scheduledDeletion: scheduledAt,
+        deletionRequestAt: Timestamp.now(),
+      },
+      { merge: true },
+    );
+
+    // 通知
+    await sendActionNotification(user, "deletionRequest");
+
+    document.getElementById("delete-confirm-overlay").style.display = "none";
+    showDeletionPendingBanner(user.uid, scheduledAt.toDate());
+    alert(
+      `アカウント削除を申請しました。\n${scheduledAt.toDate().toLocaleDateString("ja-JP")} に削除されます。\nキャンセルはアカウント設定ページから可能です。`,
+    );
   } catch (e) {
-    console.error("❌ アカウント削除失敗:", e);
-    const msg =
-      e.code === "auth/requires-recent-login"
-        ? "セキュリティのため再ログインが必要です。一度ログアウトして再ログインしてから削除してください。"
-        : "削除に失敗しました。時間をおいて再試行してください。";
-    msgEl.textContent = msg;
+    console.error("❌ 削除スケジュール失敗:", e);
+    msgEl.textContent = "処理に失敗しました。再試行してください。";
     execBtn.disabled = false;
-    execBtn.textContent = "削除する";
+    execBtn.textContent = "削除を申請する";
   }
 }
 
-/** 削除ボタン：2FA が有効なら先に OTP 認証 */
 document
   .getElementById("delete-execute-btn")
   .addEventListener("click", async () => {
@@ -741,42 +884,37 @@ document
             "error",
           );
           execBtn.disabled = false;
-          execBtn.textContent = "削除する";
+          execBtn.textContent = "削除を申請する";
           return;
         }
-
         execBtn.textContent = "認証コード送信中...";
         const code = generateOTP();
         await saveOTP(user.uid, code, "account_delete");
-        await sendOTPEmail(user, code, "アカウント削除");
+        await sendOTPEmail(user, code, "アカウント削除申請");
         setMsg(msgEl, `📧 ${user.email} に認証コードを送信しました`, "success");
-
         execBtn.disabled = false;
-        execBtn.textContent = "削除する";
+        execBtn.textContent = "削除を申請する";
 
         showOtpModal("account_delete", async () => {
-          await executeDeleteAccount();
+          await executeScheduleDeletion();
         });
         return;
       }
 
-      // 2FA 無効の場合はそのまま削除
-      await executeDeleteAccount();
+      await executeScheduleDeletion();
     } catch (e) {
       console.error("❌ 削除前処理失敗:", e);
       setMsg(msgEl, "エラーが発生しました。再試行してください", "error");
       execBtn.disabled = false;
-      execBtn.textContent = "削除する";
+      execBtn.textContent = "削除を申請する";
     }
   });
 
 // ========================================
-// 最近のアクション（ログインセッション）
+// ★ FIX 2: 最近のアクション（セッション管理）
 // ========================================
-
 const SESSION_ID_KEY = "legallife_session_id";
 
-/** セッション一覧を描画 */
 async function renderRecentActivity(user) {
   const listEl = document.getElementById("sessions-list");
   const logoutAllBtn = document.getElementById("logout-all-others-btn");
@@ -818,7 +956,7 @@ async function renderRecentActivity(user) {
   }
 }
 
-/** セッション1件分のHTML生成 */
+// ★ FIX 2: data-session-id 属性を追加（楽観的更新用）
 function _buildSessionItemHtml(data, isCurrent, uid) {
   const icon = (data.device || "").includes("スマートフォン") ? "📱" : "💻";
   const loginAt = data.loginAt?.toDate?.() || data.lastActive?.toDate?.();
@@ -827,15 +965,18 @@ function _buildSessionItemHtml(data, isCurrent, uid) {
   const currentBadge = isCurrent
     ? '<span class="session-badge-current">現在の端末</span>'
     : "";
+
+  /* ★ FIX: data-session-id 属性を付与 */
   const logoutBtn = !isCurrent
     ? `<button class="session-logout-btn"
-               onclick="window.logoutSession('${_esc(uid)}', '${_esc(data.sessionId)}')">
+                   onclick="window.logoutSession('${_esc(uid)}','${_esc(data.sessionId)}')">
                ログアウト
            </button>`
     : "";
 
   return `
-<div class="session-item${isCurrent ? " session-item--current" : ""}">
+<div class="session-item${isCurrent ? " session-item--current" : ""}"
+     data-session-id="${_esc(data.sessionId)}">
     <div class="session-device-icon">${icon}</div>
     <div class="session-info">
         <div class="session-browser">
@@ -853,75 +994,89 @@ function _buildSessionItemHtml(data, isCurrent, uid) {
 </div>`;
 }
 
-/** HTML エスケープ（最小限） */
-function _esc(str) {
-  return String(str).replace(
-    /[<>&"']/g,
-    (c) =>
-      ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-}
-
-/** 相対的な日時表示 */
-function _formatRelativeDate(date) {
-  const diff = Date.now() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "たった今";
-  if (minutes < 60) return `${minutes}分前`;
-  if (hours < 24) return `${hours}時間前`;
-  if (days < 7) return `${days}日前`;
-  return date.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-/** 指定セッションをリモートログアウト */
+// ★ FIX 2: 確認ダイアログ + 楽観的UI更新
 async function logoutSession(uid, sessionId) {
+  /* ★ FIX: 確認ダイアログ */
+  if (!confirm("この端末からログアウトしますか？")) return;
+
   try {
     await setDoc(
       doc(db, "users", uid, "sessions", sessionId),
       { shouldLogout: true },
       { merge: true },
     );
-    await renderRecentActivity(auth.currentUser);
+
+    /* ★ FIX: Firestoreの伝播を待たず即時UIから削除 */
+    const el = document.querySelector(`[data-session-id="${_esc(sessionId)}"]`);
+    if (el) el.remove();
+
+    // 他端末がなくなったらボタンを非表示
+    const remaining = document.querySelectorAll(
+      ".session-item:not(.session-item--current)",
+    );
+    if (remaining.length === 0) {
+      const btn = document.getElementById("logout-all-others-btn");
+      if (btn) btn.style.display = "none";
+    }
   } catch (e) {
     console.error("セッションログアウト失敗:", e);
+    alert("処理に失敗しました。再試行してください。");
   }
 }
 
-/** 他のすべてのセッションをリモートログアウト */
+// ★ FIX 2: 確認ダイアログ + 楽観的UI更新
 async function logoutAllOtherSessions(uid) {
   const currentSessionId = localStorage.getItem(SESSION_ID_KEY);
+  const otherItems = document.querySelectorAll(
+    ".session-item:not(.session-item--current)",
+  );
+
+  if (otherItems.length === 0) {
+    alert("現在、他のアクティブな端末はありません。");
+    return;
+  }
+
+  /* ★ FIX: 確認ダイアログ */
+  if (
+    !confirm(
+      `${otherItems.length}台の他の端末からログアウトします。\nよろしいですか？`,
+    )
+  )
+    return;
+
+  const btn = document.getElementById("logout-all-others-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "処理中...";
+  }
 
   try {
     const snap = await getDocs(collection(db, "users", uid, "sessions"));
     const targets = snap.docs.filter(
       (d) => d.data().sessionId !== currentSessionId,
     );
+
     await Promise.allSettled(
       targets.map((d) =>
         setDoc(d.ref, { shouldLogout: true }, { merge: true }),
       ),
     );
-    await renderRecentActivity(auth.currentUser);
+
+    /* ★ FIX: 楽観的更新 - 即時UI削除 */
+    otherItems.forEach((el) => el.remove());
+    if (btn) btn.style.display = "none";
   } catch (e) {
     console.error("全セッションログアウト失敗:", e);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "他のすべての端末をログアウト";
+    }
+    alert("処理に失敗しました。再試行してください。");
   }
 }
 
-/**
- * パスワード変更後に表示するダイアログ
- * 「現在の端末のみ」or「すべての端末をログアウト」を選択させる
- */
+// パスワード変更後の他端末ログアウト提案
 function showLogoutOthersDialog(uid) {
-  // 他セッションが存在しない場合はダイアログ不要
   const sessionsRef = collection(db, "users", uid, "sessions");
   getDocs(sessionsRef)
     .then((snap) => {
@@ -938,12 +1093,12 @@ function showLogoutOthersDialog(uid) {
     <div class="modal-icon">🔑</div>
     <p class="modal-message">
         パスワードを変更しました。<br>
-        <span style="font-size:0.9rem; color:#666;">他の端末もログアウトしますか？</span>
+        <span style="font-size:0.9rem;color:#666;">他の端末もログアウトしますか？</span>
     </p>
     <div class="modal-actions">
         <button class="modal-btn modal-btn-cancel" id="_logoutOthersNo">現在の端末のみ</button>
         <button class="modal-btn modal-btn-confirm" id="_logoutOthersYes"
-            style="background:#00C8E9;">すべてログアウト</button>
+                style="background:#00C8E9;">すべてログアウト</button>
     </div>
 </div>`,
       });
@@ -961,17 +1116,43 @@ function showLogoutOthersDialog(uid) {
         if (e.target === overlay) close(false);
       });
     })
-    .catch(() => {}); // セッション取得失敗時は無視
+    .catch(() => {});
 }
-
-// グローバル公開（HTMLのonclick属性から呼ばれる）
-window.logoutSession = logoutSession;
-window.logoutAllOtherSessions = logoutAllOtherSessions;
 
 // ========================================
 // ユーティリティ
 // ========================================
+function _esc(str) {
+  return String(str).replace(
+    /[<>&"']/g,
+    (c) =>
+      ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+}
+
+function _formatRelativeDate(date) {
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "たった今";
+  if (minutes < 60) return `${minutes}分前`;
+  if (hours < 24) return `${hours}時間前`;
+  if (days < 7) return `${days}日前`;
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 function setMsg(el, text, type) {
   el.textContent = text;
   el.className = `settings-msg ${type}`;
 }
+
+window.logoutSession = logoutSession;
+window.logoutAllOtherSessions = logoutAllOtherSessions;

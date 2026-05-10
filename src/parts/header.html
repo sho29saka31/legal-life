@@ -110,5 +110,22 @@
             <p id="auth-reset-email-display" style="text-align:center; font-weight:700; color:#333; margin-bottom:20px;"></p>
             <button id="auth-reset-back-btn" class="auth-submit-btn">ログイン画面に戻る</button>
         </div>
+        
+        <!-- 画面4: ログイン時二段階認証 -->
+        <div id="auth-view-login2fa" class="auth-view" style="display:none;">
+            <h2 class="auth-modal-title">🔐 ログイン認証</h2>
+            <p id="auth-2fa-email-display" class="auth-modal-sub"></p>
+            <p style="font-size:13px; color:#666; text-align:center; margin-bottom:16px; line-height:1.6;">
+                6桁の認証コードを入力してください。<br>有効期限は5分です。
+            </p>
+            <input id="auth-2fa-input" type="text" inputmode="numeric" pattern="[0-9]*"
+                maxlength="6" placeholder="000000" class="auth-input"
+                style="text-align:center; font-size:1.5rem; letter-spacing:10px; font-family:monospace; font-weight:bold;">
+            <p id="auth-2fa-error" class="auth-error-msg"></p>
+            <button id="auth-2fa-submit" class="auth-submit-btn">確認する</button>
+            <p class="auth-toggle-text">
+                <a href="javascript:void(0)" id="auth-2fa-back">← ログイン画面に戻る（ログアウト）</a>
+            </p>
+        </div>
     </div>
 </div>

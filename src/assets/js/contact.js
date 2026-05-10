@@ -6,7 +6,9 @@
   const SERVICE_ID = "service_glirsis";
   const TEMPLATE_ID = "template_85b3ffx";
   const PUBLIC_KEY = "eG7KMS7F3Fh0PziYy";
-
+  const STORAGE_KEY = "contact_form_draft";
+  const CONSENT_KEY = "contact_form_consent";
+  const EXPIRE_DAYS = 30;
   const SECTION_MAP = {
     コメント: "section-comment",
     質問: "section-question",
@@ -14,6 +16,8 @@
     機能のリクエスト: "section-feature",
     その他のお問い合わせ: "section-other",
   };
+
+  let isLoading = false;
 
   // UA パーサー（access-log.js と同じロジック）
   function parseUA() {
@@ -142,6 +146,171 @@
     document
       .getElementById("contact-submit")
       ?.addEventListener("click", handleSubmit);
+    // トグルスイッチのイベント
+    const toggle = document.getElementById("storage-consent-toggle");
+    toggle?.addEventListener("change", (e) => setConsent(e.target.checked));
+
+    // クリアボタンのイベント
+    document
+      .getElementById("contact-clear")
+      ?.addEventListener("click", clearFormAndStorage);
+
+    // 【追加】テンプレートから選択肢を流し込む
+        const template = document.getElementById('category-options-template');
+        const targets = document.querySelectorAll('.js-category-select');
+
+        if (template && targets.length > 0) {
+            targets.forEach(select => {
+                // テンプレートの中身をコピーして追加
+                select.appendChild(template.content.cloneNode(true));
+            });
+        }
+
+    // 入力変更時に自動保存（isLoadingがfalseの時だけ動くようにする）
+    const formInputs = document.querySelectorAll("#contact-form-wrapper input, #contact-form-wrapper select, #contact-form-wrapper textarea");
+    formInputs.forEach(input => {
+        input.addEventListener("input", () => { if(!isLoading) saveDraft(); });
+        input.addEventListener("change", () => { if(!isLoading) saveDraft(); });
+    });
+
+    // 初期表示の反映
+    applyConsentUI();
+    loadDraft();
+  }
+
+  // --- 追加: 同意管理 ---
+  function setConsent(isAgreed) {
+    if (isAgreed) {
+      localStorage.setItem(CONSENT_KEY, "granted");
+      saveDraft(); // 同意した瞬間に現在の内容を保存
+    } else {
+      localStorage.removeItem(CONSENT_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    applyConsentUI();
+  }
+
+  function applyConsentUI() {
+    const isAgreed = localStorage.getItem(CONSENT_KEY) === "granted";
+    const toggle = document.getElementById("storage-consent-toggle");
+    const statusText = document.getElementById("storage-status-text");
+    const banner = document.getElementById("storage-consent-banner");
+
+    if (toggle) toggle.checked = isAgreed;
+    if (statusText) statusText.textContent = isAgreed ? "有効" : "無効";
+
+    // 有効時はバナーの色を少し変える演出
+    if (isAgreed) {
+      banner?.classList.add("is-active");
+    } else {
+      banner?.classList.remove("is-active");
+    }
+  }
+
+  // --- 追加: 保存ロジック ---
+  function saveDraft() {
+    if (localStorage.getItem(CONSENT_KEY) !== "granted" || isLoading) return;
+
+    const name = getVal("field-name");
+    const email = getVal("field-email");
+    const type = document.querySelector('input[name="inquiry_type"]:checked')?.value || "";
+    
+    // 【重要】すべての主要項目が空なら保存しない（リロード時の事故防止）
+    if (!name && !email && !type) return;
+
+    const draft = {
+        name: name,
+        gender: document.querySelector('input[name="gender"]:checked')?.value || "",
+        age: getVal("field-age"),
+        email: email,
+        type: type,
+        comment: getVal("comment-content"),
+        q_cat: getVal("question-category"),
+        q_con: getVal("question-content"),
+        b_cat: getVal("bug-category"),
+        b_con: getVal("bug-content"),
+        f_cat: getVal("feature-category"),
+        f_con: getVal("feature-content"),
+        o_con: getVal("other-content"),
+        timestamp: new Date().getTime()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  }
+
+  function loadDraft() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+
+    const draft = JSON.parse(raw);
+    const now = new Date().getTime();
+    if (now - draft.timestamp > EXPIRE_DAYS * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+    }
+
+    // 【重要】読み込み開始時にフラグを立てる
+    isLoading = true;
+
+    setVal("field-name", draft.name);
+    if (draft.gender) {
+        const rb = document.querySelector(`input[name="gender"][value="${draft.gender}"]`);
+        if (rb) rb.checked = true;
+    }
+    setVal("field-age", draft.age);
+    setVal("field-email", draft.email);
+    
+    if (draft.type) {
+        const rb = document.querySelector(`input[name="inquiry_type"][value="${draft.type}"]`);
+        if (rb) {
+            rb.checked = true;
+            // ラジオボタンの変更イベントを発火させてセクションを表示
+            rb.dispatchEvent(new Event('change'));
+        }
+    }
+
+    setVal("comment-content", draft.comment);
+    setVal("question-category", draft.q_cat);
+    setVal("question-content", draft.q_con);
+    setVal("bug-category", draft.b_cat);
+    setVal("bug-content", draft.b_con);
+    setVal("feature-category", draft.f_cat);
+    setVal("feature-content", draft.f_con);
+    setVal("other-content", draft.o_con);
+
+    // 【重要】少し遅らせて読み込みフラグを解除（DOMの反映待ち）
+    setTimeout(() => {
+        isLoading = false;
+    }, 100);
+  }
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  }
+
+  // --- 追加: クリア機能 ---
+  function clearFormAndStorage() {
+    if (!confirm("入力内容をすべて消去しますか？")) return;
+
+    // フォームのリセット
+    document
+      .querySelectorAll(
+        "input[type='text'], input[type='email'], textarea, select",
+      )
+      .forEach((el) => (el.value = ""));
+    document
+      .querySelectorAll("input[type='radio']")
+      .forEach((el) => (el.checked = false));
+
+    // 表示セクションの初期化
+    document.querySelectorAll(".conditional-section").forEach((s) => {
+      s.classList.add("hidden");
+      s.classList.remove("visible");
+    });
+
+    // ストレージの削除
+    localStorage.removeItem(STORAGE_KEY);
+    alert("内容をクリアしました。");
   }
 
   function handleTypeChange(e) {
@@ -281,6 +450,7 @@
   }
 
   function showSuccess() {
+    localStorage.removeItem(STORAGE_KEY); // 送信完了したら下書きを消す
     document.getElementById("contact-form-wrapper").style.display = "none";
     const success = document.getElementById("contact-success");
     success.removeAttribute("hidden");

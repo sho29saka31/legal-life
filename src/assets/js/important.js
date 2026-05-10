@@ -1,11 +1,11 @@
 // important.js
 import { initializeApp 
     } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc,
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc
     } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove,
+import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove
     } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail, linkWithCredential, sendPasswordResetEmail,
+import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail, linkWithCredential, sendPasswordResetEmail, setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 import { initializeAppCheck, ReCaptchaV3Provider,
     } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
@@ -52,6 +52,9 @@ try {
 
   db = getFirestore(app);
   auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence)
+    .then(() => console.log("🔒 Auth persistence: LOCAL"))
+    .catch((e) => console.warn("Auth persistence設定失敗:", e));
   googleProvider = new GoogleAuthProvider();
   // databaseURL を明示指定してリージョンミスマッチを防止
   // FIREBASE_CONFIG に databaseURL が含まれていない場合のフォールバック
@@ -118,36 +121,51 @@ class AuthManager {
   }
 
   // ---- 認証状態の監視開始 ----
-  _start() {
-    if (!auth?.onAuthStateChanged) return;
+_start() {
+    /* ★ FIX 3: セッションストレージにキャッシュされた認証情報を即時適用
+       → ページ遷移時のログアウト表示フラッシュを防止 */
+    try {
+        const cached = JSON.parse(sessionStorage.getItem("ll_auth_cache") || "null");
+        if (cached) {
+            this.currentUser = cached;         // キャッシュから仮セット
+            setTimeout(() => this.updateUI(cached), 0); // 即座にUI更新
+        }
+    } catch (_) {}
 
-    this._unsubSession = null; // リモートログアウトリスナー
+    this._unsubSession = null;
 
     onAuthStateChanged(auth, (user) => {
-      this.currentUser = user;
-      console.log(
-        "👤 認証状態:",
-        user ? user.displayName || user.email : "ログアウト中",
-      );
+        this.currentUser = user;
 
-      // 前のセッションリスナーをクリーンアップ
-      if (this._unsubSession) {
-        this._unsubSession();
-        this._unsubSession = null;
-      }
+        // ★ FIX 3: キャッシュ更新
+        if (user) {
+            sessionStorage.setItem("ll_auth_cache", JSON.stringify({
+                uid:           user.uid,
+                displayName:   user.displayName,
+                email:         user.email,
+                photoURL:      user.photoURL,
+                emailVerified: user.emailVerified,
+            }));
+        } else {
+            sessionStorage.removeItem("ll_auth_cache");
+        }
 
-      if (user) {
-        // セッション記録 + リモートログアウト監視（非同期・ノンブロッキング）
-        this._setupSession(user).catch((e) =>
-          console.warn("セッション設定失敗:", e),
-        );
-      }
+        console.log("👤 認証状態:", user ? (user.displayName || user.email) : "ログアウト中");
 
-      setTimeout(() => this.updateUI(user), 100);
+        if (this._unsubSession) {
+            this._unsubSession();
+            this._unsubSession = null;
+        }
+
+        if (user) {
+            this._setupSession(user).catch((e) => console.warn("セッション設定失敗:", e));
+        }
+
+        setTimeout(() => this.updateUI(user), 100);
     });
 
     this._observeModal();
-  }
+}
 
   // ---- セッションID の取得 or 新規生成 ----
   _getOrCreateSessionId() {
@@ -402,6 +420,23 @@ class AuthManager {
         this.closeModal();
         location.href = "/account/settings/";
       });
+    
+    // ---- ログイン時二段階認証 ----
+    document.getElementById("auth-2fa-submit")
+        ?.addEventListener("click", () => this._verify2FALogin());
+
+    document.getElementById("auth-2fa-back")
+        ?.addEventListener("click", async () => {
+            // キャンセルした場合はサインアウト
+            await signOut(auth).catch(() => {});
+            this._pending2FAUser = null;
+            this._showModalView("select");
+        });
+
+    document.getElementById("auth-2fa-input")
+        ?.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") document.getElementById("auth-2fa-submit")?.click();
+        });
 
     this.initialized = true;
     this.updateUI(this.currentUser);
@@ -427,24 +462,25 @@ class AuthManager {
 
   // ---- 画面切替 ----
   _showModalView(view, user = null) {
-    ["select", "loggedin", "reset"].forEach((v) => {
-      const el = document.getElementById(`auth-view-${v}`);
-      if (el) el.style.display = v === view ? "block" : "none";
+    // ★ 'login2fa' を追加
+    ["select", "loggedin", "reset", "login2fa"].forEach((v) => {
+        const el = document.getElementById(`auth-view-${v}`);
+        if (el) el.style.display = v === view ? "block" : "none";
     });
 
     if (view === "loggedin" && user) {
-      const avatar = document.getElementById("modal-user-avatar");
-      const name = document.getElementById("modal-user-name");
-      if (avatar) avatar.src = user.photoURL || "";
-      if (name) name.textContent = user.displayName || user.email || "ユーザー";
+        const avatar = document.getElementById("modal-user-avatar");
+        const name   = document.getElementById("modal-user-name");
+        if (avatar) avatar.src = user.photoURL || "";
+        if (name)   name.textContent = user.displayName || user.email || "ユーザー";
     }
 
     if (view === "select") {
-      this._setEmailMode("login");
-      const errMsg = document.getElementById("auth-error-msg");
-      if (errMsg) errMsg.textContent = "";
+        this._setEmailMode("login");
+        const errMsg = document.getElementById("auth-error-msg");
+        if (errMsg) errMsg.textContent = "";
     }
-  }
+}
 
   _setEmailMode(mode) {
     this._emailMode = mode;
@@ -504,60 +540,159 @@ class AuthManager {
     }
   }
 
-  async _submitEmail() {
-    const email = document.getElementById("auth-email-input")?.value.trim();
+  // ─── _submitEmail の login 部分を以下に置き換え ───
+
+async _submitEmail() {
+    const email    = document.getElementById("auth-email-input")?.value.trim();
     const password = document.getElementById("auth-password-input")?.value;
-    const name = document.getElementById("auth-name-input")?.value.trim();
+    const name     = document.getElementById("auth-name-input")?.value.trim();
 
     if (!email || !password) {
-      this._showError("メールアドレスとパスワードを入力してください");
-      return;
+        this._showError("メールアドレスとパスワードを入力してください");
+        return;
     }
 
     const submitBtn = document.getElementById("auth-submit-btn");
-    if (submitBtn) {
-      submitBtn.textContent = "処理中...";
-      submitBtn.disabled = true;
-    }
+    if (submitBtn) { submitBtn.textContent = "処理中..."; submitBtn.disabled = true; }
 
     try {
-      if (this._emailMode === "register") {
-        const cred = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password,
-        );
-        if (name) await updateProfile(cred.user, { displayName: name });
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-      this.closeModal();
+        if (this._emailMode === "register") {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            if (name) await updateProfile(cred.user, { displayName: name });
+            // ★ 登録後に確認メールを送信
+            await cred.user.sendEmailVerification().catch(() => {});
+            this.closeModal();
+
+        } else {
+            // ───── ログイン + ★ 2FA チェック ─────
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+
+            // ★ ログイン時2FA: Firestoreで有効確認
+            try {
+                const twoFaSnap = await getDoc(
+                    doc(db, "users", userCred.user.uid, "security", "twoFactor")
+                );
+                const twoFaEnabled = twoFaSnap.exists() && twoFaSnap.data().enabled;
+
+                if (twoFaEnabled && userCred.user.email) {
+                    // OTP生成・保存・送信（Firestoreにパスワードは保存しない）
+                    const code     = String(Math.floor(100000 + Math.random() * 900000));
+                    const expiryMs = Date.now() + 5 * 60 * 1000;
+
+                    await setDoc(
+                        doc(db, "users", userCred.user.uid, "security", "twoFactor"),
+                        { otpCode: code, otpExpiryMs: expiryMs, otpPurpose: "login_verify" },
+                        { merge: true }
+                    );
+
+                    if (window.emailjs) {
+                        await window.emailjs.send("service_glirsis", "template_w2ile0p", {
+                            to_email:       userCred.user.email,
+                            to_name:        userCred.user.displayName || "ユーザー",
+                            otp_code:       code,
+                            expiry_minutes: 5,
+                            purpose:        "ログイン認証",
+                        });
+                    }
+
+                    // ★ ログイン済みのまま2FA検証画面へ（失敗時にサインアウト）
+                    this._pending2FAUser = userCred.user;
+                    this._show2FALoginView(userCred.user.email);
+
+                    if (submitBtn) { submitBtn.textContent = "ログイン"; submitBtn.disabled = false; }
+                    return; // モーダルを閉じない
+                }
+            } catch (e) {
+                console.warn("ログイン時2FAチェック失敗（スキップ）:", e);
+            }
+
+            this.closeModal();
+        }
     } catch (e) {
-      console.error("❌ メール認証失敗:", e);
-      const MSG = {
-        "auth/email-already-in-use":
-          "このメールアドレスはすでに使用されています",
-        "auth/invalid-email": "メールアドレスの形式が正しくありません",
-        "auth/weak-password": "パスワードは6文字以上にしてください",
-        "auth/user-not-found": "このメールアドレスは登録されていません",
-        "auth/wrong-password": "パスワードが間違っています",
-        "auth/invalid-credential":
-          "メールアドレスまたはパスワードが間違っています",
-        "auth/too-many-requests": "しばらく時間をおいてから再試行してください",
-        "auth/firebase-app-check-token-is-invalid":
-          "セキュリティ設定エラーが発生しました。Firebase Console → App Check で強制モードを無効にしてください。",
-        "auth/internal-error":
-          "サーバーエラーが発生しました。しばらく待ってから再試行してください。",
-      };
-      this._showError(MSG[e.code] || `ログインに失敗しました (${e.code})`);
+        console.error("❌ メール認証失敗:", e);
+        const MSG = {
+            "auth/email-already-in-use":  "このメールアドレスはすでに使用されています",
+            "auth/invalid-email":          "メールアドレスの形式が正しくありません",
+            "auth/weak-password":          "パスワードは6文字以上にしてください",
+            "auth/user-not-found":         "このメールアドレスは登録されていません",
+            "auth/wrong-password":         "パスワードが間違っています",
+            "auth/invalid-credential":     "メールアドレスまたはパスワードが間違っています",
+            "auth/too-many-requests":      "しばらく時間をおいてから再試行してください",
+        };
+        this._showError(MSG[e.code] || `ログインに失敗しました (${e.code})`);
     } finally {
-      if (submitBtn) {
-        submitBtn.textContent =
-          this._emailMode === "register" ? "登録する" : "ログイン";
-        submitBtn.disabled = false;
-      }
+        if (submitBtn) {
+            submitBtn.textContent = this._emailMode === "register" ? "登録する" : "ログイン";
+            submitBtn.disabled    = false;
+        }
     }
-  }
+}
+
+// ★ 追加: ログイン時2FA確認画面を表示
+_show2FALoginView(email) {
+    this._showModalView("login2fa");
+    const emailEl = document.getElementById("auth-2fa-email-display");
+    if (emailEl) emailEl.textContent = `${email} に認証コードを送信しました`;
+    const input = document.getElementById("auth-2fa-input");
+    if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
+    const errEl = document.getElementById("auth-2fa-error");
+    if (errEl) errEl.textContent = "";
+    const btn = document.getElementById("auth-2fa-submit");
+    if (btn) { btn.disabled = false; btn.textContent = "確認する"; }
+}
+
+// ★ 追加: ログイン時2FA検証
+async _verify2FALogin() {
+    const input  = document.getElementById("auth-2fa-input");
+    const errEl  = document.getElementById("auth-2fa-error");
+    const btn    = document.getElementById("auth-2fa-submit");
+    const code   = input?.value.trim();
+    const user   = this._pending2FAUser || auth.currentUser;
+
+    if (!code)  { errEl.textContent = "コードを入力してください"; return; }
+    if (!user)  { errEl.textContent = "セッションエラー。再度ログインしてください。"; return; }
+
+    btn.disabled    = true;
+    btn.textContent = "確認中...";
+    errEl.textContent = "";
+
+    try {
+        const snap = await getDoc(doc(db, "users", user.uid, "security", "twoFactor"));
+        if (!snap.exists()) throw new Error("OTPが見つかりません");
+
+        const { otpCode, otpExpiryMs, otpPurpose } = snap.data();
+
+        if (otpPurpose !== "login_verify") throw new Error("用途不一致");
+        if (Date.now() > otpExpiryMs) {
+            errEl.textContent = "認証コードの有効期限が切れています。再度ログインしてください。";
+            await signOut(auth).catch(() => {});
+            this._pending2FAUser = null;
+            this._showModalView("select");
+            return;
+        }
+        if (otpCode !== code) {
+            errEl.textContent    = "コードが正しくありません";
+            btn.disabled         = false;
+            btn.textContent      = "確認する";
+            return;
+        }
+
+        // OTPをクリア
+        await setDoc(
+            doc(db, "users", user.uid, "security", "twoFactor"),
+            { otpCode: null, otpExpiryMs: null, otpPurpose: null },
+            { merge: true }
+        );
+
+        this._pending2FAUser = null;
+        this.closeModal();
+    } catch (e) {
+        console.error("2FAログイン検証失敗:", e);
+        errEl.textContent    = "エラーが発生しました。再度ログインしてください。";
+        btn.disabled         = false;
+        btn.textContent      = "確認する";
+    }
+}
 
   async _sendPasswordReset() {
     const email = document.getElementById("auth-email-input")?.value.trim();

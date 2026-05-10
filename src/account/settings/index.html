@@ -34,6 +34,36 @@
     <main>
         <div class="settings-container">
             <div id="loading-state" class="loading-state">読み込み中...</div>
+            <!-- メール確認バナー -->
+            <div id="email-verify-banner" class="account-card"
+                style="display:none; border:1.5px solid #ffc107; background:#fffdf0;">
+                <p style="color:#856404; font-weight:700; margin:0 0 8px;">
+                    ⚠️ メールアドレスが未確認です
+                </p>
+                <p style="font-size:13px; color:#856404; margin:0 0 12px; line-height:1.6;">
+                    セキュリティ機能の一部（通知メール等）はメールアドレス確認後に利用可能になります。
+                    確認メールを再送するには下のボタンを押してください。
+                </p>
+                <button id="send-verify-email-btn" class="settings-btn"
+                        style="background:#ffc107; color:#000; max-width:300px;">
+                    確認メールを再送する
+                </button>
+                <p id="verify-email-msg" class="settings-msg"></p>
+            </div>
+
+            <!-- アカウント削除ペンディングバナー -->
+            <div id="deletion-pending-banner" class="account-card"
+                style="display:none; border:1.5px solid #e74c3c; background:#fff9f9;">
+                <p style="color:#c0392b; font-weight:700; margin:0 0 8px;">⚠️ アカウント削除が予約されています</p>
+                <p style="font-size:13px; color:#c0392b; margin:0 0 12px; line-height:1.6;">
+                    削除予定日: <strong id="deletion-scheduled-date"></strong><br>
+                    それまでのあいだキャンセルが可能です。
+                </p>
+                <button id="cancel-deletion-btn" class="settings-btn"
+                        style="background:#fff; color:#e74c3c; border:1.5px solid #e74c3c; max-width:200px;">
+                    削除をキャンセルする
+                </button>
+            </div>
 
             <div id="settings-content" style="display:none;">
                 <h1 class="settings-title">アカウント設定</h1>
@@ -57,6 +87,10 @@
                                 <span class="user-info-uuid-label">UUID：</span>
                                 <span id="settings-user-uuid" class="user-info-uuid"></span>
                                 <button id="copy-uuid-btn" class="copy-uuid-btn" title="UUIDをコピー">📋</button>
+                            </div>
+                            <!-- 最終ログイン日時 -->
+                            <div style="font-size:11px; color:#aaa; margin-top:6px;">
+                                最終ログイン: <span id="settings-last-signin">--</span>
                             </div>
                         </div>
                         <!-- ログアウトボタン -->
@@ -146,6 +180,18 @@
                     <p id="two-factor-msg" class="settings-msg"></p>
                 </div>
 
+                <!-- 通知設定カード -->
+                <div class="account-card">
+                    <p class="account-card-title">🔔 メール通知設定</p>
+                    <p style="font-size:12px; color:#888; margin:0 0 16px; line-height:1.5;">
+                        各種アクション時にメール通知を受け取る設定です。<br>
+                        メールアドレスが確認済みの場合のみ有効です。
+                    </p>
+                    <div id="notification-settings-container">
+                        <p style="color:#aaa; font-size:13px;">読み込み中...</p>
+                    </div>
+                </div>
+
                 <!-- 最近のアクション（ログインセッション） -->
                 <div class="account-card" id="recent-activity-card">
                     <p class="account-card-title sessions-card-title">
@@ -200,17 +246,40 @@
 
     <!-- 削除確認モーダル -->
     <div id="delete-confirm-overlay" class="delete-confirm-overlay" style="display:none;">
-        <div class="delete-confirm-modal">
+        <div class="delete-confirm-modal" style="max-width:480px;">
             <p class="delete-confirm-title">⚠️ アカウントを削除しますか？</p>
             <p class="delete-confirm-text">
-                この操作は<strong>取り消せません</strong>。<br>
-                保存されたすべてのデータが完全に削除されます。<br><br>
-                本当に削除する場合は「削除する」を押してください。
+                削除申請後、<strong>30日間</strong>はキャンセル可能です。<br>
+                30日後に完全削除されます。<br><br>
+                以下の内容に同意してください：
             </p>
+
+            <!-- チェックリスト -->
+            <div class="deletion-checklist">
+                <label class="deletion-check-item">
+                    <input type="checkbox" class="deletion-checkbox">
+                    <span>削除後、すべてのデータ（チャット履歴・アカウント情報）は完全に消去され、エクスポートは不可です</span>
+                </label>
+                <label class="deletion-check-item">
+                    <input type="checkbox" class="deletion-checkbox">
+                    <span>削除申請後はコンテンツの利用が制限されます</span>
+                </label>
+                <label class="deletion-check-item">
+                    <input type="checkbox" class="deletion-checkbox">
+                    <span>利用履歴はシステム改善のために匿名化して利用される場合があります</span>
+                </label>
+                <label class="deletion-check-item">
+                    <input type="checkbox" class="deletion-checkbox">
+                    <span>上記をすべて理解し、アカウントの削除を申請します</span>
+                </label>
+            </div>
+
             <p id="delete-msg" class="delete-msg"></p>
             <div class="delete-confirm-btns">
                 <button id="delete-cancel-btn" class="delete-cancel-btn">キャンセル</button>
-                <button id="delete-execute-btn" class="delete-execute-btn">削除する</button>
+                <button id="delete-execute-btn" class="delete-execute-btn" disabled>
+                    削除を申請する
+                </button>
             </div>
         </div>
     </div>

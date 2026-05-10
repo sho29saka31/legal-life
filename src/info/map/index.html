@@ -52,6 +52,7 @@
                     <a href="/info/">ⓘ お知らせ</a>
                     <a href="/info/faq/">❓ よくある質問</a>
                     <a href="/info/contact/">✉️ お問い合わせ</a>
+                    <a href="/info/map/">🗺 サイトマップ</a>
                 </div>
                 <div class="sitemap-category">
                     <h3>法的情報ページ</h3>
@@ -59,10 +60,6 @@
                     <a href="/law/terms/">📋 利用規約</a>
                     <a href="/law/disclaimer/">⚠️ 免責事項</a>
                     <a href="/law/cookie/">🍪 クッキーポリシー</a>
-                </div>
-                <div class="sitemap-category">
-                    <h3>その他</h3>
-                    <a href="/info/map/">🗺 サイトマップ</a>
                     <a href="/z[dev--tool]/" class="is-hidden"></a>
                 </div>
             </nav>
@@ -92,7 +89,7 @@
 
                         lastTapTime = currentTime;
 
-                        // 3回連続タップで実行
+                        // 5回連続タップで実行
                         if (tapCount === 5) {
                             secretLinks.forEach(link => {
                                 link.classList.remove('is-hidden');
