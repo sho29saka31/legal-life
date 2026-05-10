@@ -140,7 +140,7 @@ class LegalChatApp {
     if (this.history.length === 0) {
       this.el.responseArea.innerHTML = `
 <div class="chat-ai-container">
-    <img src="/assets/images/site_icon_clear.png" class="chat-ai-icon"
+    <img src="/assets/images/chat_logo.png" class="chat-ai-icon"
          onerror="this.src='https://ui-avatars.com/api/?name=AI&background=0D8ABC&color=fff'">
     <div class="chat-message chat-ai-message">こんにちは！日本の法令に関する一般的な仕組みや制度について、AIがお答えします。何かお困りですか？</div>
 </div>`;

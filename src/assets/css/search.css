@@ -28,7 +28,6 @@
     font-weight: 700;
     color: #00695c;
     transition: background 0.2s ease, color 0.2s ease;
-    font-family: "BIZ UDGothic", sans-serif;
     letter-spacing: 0.02em;
 }
 
@@ -90,7 +89,6 @@
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 10px;
-    font-family: "BIZ UDGothic", sans-serif;
     font-weight: 700;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -118,7 +116,6 @@
     cursor: pointer;
     transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     box-shadow: 0 3px 10px rgba(0, 188, 212, 0.3);
-    font-family: "BIZ UDGothic", sans-serif;
     letter-spacing: 0.04em;
 }
 
@@ -246,7 +243,6 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-family: "BIZ UDGothic", sans-serif;
 }
 
 .lawapi-view-button::before {
@@ -376,7 +372,6 @@
     font-weight: 700;
     cursor: pointer;
     transition: background 0.2s, transform 0.15s;
-    font-family: "BIZ UDGothic", sans-serif;
 }
 
 .lawapi-pagination button:hover:not(:disabled) {

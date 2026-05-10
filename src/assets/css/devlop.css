@@ -3,7 +3,6 @@ body {
   overflow-y: hidden;
 }
 .login-body {
-  font-family: "BIZ UDGothic", sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;

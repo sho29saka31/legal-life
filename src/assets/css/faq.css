@@ -35,7 +35,6 @@
         max-width: 1000px;
         margin: 40px auto;
         padding: 0 20px;
-        font-family: 'Noto Sans JP', sans-serif;
     }
 
     /* FAQセクション全体の導入文（最初のp） */
@@ -127,77 +126,93 @@
         border-top: 1px solid #e2e8f0;
     }
 
-   /* --- 改良版：まだ解決しない場合 のエリア --- */
-    /* --- お問い合わせエリアの最終調整 --- */
-
-    /* まだ解決しない場合の見出し */
-    .faq-section h2 {
-        font-size: 24px;
-        color: #0f172a;
-        margin-top: 80px; /* FAQリストとの間隔を広く */
-        margin-bottom: 30px;
-        text-align: center;
-        width: 100%;
-    }
-
-    /* 説明文：強制的に一行ずつにする */
-    .faq-section h2 + p {
-        display: block;      /* インラインからブロックに変更して独立させる */
-        text-align: center;
-        font-size: 16px;
-        color: #334155;
-        margin-bottom: 10px; /* ボタンとの距離（上側） */
-        line-height: 1.6;
-    }
-
-    /* ボタン下の「よりお気軽にご連絡ください」部分 */
-    .faq-section a[href*="contact.html"] + p {
-        display: block;
-        text-align: center;
-        font-size: 16px;
-        color: #334155;
-        margin-top: 25px;    /* ボタンとの距離（下側） */
-        margin-bottom: 10px;
-    }
-
-    /* お問い合わせボタン：中央配置とデザインの固定 */
-    .faq-section a[href*="contact.html"] {
-        display: flex;            /* 中の文字を中央寄せに */
+    /* FAQ下部 お問い合わせセクション全体 */
+    .faq-footer-contact {
+        /* footerとの余白をしっかり確保（100px） */
+        margin: 80px auto 100px; 
+        padding: 0 20px;
+        display: flex;
         justify-content: center;
+    }
+
+    /* ダイアログ（カード）部分 */
+    .contact-card {
+        max-width: 550px;           /* 広がりすぎない適切な幅 */
+        width: 100%;
+        background-color: #ffffff;  /* 清潔感のある白 */
+        border: 1px solid #e0e0e0;  /* 繊細な境界線 */
+        border-radius: 16px;        /* 角を丸くして親しみやすさを */
+        padding: 40px 30px;
+        text-align: center;         /* すべて中央寄せ */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* 浮いているような軽い影 */
+    }
+
+    /* 見出し：左右にCSSで線を表示 */
+    .contact-title {
+        display: flex;
         align-items: center;
-        margin: 20px auto;        /* 上下の余白を作りつつ左右中央に */
-        width: fit-content;       /* 文字幅に合わせる */
-        min-width: 280px;         /* 最低限の横幅を確保 */
-        padding: 16px 40px;
-        background-color: #ffffff;
-        border: 1.5px solid #00C8E9;
-        color: #007c91;
-        text-decoration: none;
+        justify-content: center;
+        font-size: 1.2rem;
         font-weight: bold;
-        font-size: 18px;
-        border-radius: 4px;       /* 誠実な印象の角丸 */
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .contact-title::before,
+    .contact-title::after {
+        content: "";
+        width: 150px;
+        height: 3px;
+        background-color: #d1d1d1;
+        margin: 0 5px;
+        border-radius: 2px;
+    }
+
+    /* 説明文 */
+    .contact-text {
+        font-size: 0.95rem;
+        color: #666;
+        line-height: 1.7;
+        margin-bottom: 25px;
+    }
+
+    /* ボタンのデザイン */
+    .contact-btn {
+        display: inline-block;
+        background-color: #333;    /* サイトに合わせて色を変えてください（例：#0066cc） */
+        color: #fff;
+        text-decoration: none;
+        padding: 14px 40px;
+        border-radius: 30px;
+        font-weight: bold;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    /* ボタンホバー時 */
-    .faq-section a[href*="contact.html"]:hover {
-        background-color: #f0fdff;
-        border-color: #007c91;
-        box-shadow: 0 4px 12px rgba(0, 200, 233, 0.15);
-        transform: translateY(-2px);
+    .contact-btn:hover {
+        background-color: #555;    /* ホバー時に少し明るく */
+        transform: translateY(-2px); /* 少し浮き上がるアニメーション */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
     }
 
-    /* 1週間以内に〜 の注釈 */
-    .faq-section h2 + p + p {
-        display: block;
-        text-align: center;
-        font-size: 13px;
-        color: #94a3b8;
-        margin-top: 15px;
+    /* 補足テキスト */
+    .contact-note {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 20px;
     }
 
     /* スマホ対応 */
+    @media (max-width: 480px) {
+        .contact-card {
+            padding: 30px 20px;
+        }
+        .contact-title::before,
+        .contact-title::after {
+            width: 20px; /* スマホでは線を少し短く */
+        }
+    }
+
     @media (max-width: 768px) {
         .faq_layout {
             flex-direction: column;
@@ -216,9 +231,5 @@
         .faq-section > p:first-of-type {
             font-size: 15px;
             margin-bottom: 30px;
-        }
-        .faq-section a[href*="contact.html"] {
-            min-width: 100%; /* 横幅いっぱいにする */
-            font-size: 16px;
         }
     }
