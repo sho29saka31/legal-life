@@ -114,7 +114,7 @@
     font-weight: bold;
 }
 
-/* メンテナンス情報の枠囲み */
+/* 情報のテーブル状枠囲み */
 .detail-box {
     background-color: #fcfcfc;
     border: 1px solid #eee;
