@@ -17,7 +17,7 @@ import { initializeAppCheck, ReCaptchaV3Provider }
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260512-2302"; // ★ バージョン更新
+const LAYOUT_VERSION = "260512-2300"; // ★ バージョン更新
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;
@@ -43,16 +43,7 @@ const layoutPromise = Promise.all([
 let app, db, auth, rtdb;
 
 try {
-    const firebaseConfig = {
-    "apiKey": "AIzaSyA_b8XjJrexCj86H0LC6FNTztFfcJXOT0Y",
-    "authDomain": "legallife.firebaseapp.com",
-    "databaseURL": "https://legallife-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "projectId": "legallife",
-    "storageBucket": "legallife.firebasestorage.app",
-    "messagingSenderId": "218375080608",
-    "appId": "1:218375080608:web:7d4005ec474e38bd6297c5",
-    "measurementId": "G-2JXNJ9QJ9S"
-};
+    const firebaseConfig = __FIREBASE_CONFIG__;
     app  = initializeApp(firebaseConfig);
     db   = getFirestore(app);
     auth = getAuth(app);
