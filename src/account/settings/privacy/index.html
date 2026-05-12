@@ -19,13 +19,12 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-        <div class="account-container activity-wide">
+        <main>        <div class="account-container activity-wide">
             <h1 class="home-title">プライバシー設定</h1>
             <p class="subtitle">メール通知や情報の取り扱いに関する設定</p>
 
@@ -33,39 +32,9 @@
                 <div class="settings-group">
                     <h2 class="settings-group-title">メール通知設定</h2>
                     
-                    <div class="setting-toggle-item">
-                        <div class="setting-text">
-                            <span class="setting-label">セキュリティ通知</span>
-                            <p class="setting-description">新しい端末からのログインやパスワード変更時に通知を受け取ります（推奨）</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notify_security" checked disabled>
-                            <span class="slider round"></span>
-                        </label>
+                    <div id="notification-settings">
+                        <!-- JSが動的に生成 -->
                     </div>
-
-                    <div class="setting-toggle-item">
-                        <div class="setting-text">
-                            <span class="setting-label">学習進捗リマインダー</span>
-                            <p class="setting-description">週ごとの学習記録やおすすめの法律トピックを受け取ります</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notify_learning" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-
-                    <div class="setting-toggle-item">
-                        <div class="setting-text">
-                            <span class="setting-label">ニュースレター</span>
-                            <p class="setting-description">legal&life Platform からの最新ニュースやアップデート情報を受け取ります</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notify_newsletter">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
 
                 <div class="action-area">
                     <button type="submit" class="btn-primary">設定を保存</button>
@@ -77,9 +46,10 @@
             </div>
         </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>

@@ -66,36 +66,25 @@ body {
         margin-bottom: 10px !important;
         min-height: 0;
     }
-    .menu-auth-area:has(#g_id_signin[style*="display: none"]):has(#user-profile[style*="display: none"]) {
-        display: none;
-    }
-    .menu-auth-area .auth {
-        display: block;
-        width: 100%;
-        min-height: 0;
-    }
-
-    .menu-auth-area #g_id_signin {
-        width: 100%;
+    .menu-ac-btn {
         padding: 10px 16px;
+        width: 200px;
         background-color: #4285f4;
         color: white;
         border: none;
         border-radius: 4px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
         cursor: pointer;
         transition: background-color 0.3s;
         display: block !important;
         margin: 0;
     }
-    .menu-auth-area #g_id_signin[style*="display: none"] {
-        height: 0;
-        padding: 0;
-        margin: 0;
-        overflow: hidden;
+    .menu-login-btn {
+        background-color: #4285f4;
+        color: white;
     }
-    .menu-auth-area #g_id_signin:hover {
+    .menu-signin-btn:hover {
         background-color: #357ae8;
     }
     .menu-auth-area .auth-user-profile {
@@ -108,60 +97,30 @@ body {
         border-radius: 8px;
         margin: 0;
     }
-    .menu-auth-area .auth-user-profile[style*="display: none"] {
-        height: 0;
-        padding: 0;
-        margin: 0;
-        overflow: hidden;
-    }
     .menu-auth-area .auth-user-icon {
         width: 48px;
         height: 48px;
         border-radius: 50%;
         border: 2px solid #00C8E9;
     }
-
     .menu-auth-area .auth-user-name {
         font-size: 15px;
         font-weight: 600;
         color: #333;
         text-align: center;
     }
-
-    .menu-auth-area #logout-btn {
-        width: 100%;
-        padding: 8px 16px;
+    .menu-logout-btn {
         background-color: #e74c3c;
         color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: background-color 0.3s;
     }
-
-    .menu-auth-area #logout-btn:hover {
+    .menu-logout-btn:hover {
         background-color: #c0392b;
     }
-
     .menu-divider {
         border: none;
         border-top: 2px solid rgba(0, 0, 0, 0.15);
         margin: 15px 0;
         width: 100%;
-    }
-    .menu-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-        display: none;
-    }
-    .menu-overlay.is-active {
-        display: block;
     }
 /*ハンバーガーメニュー*/
     .header-nav-container {
@@ -174,7 +133,7 @@ body {
         top: 0px; 
         right: 0;
         width: 200px;
-        height: auto;
+        height: 550px;
         max-height: 100vh;
         padding: 30px;
         background-color: #D6EAEF;

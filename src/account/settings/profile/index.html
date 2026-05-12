@@ -19,28 +19,32 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <div class="account-container activity-wide">
+        <main>            <div class="account-container activity-wide">
                 <h1 class="home-title">プロフィール</h1>
                 <p class="subtitle">あなたのアカウント情報と学習の進捗</p>
 
                 <!-- アカウント基本情報 -->
-                <div class="profile-card">
-                    <div class="profile-avatar">
-                        <svg viewBox="0 0 24 24" width="64" height="64">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#dadce0"/>
-                        </svg>
-                    </div>
-                    <div class="profile-info-main">
-                        <h2 class="user-display-name">ユーザー名</h2>
-                        <p class="user-email">example@mail.com</p>
-                        <button class="btn-text-only" style="padding: 0; margin-top: 8px;">基本情報を編集</button>
-                    </div>
+                <div id="settings-avatar-wrap"></div>
+                <p id="settings-user-name"></p>
+                <p id="settings-user-email"></p>
+                <p id="settings-user-uuid" style="font-size:11px;color:#aaa;"></p>
+                <p>最終ログイン: <span id="settings-last-signin"></span></p>
+
+                <!-- 表示名変更 -->
+                <input id="profile-display-name" type="text" class="form-input">
+                <p id="profile-msg" class="settings-msg"></p>
+                <button id="profile-save-btn" class="btn-primary">保存</button>
+
+                <!-- メール確認バナー -->
+                <div id="email-verify-banner">
+                    <p>⚠️ メールアドレスが未確認です</p>
+                    <button id="send-verify-email-btn" class="btn-secondary">確認メールを再送する</button>
+                    <p id="verify-email-msg" class="settings-msg"></p>
                 </div>
 
                 <div class="divider">コンテンツ進捗状況</div>
@@ -89,9 +93,10 @@
                 </div>
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>

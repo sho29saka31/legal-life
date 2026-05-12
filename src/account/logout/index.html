@@ -19,37 +19,20 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <div class="account-container">
-                <h1 class="home-title">ログアウトしました</h1>
-                <p class="subtitle">legal&life Platform をご利用いただきありがとうございました</p>
-
-                <div class="status-icon-area">
-                    <div class="success-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#34A853"/>
-                        </svg>
-                    </div>
-                    <p class="status-message">安全にログアウトが完了しました。</p>
-                </div>
-
-                <div class="action-area">
-                    <a href="/account/login" class="btn-primary-link">もう一度ログインする</a>
-                </div>
-
-                <div class="link-group">
-                    <a href="/" class="link-item">トップページへ戻る</a>
-                </div>
+        <main>            <div id="logout-loading">ログアウト中...</div>
+            <div id="logout-success" style="display:none;">
+                ✅ ログアウトしました。3秒後にトップページへ移動します。
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>

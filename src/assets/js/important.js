@@ -1,1053 +1,361 @@
-// important.js
-import { initializeApp 
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail, linkWithCredential, sendPasswordResetEmail, setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-import { initializeAppCheck, ReCaptchaV3Provider,
-    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
+// important.js  (認証モーダル廃止・ページ遷移方式に変更した箇所のみ抜粋)
+// ─────────────────────────────────────────────────────────────────
+
+import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapshot, collection, addDoc }
+    from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove }
+    from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import {
+    getAuth, onAuthStateChanged, signOut, GoogleAuthProvider,
+    setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+import { initializeAppCheck, ReCaptchaV3Provider }
+    from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
 
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260511-99";
+const LAYOUT_VERSION = "260512-2302"; // ★ バージョン更新
 
 function fetchWithCache(url) {
-  const key = `cache:${url}:v${LAYOUT_VERSION}`;
-
-  // 旧バージョンのキャッシュを削除
-  for (let i = sessionStorage.length - 1; i >= 0; i--) {
-    const k = sessionStorage.key(i);
-    if (k?.startsWith(`cache:${url}`) && k !== key)
-      sessionStorage.removeItem(k);
-  }
-
-  const cached = sessionStorage.getItem(key);
-  if (cached) return Promise.resolve(cached);
-
-  return fetch(url)
-    .then((r) => (r.ok ? r.text() : ""))
-    .then((text) => {
-      if (text) sessionStorage.setItem(key, text);
-      return text;
-    });
+    const key = `cache:${url}:v${LAYOUT_VERSION}`;
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const k = sessionStorage.key(i);
+        if (k?.startsWith(`cache:${url}`) && k !== key) sessionStorage.removeItem(k);
+    }
+    const cached = sessionStorage.getItem(key);
+    if (cached) return Promise.resolve(cached);
+    return fetch(url)
+        .then(r => r.ok ? r.text() : "")
+        .then(text => { if (text) sessionStorage.setItem(key, text); return text; });
 }
 
 const layoutPromise = Promise.all([
-  fetchWithCache("/parts/header.html"),
-  fetchWithCache("/parts/footer.html"),
+    fetchWithCache("/parts/header.html"),
+    fetchWithCache("/parts/footer.html"),
 ]);
 
 // ========================================
 // Firebase 初期化
 // ========================================
-let app, db, auth, googleProvider, rtdb;
+let app, db, auth, rtdb;
 
 try {
-  const firebaseConfig = __FIREBASE_CONFIG__;
-  app = initializeApp(firebaseConfig);
+    const firebaseConfig = {
+    "apiKey": "AIzaSyA_b8XjJrexCj86H0LC6FNTztFfcJXOT0Y",
+    "authDomain": "legallife.firebaseapp.com",
+    "databaseURL": "https://legallife-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "projectId": "legallife",
+    "storageBucket": "legallife.firebasestorage.app",
+    "messagingSenderId": "218375080608",
+    "appId": "1:218375080608:web:7d4005ec474e38bd6297c5",
+    "measurementId": "G-2JXNJ9QJ9S"
+};
+    app  = initializeApp(firebaseConfig);
+    db   = getFirestore(app);
+    auth = getAuth(app);
 
-  db = getFirestore(app);
-  auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence)
-    .then(() => console.log("🔒 Auth persistence: LOCAL"))
-    .catch((e) => console.warn("Auth persistence設定失敗:", e));
-  googleProvider = new GoogleAuthProvider();
-  // databaseURL を明示指定してリージョンミスマッチを防止
-  // FIREBASE_CONFIG に databaseURL が含まれていない場合のフォールバック
-  const dbUrl =
-    firebaseConfig.databaseURL ||
-    `https://${firebaseConfig.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`;
-  rtdb = getDatabase(app, dbUrl);
+    // ★ FIX: 認証状態の永続化を明示設定（ページ遷移でログアウトしない）
+    setPersistence(auth, browserLocalPersistence)
+        .then(() => console.log("🔒 Auth persistence: LOCAL"))
+        .catch(e => console.warn("Auth persistence設定失敗:", e));
 
-  // App Check: reCAPTCHA v3（無料プラン対応）
-  // サイトキーは build.sh でプレースホルダー __RECAPTCHA_SITE_KEY__ に注入される
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider("__RECAPTCHA_SITE_KEY__"),
-    isTokenAutoRefreshEnabled: true,
-  });
-  console.log("🛡️ App Check (reCAPTCHA v3): 初期化完了");
+    const dbUrl = firebaseConfig.databaseURL ||
+        `https://${firebaseConfig.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`;
+    rtdb = getDatabase(app, dbUrl);
+
+    initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider("__RECAPTCHA_SITE_KEY__"),
+        isTokenAutoRefreshEnabled: true,
+    });
 } catch (error) {
-  console.error("⚠️ Firebase初期化失敗:", error);
-  auth = { onAuthStateChanged: () => {} };
+    console.error("⚠️ Firebase初期化失敗:", error);
 }
 
 // ========================================
-// 同一メール別プロバイダー 自動連携ヘルパー
-// ========================================
-async function autoLinkAndSignIn(error, pendingCredential) {
-  if (error.code !== "auth/account-exists-with-different-credential")
-    throw error;
-
-  const email = error.customData?.email;
-  if (!email) throw error;
-
-  console.log(
-    `🔗 同メール(${email})で別プロバイダーを検出。自動連携を試みます...`,
-  );
-  const methods = await fetchSignInMethodsForEmail(auth, email);
-
-  if (methods.includes("google.com")) {
-    const result = await signInWithPopup(auth, googleProvider);
-    await linkWithCredential(result.user, pendingCredential);
-    console.log("✅ Googleアカウントに自動連携しました");
-    return result;
-  }
-
-  if (methods.includes("password")) {
-    const e = new Error(
-      "このメールアドレスはパスワードログインで登録済みです。" +
-        "先にパスワードでログインし、アカウント設定から連携してください。",
-    );
-    e.code = "auth/manual-link-required";
-    throw e;
-  }
-
-  throw error;
-}
-
-// ========================================
-// AuthManager
+// ★ 新: AuthManager (シンプル化・ページ遷移方式)
 // ========================================
 class AuthManager {
-  constructor() {
-    this.currentUser = null;
-    this.initialized = false;
-    this._emailMode = "login";
-    this._start();
-  }
-
-  // ---- 認証状態の監視開始 ----
-_start() {
-    /* ★ FIX 3: セッションストレージにキャッシュされた認証情報を即時適用
-       → ページ遷移時のログアウト表示フラッシュを防止 */
-    try {
-        const cached = JSON.parse(sessionStorage.getItem("ll_auth_cache") || "null");
-        if (cached) {
-            this.currentUser = cached;         // キャッシュから仮セット
-            setTimeout(() => this.updateUI(cached), 0); // 即座にUI更新
-        }
-    } catch (_) {}
-
-    this._unsubSession = null;
-
-    onAuthStateChanged(auth, (user) => {
-        this.currentUser = user;
-
-        // ★ FIX 3: キャッシュ更新
-        if (user) {
-            sessionStorage.setItem("ll_auth_cache", JSON.stringify({
-                uid:           user.uid,
-                displayName:   user.displayName,
-                email:         user.email,
-                photoURL:      user.photoURL,
-                emailVerified: user.emailVerified,
-            }));
-        } else {
-            sessionStorage.removeItem("ll_auth_cache");
-        }
-
-        console.log("👤 認証状態:", user ? (user.displayName || user.email) : "ログアウト中");
-
-        if (this._unsubSession) {
-            this._unsubSession();
-            this._unsubSession = null;
-        }
-
-        if (user) {
-            this._setupSession(user).catch((e) => console.warn("セッション設定失敗:", e));
-        }
-
-        setTimeout(() => this.updateUI(user), 100);
-    });
-
-    this._observeModal();
-}
-
-  // ---- セッションID の取得 or 新規生成 ----
-  _getOrCreateSessionId() {
-    const KEY = "legallife_session_id";
-    let id = localStorage.getItem(KEY);
-    if (!id) {
-      id = Date.now().toString(36) + Math.random().toString(36).slice(2);
-      localStorage.setItem(KEY, id);
-    }
-    return id;
-  }
-
-  // ---- UA からブラウザ / OS / デバイス種別を判定 ----
-  _parseUserAgent() {
-    const ua = navigator.userAgent;
-
-    let browser = "その他";
-    if (ua.includes("Edg/")) browser = "Microsoft Edge";
-    else if (ua.includes("OPR/") || ua.includes("Opera")) browser = "Opera";
-    else if (ua.includes("Chrome/")) browser = "Google Chrome";
-    else if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
-    else if (ua.includes("Safari/")) browser = "Safari";
-
-    let os = "その他";
-    if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
-    else if (ua.includes("Android")) os = "Android";
-    else if (ua.includes("Windows")) os = "Windows";
-    else if (ua.includes("Mac OS X")) os = "macOS";
-    else if (ua.includes("Linux")) os = "Linux";
-
-    const device = /Mobi|Android|iPhone|iPad/i.test(ua)
-      ? "スマートフォン/タブレット"
-      : "PC";
-
-    return { browser, os, device };
-  }
-
-  // ---- IPジオロケーションで都市・国を取得（失敗時は"不明"）----
-  //   プライマリ:  ipapi.co    (無料・CORS対応・制限なし)
-  //   フォールバック: Cloudflare /cdn-cgi/trace (国コードのみ)
-  async _fetchLocation() {
-    // プライマリ: ipapi.co
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("https://ipapi.co/json", {
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (res.ok) {
-        const d = await res.json();
-        if (d?.country_name) {
-          return [d.city, d.country_name].filter(Boolean).join(", ");
-        }
-      }
-    } catch (_) {
-      /* フォールバックへ */
+    constructor() {
+        this.currentUser = null;
+        this._unsubSession = null;
+        this._start();
     }
 
-    // フォールバック: Cloudflare trace
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 2000);
-      const res = await fetch("https://cloudflare.com/cdn-cgi/trace", {
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (res.ok) {
-        const loc = (await res.text()).match(/loc=([A-Z]{2})/)?.[1];
-        if (loc) return loc;
-      }
-    } catch (_) {
-      /* 両方失敗 */
-    }
+    _start() {
+        // ★ キャッシュからUI即時更新（ページ遷移時のフラッシュ防止）
+        try {
+            const cached = JSON.parse(sessionStorage.getItem("ll_auth_cache") || "null");
+            if (cached) {
+                this.currentUser = cached;
+                setTimeout(() => this._updateHeaderUI(cached), 0);
+            }
+        } catch (_) {}
 
-    return "不明";
-  }
+        onAuthStateChanged(auth, (user) => {
+            this.currentUser = user;
 
-  // ---- セッションの記録 + リモートログアウトリスナー設置 ----
-  async _setupSession(user) {
-    const sessionId = this._getOrCreateSessionId();
-    const sessionRef = doc(db, "users", user.uid, "sessions", sessionId);
-    const { browser, os, device } = this._parseUserAgent();
-
-    try {
-      const snap = await getDoc(sessionRef);
-      if (!snap.exists()) {
-        // 新規セッション：位置情報を取得してフルレコード作成
-        const location = await this._fetchLocation();
-        await setDoc(sessionRef, {
-          sessionId,
-          browser,
-          os,
-          device,
-          location,
-          loginAt: serverTimestamp(),
-          lastActive: serverTimestamp(),
-          shouldLogout: false,
-        });
-      } else {
-        // 既存セッション：lastActive のみ更新
-        await setDoc(
-          sessionRef,
-          { lastActive: serverTimestamp() },
-          { merge: true },
-        );
-      }
-    } catch (e) {
-      console.warn("セッション記録失敗:", e);
-    }
-
-    // リモートログアウト監視
-    this._unsubSession = onSnapshot(sessionRef, (snap) => {
-      if (snap.exists() && snap.data().shouldLogout === true) {
-        console.log("📤 リモートログアウト信号を受信");
-        // セッションドキュメントを削除してからサインアウト
-        const sid = localStorage.getItem("legallife_session_id");
-        localStorage.removeItem("legallife_session_id");
-        deleteDoc(sessionRef)
-          .catch(() => {})
-          .finally(() => {
-            signOut(auth).then(() => {
-              window.location.href = "/";
-            });
-          });
-      }
-    });
-  }
-
-  // ---- UI 更新 ----
-  // ⚠️ main.css に「display: block !important」があるため、
-  //    setProperty の第3引数 'important' で上書きする必要がある
-  updateUI(user) {
-    const loginBtn = document.getElementById("g_id_signin");
-    const menuProfile = document.getElementById("user-profile");
-    const menuAvatar = document.getElementById("user-avatar");
-    const menuName = document.getElementById("user-name");
-
-    // DOM がまだ注入されていない場合はスキップ（次の updateUI 呼び出しで処理される）
-    if (!loginBtn) {
-      console.log(`🎨 UI更新スキップ: loginBtn未存在（ヘッダー未注入）`);
-      return;
-    }
-
-    if (user) {
-      // ログイン済み: ログインボタン非表示、プロフィール表示
-      // !important を持つ CSS ルールに勝つため setProperty の 'important' フラグを使用
-      loginBtn.style.setProperty("display", "none", "important");
-      if (menuProfile)
-        menuProfile.style.setProperty("display", "flex", "important");
-      if (menuAvatar) menuAvatar.src = user.photoURL || "";
-      if (menuName)
-        menuName.textContent = user.displayName || user.email || "ユーザー";
-
-      const overlay = document.getElementById("auth-modal-overlay");
-      if (overlay?.style.display === "flex")
-        this._showModalView("loggedin", user);
-      console.log(
-        `🎨 UI更新: ログイン済み (${user.displayName || user.email})`,
-      );
-    } else {
-      // 未ログイン: ログインボタン表示、プロフィール非表示
-      loginBtn.style.removeProperty("display"); // CSS の display: block !important に戻す
-      if (menuProfile)
-        menuProfile.style.setProperty("display", "none", "important");
-      console.log(`🎨 UI更新: 未ログイン`);
-    }
-  }
-
-  // ---- モーダル DOM 監視（遅延読み込み対応）----
-  _observeModal() {
-    if (this._tryBindModal()) return;
-
-    const observer = new MutationObserver((_, obs) => {
-      if (this._tryBindModal()) obs.disconnect();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  _tryBindModal() {
-    const overlay = document.getElementById("auth-modal-overlay");
-    if (!overlay || this.initialized) return false;
-
-    // ---- ログインボタン ----
-    document
-      .getElementById("g_id_signin")
-      ?.addEventListener("click", () => this.openModal());
-
-    // ---- モーダルを閉じる ----
-    document
-      .getElementById("auth-modal-close")
-      ?.addEventListener("click", () => this.closeModal());
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) this.closeModal();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.closeModal();
-    });
-
-    // ---- Google ----
-    document
-      .getElementById("auth-google-btn")
-      ?.addEventListener("click", () => this._loginWithGoogle());
-
-    // ---- メール 画面切替 ----
-    document
-      .getElementById("auth-to-register")
-      ?.addEventListener("click", () => this._setEmailMode("register"));
-    document
-      .getElementById("auth-to-login")
-      ?.addEventListener("click", () => this._setEmailMode("login"));
-
-    // ---- メール 送信 ----
-    document
-      .getElementById("auth-submit-btn")
-      ?.addEventListener("click", () => this._submitEmail());
-
-    // ---- Enterキー ----
-    ["auth-email-input", "auth-password-input", "auth-name-input"].forEach(
-      (id) => {
-        document.getElementById(id)?.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") this._submitEmail();
-        });
-      },
-    );
-
-    // ---- パスワードリセット ----
-    document
-      .getElementById("auth-forgot-btn")
-      ?.addEventListener("click", () => this._sendPasswordReset());
-    document
-      .getElementById("auth-reset-back-btn")
-      ?.addEventListener("click", () => this._showModalView("select"));
-
-    // ---- ログアウト ----
-    document
-      .getElementById("logout-btn")
-      ?.addEventListener("click", () => this._handleLogout());
-    document
-      .getElementById("modal-logout-btn")
-      ?.addEventListener("click", () => this._handleLogout());
-
-    // ---- アカウント設定 ----
-    document
-      .getElementById("menu-settings-btn")
-      ?.addEventListener("click", () => {
-        location.href = "/account/settings/";
-      });
-    document
-      .getElementById("modal-settings-link")
-      ?.addEventListener("click", () => {
-        this.closeModal();
-        location.href = "/account/settings/";
-      });
-    
-    // ---- ログイン時二段階認証 ----
-    document.getElementById("auth-2fa-submit")
-        ?.addEventListener("click", () => this._verify2FALogin());
-
-    document.getElementById("auth-2fa-back")
-        ?.addEventListener("click", async () => {
-            // キャンセルした場合はサインアウト
-            await signOut(auth).catch(() => {});
-            this._pending2FAUser = null;
-            this._showModalView("select");
-        });
-
-    document.getElementById("auth-2fa-input")
-        ?.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") document.getElementById("auth-2fa-submit")?.click();
-        });
-
-    this.initialized = true;
-    this.updateUI(this.currentUser);
-    console.log("✅ 認証モーダルのバインド完了");
-    return true;
-  }
-
-  // ---- モーダル開閉 ----
-  openModal() {
-    const overlay = document.getElementById("auth-modal-overlay");
-    if (!overlay) return;
-    overlay.style.display = "flex";
-    this._showModalView(
-      this.currentUser ? "loggedin" : "select",
-      this.currentUser,
-    );
-  }
-
-  closeModal() {
-    const overlay = document.getElementById("auth-modal-overlay");
-    if (overlay) overlay.style.display = "none";
-  }
-
-  // ---- 画面切替 ----
-  _showModalView(view, user = null) {
-    // ★ 'login2fa' を追加
-    ["select", "loggedin", "reset", "login2fa"].forEach((v) => {
-        const el = document.getElementById(`auth-view-${v}`);
-        if (el) el.style.display = v === view ? "block" : "none";
-    });
-
-    if (view === "loggedin" && user) {
-        const avatar = document.getElementById("modal-user-avatar");
-        const name   = document.getElementById("modal-user-name");
-        if (avatar) avatar.src = user.photoURL || "";
-        if (name)   name.textContent = user.displayName || user.email || "ユーザー";
-    }
-
-    if (view === "select") {
-        this._setEmailMode("login");
-        const errMsg = document.getElementById("auth-error-msg");
-        if (errMsg) errMsg.textContent = "";
-    }
-}
-
-  _setEmailMode(mode) {
-    this._emailMode = mode;
-    const isRegister = mode === "register";
-
-    const els = {
-      title: document.getElementById("auth-email-title"),
-      submitBtn: document.getElementById("auth-submit-btn"),
-      nameRow: document.getElementById("auth-name-row"),
-      toRegisterWrap: document.getElementById("auth-to-register-wrap"),
-      toLoginWrap: document.getElementById("auth-to-login-wrap"),
-      forgotWrap: document.getElementById("auth-forgot-wrap"),
-    };
-
-    if (els.title)
-      els.title.textContent = isRegister ? "新規登録" : "メールでログイン";
-    if (els.submitBtn)
-      els.submitBtn.textContent = isRegister ? "登録する" : "ログイン";
-    if (els.nameRow) els.nameRow.style.display = isRegister ? "block" : "none";
-    if (els.toRegisterWrap)
-      els.toRegisterWrap.style.display = isRegister ? "none" : "block";
-    if (els.toLoginWrap)
-      els.toLoginWrap.style.display = isRegister ? "block" : "none";
-    if (els.forgotWrap)
-      els.forgotWrap.style.display = isRegister ? "none" : "block";
-  }
-
-  // ---- 認証処理 ----
-  async _loginWithGoogle() {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      this.closeModal();
-    } catch (e) {
-      try {
-        await autoLinkAndSignIn(e, e.credential);
-        this.closeModal();
-      } catch (linkErr) {
-        console.error("❌ Googleログイン失敗:", linkErr);
-        const GMSG = {
-          "auth/firebase-app-check-token-is-invalid":
-            "セキュリティ設定エラー: Firebase Console → App Check で強制モードを無効にしてください。",
-          "auth/internal-error":
-            "サーバーエラーが発生しました。App Check の強制モードが有効になっている可能性があります。",
-          "auth/popup-closed-by-user":
-            "ポップアップが閉じられました。再度お試しください。",
-          "auth/cancelled-popup-request":
-            "ポップアップがキャンセルされました。",
-          "auth/unauthorized-domain":
-            "このドメインはFirebaseに登録されていません。",
-        };
-        this._showError(
-          GMSG[linkErr.code] ||
-            linkErr.message ||
-            "Googleログインに失敗しました",
-        );
-      }
-    }
-  }
-
-  // ─── _submitEmail の login 部分を以下に置き換え ───
-
-async _submitEmail() {
-    const email    = document.getElementById("auth-email-input")?.value.trim();
-    const password = document.getElementById("auth-password-input")?.value;
-    const name     = document.getElementById("auth-name-input")?.value.trim();
-
-    if (!email || !password) {
-        this._showError("メールアドレスとパスワードを入力してください");
-        return;
-    }
-
-    const submitBtn = document.getElementById("auth-submit-btn");
-    if (submitBtn) { submitBtn.textContent = "処理中..."; submitBtn.disabled = true; }
-
-    try {
-        if (this._emailMode === "register") {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-            if (name) await updateProfile(cred.user, { displayName: name });
-            // ★ 登録後に確認メールを送信
-            await cred.user.sendEmailVerification().catch(() => {});
-            this.closeModal();
-
-        } else {
-            // ───── ログイン + ★ 2FA チェック ─────
-            const userCred = await signInWithEmailAndPassword(auth, email, password);
-
-            // ★ ログイン時2FA: Firestoreで有効確認
-            try {
-                const twoFaSnap = await getDoc(
-                    doc(db, "users", userCred.user.uid, "security", "twoFactor")
-                );
-                const twoFaEnabled = twoFaSnap.exists() && twoFaSnap.data().enabled;
-
-                if (twoFaEnabled && userCred.user.email) {
-                    // OTP生成・保存・送信（Firestoreにパスワードは保存しない）
-                    const code     = String(Math.floor(100000 + Math.random() * 900000));
-                    const expiryMs = Date.now() + 5 * 60 * 1000;
-
-                    await setDoc(
-                        doc(db, "users", userCred.user.uid, "security", "twoFactor"),
-                        { otpCode: code, otpExpiryMs: expiryMs, otpPurpose: "login_verify" },
-                        { merge: true }
-                    );
-
-                    if (window.emailjs) {
-                        await window.emailjs.send("service_glirsis", "template_w2ile0p", {
-                            to_email:       userCred.user.email,
-                            to_name:        userCred.user.displayName || "ユーザー",
-                            otp_code:       code,
-                            expiry_minutes: 5,
-                            purpose:        "ログイン認証",
-                        });
-                    }
-
-                    // ★ ログイン済みのまま2FA検証画面へ（失敗時にサインアウト）
-                    this._pending2FAUser = userCred.user;
-                    this._show2FALoginView(userCred.user.email);
-
-                    if (submitBtn) { submitBtn.textContent = "ログイン"; submitBtn.disabled = false; }
-                    return; // モーダルを閉じない
-                }
-            } catch (e) {
-                console.warn("ログイン時2FAチェック失敗（スキップ）:", e);
+            // キャッシュ更新
+            if (user) {
+                sessionStorage.setItem("ll_auth_cache", JSON.stringify({
+                    uid:           user.uid,
+                    displayName:   user.displayName,
+                    email:         user.email,
+                    photoURL:      user.photoURL,
+                    emailVerified: user.emailVerified,
+                }));
+                // セッション監視（他端末からのリモートログアウト）
+                this._watchSession(user);
+            } else {
+                sessionStorage.removeItem("ll_auth_cache");
+                if (this._unsubSession) { this._unsubSession(); this._unsubSession = null; }
             }
 
-            this.closeModal();
+            setTimeout(() => this._updateHeaderUI(user), 100);
+        });
+    }
+
+    // ─── ヘッダーUI更新 ───
+    _updateHeaderUI(user) {
+        const guestEl  = document.getElementById("menu-guest");
+        const userEl   = document.getElementById("menu-user");
+        const nameEl   = document.getElementById("header-user-name");
+        const avatarEl = document.getElementById("header-user-avatar");
+
+        // DOM がまだ挿入されていない場合はスキップ
+        if (!guestEl && !userEl) return;
+
+        if (user) {
+            if (guestEl)  guestEl.style.display  = "none";
+            if (userEl)   userEl.style.display   = "block";
+            if (nameEl)   nameEl.textContent     = user.displayName || user.email || "ユーザー";
+            if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+        } else {
+            if (guestEl) guestEl.style.display  = "block";
+            if (userEl)  userEl.style.display   = "none";
         }
-    } catch (e) {
-        console.error("❌ メール認証失敗:", e);
-        const MSG = {
-            "auth/email-already-in-use":  "このメールアドレスはすでに使用されています",
-            "auth/invalid-email":          "メールアドレスの形式が正しくありません",
-            "auth/weak-password":          "パスワードは6文字以上にしてください",
-            "auth/user-not-found":         "このメールアドレスは登録されていません",
-            "auth/wrong-password":         "パスワードが間違っています",
-            "auth/invalid-credential":     "メールアドレスまたはパスワードが間違っています",
-            "auth/too-many-requests":      "しばらく時間をおいてから再試行してください",
-        };
-        this._showError(MSG[e.code] || `ログインに失敗しました (${e.code})`);
-    } finally {
-        if (submitBtn) {
-            submitBtn.textContent = this._emailMode === "register" ? "登録する" : "ログイン";
-            submitBtn.disabled    = false;
+    }
+
+    // ─── 他端末からのリモートログアウト監視 ───
+    _watchSession(user) {
+        if (this._unsubSession) { this._unsubSession(); this._unsubSession = null; }
+        const sid = localStorage.getItem("legallife_session_id");
+        if (!sid) return;
+        const ref = doc(db, "users", user.uid, "sessions", sid);
+        this._unsubSession = onSnapshot(ref, (snap) => {
+            if (snap.exists() && snap.data().shouldLogout === true) {
+                console.log("📤 リモートログアウト信号受信");
+                localStorage.removeItem("legallife_session_id");
+                deleteDoc(ref).catch(() => {}).finally(() => {
+                    signOut(auth).then(() => { window.location.replace("/"); });
+                });
+            }
+        });
+    }
+
+    // ─── Firestore チャット保存 (chat.js から利用) ───
+    async saveToCloud(input, response, category) {
+        if (!this.currentUser || !db) return null;
+        try {
+            const docId   = Date.now().toString();
+            const docPath = doc(db, "content", "chat", this.currentUser.uid, docId);
+            await setDoc(docPath, {
+                userInput: input, aiResponse: response, category,
+                timestamp: serverTimestamp(),
+            });
+            return docId;
+        } catch (e) {
+            console.error("❌ チャット保存失敗:", e);
+            return null;
         }
     }
-}
 
-// ★ 追加: ログイン時2FA確認画面を表示
-_show2FALoginView(email) {
-    this._showModalView("login2fa");
-    const emailEl = document.getElementById("auth-2fa-email-display");
-    if (emailEl) emailEl.textContent = `${email} に認証コードを送信しました`;
-    const input = document.getElementById("auth-2fa-input");
-    if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
-    const errEl = document.getElementById("auth-2fa-error");
-    if (errEl) errEl.textContent = "";
-    const btn = document.getElementById("auth-2fa-submit");
-    if (btn) { btn.disabled = false; btn.textContent = "確認する"; }
-}
-
-// ★ 追加: ログイン時2FA検証
-async _verify2FALogin() {
-    const input  = document.getElementById("auth-2fa-input");
-    const errEl  = document.getElementById("auth-2fa-error");
-    const btn    = document.getElementById("auth-2fa-submit");
-    const code   = input?.value.trim();
-    const user   = this._pending2FAUser || auth.currentUser;
-
-    if (!code)  { errEl.textContent = "コードを入力してください"; return; }
-    if (!user)  { errEl.textContent = "セッションエラー。再度ログインしてください。"; return; }
-
-    btn.disabled    = true;
-    btn.textContent = "確認中...";
-    errEl.textContent = "";
-
-    try {
-        const snap = await getDoc(doc(db, "users", user.uid, "security", "twoFactor"));
-        if (!snap.exists()) throw new Error("OTPが見つかりません");
-
-        const { otpCode, otpExpiryMs, otpPurpose } = snap.data();
-
-        if (otpPurpose !== "login_verify") throw new Error("用途不一致");
-        if (Date.now() > otpExpiryMs) {
-            errEl.textContent = "認証コードの有効期限が切れています。再度ログインしてください。";
-            await signOut(auth).catch(() => {});
-            this._pending2FAUser = null;
-            this._showModalView("select");
-            return;
-        }
-        if (otpCode !== code) {
-            errEl.textContent    = "コードが正しくありません";
-            btn.disabled         = false;
-            btn.textContent      = "確認する";
-            return;
-        }
-
-        // OTPをクリア
-        await setDoc(
-            doc(db, "users", user.uid, "security", "twoFactor"),
-            { otpCode: null, otpExpiryMs: null, otpPurpose: null },
-            { merge: true }
-        );
-
-        this._pending2FAUser = null;
-        this.closeModal();
-    } catch (e) {
-        console.error("2FAログイン検証失敗:", e);
-        errEl.textContent    = "エラーが発生しました。再度ログインしてください。";
-        btn.disabled         = false;
-        btn.textContent      = "確認する";
+    async deletechatation(docId) {
+        if (!docId || !this.currentUser || !db) return;
+        try {
+            await deleteDoc(doc(db, "content", "chat", this.currentUser.uid, docId));
+        } catch (e) { console.error("❌ 削除失敗:", e); }
     }
-}
-
-  async _sendPasswordReset() {
-    const email = document.getElementById("auth-email-input")?.value.trim();
-    if (!email) {
-      this._showError("メールアドレスを入力してください");
-      return;
-    }
-
-    try {
-      await sendPasswordResetEmail(auth, email);
-      const display = document.getElementById("auth-reset-email-display");
-      if (display) display.textContent = email;
-      this._showModalView("reset");
-      console.log("📧 パスワードリセットメール送信:", email);
-    } catch (e) {
-      console.error("❌ パスワードリセット失敗:", e);
-      const MSG = {
-        "auth/user-not-found": "このメールアドレスは登録されていません",
-        "auth/invalid-email": "メールアドレスの形式が正しくありません",
-        "auth/too-many-requests": "しばらく時間をおいてから再試行してください",
-      };
-      this._showError(MSG[e.code] || "メール送信に失敗しました");
-    }
-  }
-
-  _showError(msg) {
-    const el = document.getElementById("auth-error-msg");
-    if (el) el.textContent = msg;
-  }
-
-  _handleLogout() {
-    const sessionId = localStorage.getItem("legallife_session_id");
-    const uid = this.currentUser?.uid;
-
-    // セッションドキュメントを削除してからサインアウト
-    const cleanup =
-      uid && sessionId
-        ? deleteDoc(doc(db, "users", uid, "sessions", sessionId)).catch((e) =>
-            console.warn("セッション削除失敗:", e),
-          )
-        : Promise.resolve();
-
-    cleanup.finally(() => {
-      localStorage.removeItem("legallife_session_id");
-      signOut(auth)
-        .then(() => {
-          console.log("👋 ログアウトしました");
-          this.updateUI(null);
-          const overlay = document.getElementById("auth-modal-overlay");
-          if (overlay?.style.display === "flex") this._showModalView("select");
-        })
-        .catch((e) => console.error("❌ ログアウト失敗:", e));
-    });
-  }
-
-  // ========================================
-  // Firestore: チャット履歴の保存・削除
-  //   パス: content/chat/{uid}/{docId}
-  //   ※ "content"=コレクション, "chat"=ドキュメント(固定),
-  //      uid=サブコレクション名, docId=メッセージドキュメント
-  // ========================================
-  async saveToCloud(input, response, category) {
-    if (!this.currentUser) {
-      console.warn("⚠️ saveToCloud: ユーザー未ログイン - 保存をスキップ");
-      return null;
-    }
-    if (!db) {
-      console.error("❌ saveToCloud: Firestore未初期化");
-      return null;
-    }
-
-    try {
-      const docId = Date.now().toString();
-      const docPath = doc(db, "content", "chat", this.currentUser.uid, docId);
-      console.log("📤 Firestore書き込み開始:", docPath.path);
-      await setDoc(docPath, {
-        userInput: input,
-        aiResponse: response,
-        category: category,
-        timestamp: serverTimestamp(),
-      });
-      console.log("✅ チャット保存成功:", docId);
-      return docId;
-    } catch (error) {
-      console.error("❌ チャット保存失敗:", error.code, error.message, error);
-      return null;
-    }
-  }
-
-  // deleteConsultation / deleteChat は同一メソッド（chat.js側の呼び名に対応）
-  async deleteConsultation(docId) {
-    if (!docId || !this.currentUser || !db) return;
-    try {
-      await deleteDoc(doc(db, "content", "chat", this.currentUser.uid, docId));
-      console.log("🗑️ クラウドから削除成功:", docId);
-    } catch (error) {
-      console.error("❌ 削除失敗:", error);
-    }
-  }
-
-  // chat.js から deleteChat で呼ばれる場合の互換エイリアス
-  async deleteChat(docId) {
-    return this.deleteConsultation(docId);
-  }
 }
 
 window.authApp = new AuthManager();
 
-// access-log.js から利用できるよう Firebase インスタンスを公開
-// （アクセスログ機能を使わない場合は削除しても無害）
-window._firebaseDb = { db };
+// Realtime Database 公開 (access-log.js 用)
+window._firebaseRTDB = { rtdb, ref: rtdbRef, push: rtdbPush, set: rtdbSet, remove: rtdbRemove };
+window._firebaseDb   = { db };
 window._firebaseModules = { addDoc, collection, serverTimestamp };
-// Realtime Database（アクセスログ用）
-window._firebaseRTDB = {
-  rtdb,
-  ref: rtdbRef,
-  push: rtdbPush,
-  set: rtdbSet,
-  remove: rtdbRemove,
-};
 
 // ========================================
-// ヘッダー・フッター 挿入
+// ヘッダー・フッター挿入
 // ========================================
-layoutPromise
-  .then(([headerData, footerData]) => {
+layoutPromise.then(([headerData, footerData]) => {
     const headerTarget = document.querySelector("#header");
     const footerTarget = document.querySelector("#footer");
     if (headerTarget && headerData) headerTarget.innerHTML = headerData;
     if (footerTarget && footerData) footerTarget.innerHTML = footerData;
 
-    _initThemeToggle();
     _initHamburgerMenu();
     _loadCookieScript();
 
-    // ヘッダー注入後の認証UI反映
-    // - 0ms: MutationObserver（_tryBindModal → updateUI）が発火する
-    // - 300ms: Firebase Auth のトークン検証完了を待つ安全マージン
-    setTimeout(() => window.authApp?.updateUI(window.authApp?.currentUser), 0);
-    setTimeout(
-      () => window.authApp?.updateUI(window.authApp?.currentUser),
-      300,
-    );
-  })
-  .catch((err) => console.error("important.js_load-error:", err));
+    // ヘッダー挿入後にUI更新
+    setTimeout(() => window.authApp?._updateHeaderUI(window.authApp?.currentUser), 0);
+    setTimeout(() => window.authApp?._updateHeaderUI(window.authApp?.currentUser), 300);
 
-function _initThemeToggle() {
-  document
-    .getElementById("theme-toggle-btn")
-    ?.addEventListener("click", (e) => {
-      e.preventDefault();
-      const html = document.documentElement;
-      const isDark = html.getAttribute("data-theme") === "dark";
-      if (isDark) {
-        html.removeAttribute("data-theme");
-        localStorage.setItem("theme", "light");
-      } else {
-        html.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-      }
-    });
-}
+}).catch(err => console.error("important.js layout error:", err));
 
 function _initHamburgerMenu() {
-  const button = document.querySelector(".hamberger-btn");
-  const menu = document.getElementById("main-menu");
-  if (!button || !menu) return;
+    const button = document.querySelector(".hamberger-btn");
+    const menu   = document.getElementById("main-menu");
+    if (!button || !menu) return;
 
-  const overlay = Object.assign(document.createElement("div"), {
-    className: "menu-overlay",
-  });
-  document.body.appendChild(overlay);
+    const overlay = Object.assign(document.createElement("div"), { className: "menu-overlay" });
+    document.body.appendChild(overlay);
 
-  const toggleMenu = (shouldOpen) => {
-    menu.classList.toggle("is-active", shouldOpen);
-    button.classList.toggle("is-active", shouldOpen);
-    overlay.classList.toggle("is-active", shouldOpen);
-    button.setAttribute("aria-expanded", String(shouldOpen));
-  };
+    const toggleMenu = (open) => {
+        menu.classList.toggle("is-active", open);
+        button.classList.toggle("is-active", open);
+        overlay.classList.toggle("is-active", open);
+        button.setAttribute("aria-expanded", String(open));
+    };
 
-  button.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleMenu(button.getAttribute("aria-expanded") !== "true");
-  });
+    button.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMenu(button.getAttribute("aria-expanded") !== "true");
+    });
 
-  document.addEventListener("click", (e) => {
-    if (
-      menu.classList.contains("is-active") &&
-      !menu.contains(e.target) &&
-      !button.contains(e.target)
-    ) {
-      toggleMenu(false);
-    }
-  });
+    document.addEventListener("click", (e) => {
+        if (menu.classList.contains("is-active") &&
+            !menu.contains(e.target) && !button.contains(e.target)) {
+            toggleMenu(false);
+        }
+    });
 
-  menu
-    .querySelectorAll("a")
-    .forEach((link) => link.addEventListener("click", () => toggleMenu(false)));
+    menu.querySelectorAll("a").forEach(link => link.addEventListener("click", () => toggleMenu(false)));
 }
 
 function _loadCookieScript() {
-  const cookieScript = Object.assign(document.createElement("script"), {
-    src: "/assets/js/cookie.js",
-    onload: () => console.log("✅ cookie.js: 読み込み完了"),
-    onerror: () => console.error("❌ cookie.js: 読み込み失敗"),
-  });
-  document.body.appendChild(cookieScript);
+    const s = Object.assign(document.createElement("script"), {
+        src: "/assets/js/cookie.js",
+        onload:  () => console.log("✅ cookie.js: 読み込み完了"),
+        onerror: () => console.error("❌ cookie.js: 読み込み失敗"),
+    });
+    document.body.appendChild(s);
 }
 
 // ========================================
 // TOPに戻るボタン
 // ========================================
 document.addEventListener("DOMContentLoaded", () => {
-  document.documentElement.style.overflowX = "hidden";
-  document.body.style.overflowX = "hidden";
+    document.documentElement.style.overflowX = "hidden";
+    document.body.style.overflowX = "hidden";
 
-  const isMobile = () => window.innerWidth <= 600;
-
-  const topBtn = Object.assign(document.createElement("button"), {
-    id: "js-scroll-top",
-    className: "scroll-top-btn",
-    ariaLabel: "トップへ戻る",
-    innerHTML: "▲",
-  });
-
-  const applySize = () => {
-    const m = isMobile();
-    Object.assign(topBtn.style, {
-      position: "fixed",
-      right: m ? "10px" : "20px",
-      bottom: "20px",
-      width: m ? "45px" : "50px",
-      height: m ? "45px" : "50px",
-      backgroundColor: "#00C8E9",
-      color: "#fff",
-      border: "none",
-      borderRadius: "50%",
-      cursor: "pointer",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      fontSize: m ? "18px" : "20px",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-      zIndex: "9999",
-      opacity: "0",
-      visibility: "hidden",
-      transform: "translateY(20px)",
-      transition: "all 0.3s ease",
+    const isMobile = () => window.innerWidth <= 600;
+    const topBtn = Object.assign(document.createElement("button"), {
+        id:        "js-scroll-top",
+        className: "scroll-top-btn",
+        ariaLabel: "トップへ戻る",
+        innerHTML: "▲",
     });
-  };
 
-  applySize();
-  document.body.appendChild(topBtn);
+    const applySize = () => {
+        const m = isMobile();
+        Object.assign(topBtn.style, {
+            position: "fixed", right: m ? "10px" : "20px", bottom: "20px",
+            width: m ? "45px" : "50px", height: m ? "45px" : "50px",
+            backgroundColor: "#00C8E9", color: "#fff", border: "none",
+            borderRadius: "50%", cursor: "pointer", display: "flex",
+            justifyContent: "center", alignItems: "center",
+            fontSize: m ? "18px" : "20px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.2)", zIndex: "9999",
+            opacity: "0", visibility: "hidden", transform: "translateY(20px)",
+            transition: "all 0.3s ease",
+        });
+    };
 
-  window.addEventListener("scroll", () => {
-    const show = window.scrollY > 300;
-    topBtn.style.opacity = show ? "1" : "0";
-    topBtn.style.visibility = show ? "visible" : "hidden";
-    topBtn.style.transform = show ? "translateY(0)" : "translateY(20px)";
-  });
+    applySize();
+    document.body.appendChild(topBtn);
 
-  topBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+    window.addEventListener("scroll", () => {
+        const show = window.scrollY > 300;
+        topBtn.style.opacity    = show ? "1" : "0";
+        topBtn.style.visibility = show ? "visible" : "hidden";
+        topBtn.style.transform  = show ? "translateY(0)" : "translateY(20px)";
+    });
 
-  window.addEventListener("resize", applySize);
+    topBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    window.addEventListener("resize", applySize);
 });
 
 // ========================================
 // 検索バー クリアボタン（共通）
 // ========================================
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-search-clear]").forEach((clearBtn) => {
-    const targetId = clearBtn.dataset.searchClear;
-    const input = document.getElementById(targetId);
-    if (!input) {
-      console.warn(`[common-search] #${targetId} が見つかりません。`);
-      return;
-    }
+    document.querySelectorAll("[data-search-clear]").forEach(clearBtn => {
+        const targetId = clearBtn.dataset.searchClear;
+        const input    = document.getElementById(targetId);
+        if (!input) return;
 
-    const syncVisibility = () => {
-      clearBtn.style.display = input.value.length > 0 ? "flex" : "none";
-    };
+        const syncVisibility = () => {
+            clearBtn.style.display = input.value.length > 0 ? "flex" : "none";
+        };
 
-    syncVisibility();
-    input.addEventListener("input", syncVisibility);
+        syncVisibility();
+        input.addEventListener("input", syncVisibility);
 
-    clearBtn.addEventListener("click", () => {
-      input.value = "";
-      syncVisibility();
-      input.focus();
-      input.dispatchEvent(
-        new CustomEvent("search:cleared", {
-          bubbles: true,
-          detail: { inputId: targetId },
-        }),
-      );
+        clearBtn.addEventListener("click", () => {
+            input.value = "";
+            syncVisibility();
+            input.focus();
+            input.dispatchEvent(new CustomEvent("search:cleared", {
+                bubbles: true, detail: { inputId: targetId },
+            }));
+        });
     });
-  });
 });
 
 // ========================================
-// 開発中ページ開けませんウィンドウ (複数対応・監視型)
+// 開発中ページポップアップ
 // ========================================
 (function () {
-  const TARGET_CLASS = "js-popup-show"; // IDではなくCLASSを指定
-  const MESSAGE =
-    "選択いただいたページは現在メンテナンス中です<br>メンテナンス終了までしばらくお待ちください";
-  const CLOSE_TEXT = "閉じる";
+    const TARGET_CLASS = "js-popup-show";
+    const MESSAGE = "選択いただいたページは現在メンテナンス中です<br>メンテナンス終了までしばらくお待ちください";
 
-  // 1. ポップアップの土台作成（変更なし）
-  const overlay = document.createElement("div");
-  overlay.className = "custom-popup-overlay";
-  overlay.innerHTML = `
+    const overlay = document.createElement("div");
+    overlay.className = "custom-popup-overlay";
+    overlay.innerHTML = `
         <div class="custom-popup-content">
             <p class="custom-popup-text">${MESSAGE}</p>
-            <div class="custom-popup-close-btn">${CLOSE_TEXT}</div>
-        </div>
-    `;
-  document.body.appendChild(overlay);
+            <div class="custom-popup-close-btn">閉じる</div>
+        </div>`;
+    document.body.appendChild(overlay);
 
-  const closeBtn = overlay.querySelector(".custom-popup-close-btn");
-  closeBtn.addEventListener("click", () =>
-    overlay.classList.remove("is-visible"),
-  );
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) overlay.classList.remove("is-visible");
-  });
-
-  // 2. ボタンにイベントを付与する関数 (querySelectorAllで全てに適用)
-  const bindPopups = () => {
-    const triggers = document.querySelectorAll(`.${TARGET_CLASS}`);
-    triggers.forEach((el) => {
-      if (!el.dataset.popupBound) {
-        el.addEventListener("click", (e) => {
-          e.preventDefault();
-          overlay.classList.add("is-visible");
-        });
-        el.dataset.popupBound = "true"; // 二重登録防止
-      }
+    overlay.querySelector(".custom-popup-close-btn")
+        .addEventListener("click", () => overlay.classList.remove("is-visible"));
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.classList.remove("is-visible");
     });
-  };
 
-  // 3. DOMを監視して、新しいボタンが現れたら即座に機能を付与
-  const observer = new MutationObserver(bindPopups);
-  observer.observe(document.body, { childList: true, subtree: true });
+    const bindPopups = () => {
+        document.querySelectorAll(`.${TARGET_CLASS}`).forEach(el => {
+            if (!el.dataset.popupBound) {
+                el.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    overlay.classList.add("is-visible");
+                });
+                el.dataset.popupBound = "true";
+            }
+        });
+    };
 
-  // 初回実行
-  bindPopups();
+    new MutationObserver(bindPopups).observe(document.body, { childList: true, subtree: true });
+    bindPopups();
 })();
 
-console.log(
-  "%c警告!",
-  "color: red; font-size: 1.2em; font-weight: bold;",
-  "\n不用意なコード実行は避けてください。",
-);
+console.log("%c警告!", "color:red;font-size:1.2em;font-weight:bold;",
+    "\n不用意なコード実行は避けてください。");

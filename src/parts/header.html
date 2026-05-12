@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/assets/css/announce.css">
 <header>
   <div class="header-logo">
     <h1>
@@ -7,7 +8,9 @@
   <div class="header-right-content">
     <nav class="header-nav-container">
       <button class="hamberger-btn" aria-expanded="false" aria-controls="main-menu" aria-label="メニューを開く">
-        <span class="hamberger-bar"></span><span class="hamberger-bar"></span><span class="hamberger-bar"></span>
+        <span class="hamberger-bar"></span>
+        <span class="hamberger-bar"></span>
+        <span class="hamberger-bar"></span>
       </button>
       <ul class="header-nav-menu" id="main-menu">
         <li><a href="/">ホーム</a></li>
@@ -16,7 +19,30 @@
         <li><a href="/content/search/">法令検索</a></li>
         <li><a href="/content/news/" class="js-popup-show">ニュース</a></li>
         <li><hr class="menu-divider"/></li>
-        アカウント機能はメンテナンス中です
+        <!-- ────────────────────────────────────────
+          認証エリア
+          未ログイン : ログインボタン（/account/login へ）
+          ログイン済み: アバター + 設定 + ログアウト（/account/logout へ）
+          ──────────────────────────────────────── -->
+      <!--<li class="menu-auth-area" id="menu-auth-area">
+          <div id="menu-guest" style="display:none;">
+              <a href="/account/login" class="menu-ac-btn menu-login-btn" id="header-login-link">
+                  ログイン
+              </a>
+          </div>
+
+          <div id="menu-user" style="display:none;">
+              <div class="auth-user-profile">
+                  <img id="header-user-avatar" src="" alt="avatar" class="auth-user-icon">
+                  <span id="header-user-name" class="auth-user-name"></span>
+                  <a href="/account/settings/" class="menu-settings-btn">アカウント設定</a>
+                  <a href="/account/logout" class="menu-ac-btn menu-logout-btn" id="header-logout-link">
+                      ログアウト
+                  </a>
+              </div>
+          </div>
+        </li>-->
+        メンテナンス中です
         <li><hr class="menu-divider"/></li>
         <li><a href="/info/about/">サイト概要</a></li>
         <li><a href="/info/">お知らせ</a></li>
@@ -27,6 +53,7 @@
     </nav>
   </div>
 </header>
+
 <div class="announce-wrapper">
   <div class="announce-item announce-type-important">
     <span class="announce-icon">
@@ -45,4 +72,3 @@
     <p class="announce-text">【実施中】アカウント機能のメンテナンスおよびリニューアルのお知らせ <a href="/info/details/0013.html" class="announce-link">確認する</a></p>
   </div>
 </div>
-<link rel="stylesheet" href="/assets/css/announce.css">

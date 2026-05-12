@@ -94,25 +94,10 @@ main {
 
 .google-btn {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
     padding: 10px;
-    border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     width: 100%;
-    margin-top: 10px;
-}
-
-.google-btn:hover {
-    background-color: #f1f3f4;
-}
-
-.google-icon {
-    margin-right: 12px;
 }
 
 /* 区切り線 */

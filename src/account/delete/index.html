@@ -19,50 +19,48 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
         <main>
             <div class="account-container">
                 <h1 class="home-title">アカウントの削除</h1>
                 <p class="subtitle">legal&life Platform アカウントを完全に削除します</p>
-
-                <div class="alert-box">
-                    <p class="alert-title">⚠️ 注意事項を確認してください</p>
-                    <ul class="alert-list">
-                        <li>保存されているすべての学習進捗データが失われます。</li>
-                        <li>相談履歴や設定情報は復元できません。</li>
-                        <li>同一メールアドレスでの再登録に制限がかかる場合があります。</li>
-                    </ul>
+                <div id="delete-form-wrapper">
+                    <!-- チェックリスト -->
+                    <label class="deletion-check-item">
+                        <input type="checkbox" class="deletion-checkbox">
+                        <span>削除後すべてのデータの復元は不可能です</span>
+                    </label>
+                    <label class="deletion-check-item">
+                        <input type="checkbox" class="deletion-checkbox">
+                        <span>削除申請後はサービス利用が制限されます</span>
+                    </label>
+                    <label class="deletion-check-item">
+                        <input type="checkbox" class="deletion-checkbox">
+                        <span>利用履歴は匿名化してシステム改善に使用される場合があります</span>
+                    </label>
+                    <label class="deletion-check-item">
+                        <input type="checkbox" class="deletion-checkbox">
+                        <span>上記をすべて理解し削除を申請する</span>
+                    </label>
+                    <p id="delete-msg" class="settings-msg"></p>
+                    <button id="delete-execute-btn" class="btn-danger" disabled>削除を申請する</button>
                 </div>
-
-                <form action="/auth/delete" method="POST" id="delete-form">
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="agree" name="agree" class="form-checkbox" required>
-                        <label for="agree" class="checkbox-label">
-                            上記の注意事項を理解し、アカウントの削除に同意します。
-                        </label>
-                    </div>
-
-                    <p class="countdown-text" id="countdown-display">
-                        安全のため、あと <span id="seconds">10</span> 秒お待ちください
-                    </p>
-
-                    <button type="submit" class="btn-danger" id="delete-btn" disabled>
-                        アカウントを永久に削除する
-                    </button>
-                </form>
-
+                <div id="delete-success" style="display:none;">
+                    ✅ 削除を申請しました。30日後に完全削除されます。
+                </div>
                 <div class="link-group">
                     <a href="/account/settings/profile" class="link-item">削除せずに戻る</a>
                 </div>
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
         <!-- 削除カウントダウン用スクリプト（簡易版） -->
         <script>

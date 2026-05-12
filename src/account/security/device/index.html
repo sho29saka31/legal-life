@@ -19,62 +19,28 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <div class="account-container activity-wide">
+        <main>            <div class="account-container activity-wide">
                 <h1 class="home-title">ログイン中のデバイス</h1>
                 <p class="subtitle">現在アカウントにサインインしている端末の一覧です</p>
 
-                <div class="device-list">
-                    <!-- 現在使用中のデバイス -->
-                    <div class="device-item current">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z" fill="#5f6368"/>
-                            </svg>
-                        </div>
-                        <div class="device-info">
-                            <div class="device-name">Windows PC <span class="current-badge">この端末</span></div>
-                            <p class="device-meta">Chrome • 愛知県小牧市 • 14:20</p>
-                        </div>
-                    </div>
-
-                    <!-- その他のデバイス -->
-                    <div class="device-item">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" fill="#5f6368"/>
-                            </svg>
-                        </div>
-                        <div class="device-info">
-                            <div class="device-name">iPhone 15 Pro</div>
-                            <p class="device-meta">Safari • 東京都港区 • 5月8日</p>
-                        </div>
-                        <button class="btn-text-only">ログアウト</button>
-                    </div>
-                </div>
-
-                <div class="action-footer">
-                    <button type="button" class="btn-secondary w-full danger-text">
-                        他のすべてのデバイスからログアウト
-                    </button>
-                    <p class="footer-note" style="margin-top: 12px; text-align: center;">
-                        心当たりのないデバイスがある場合は、セキュリティ保護のためパスワードを変更してください。
-                    </p>
-                </div>
+                <div id="device-list"><!-- JSが動的に生成 --></div>
+                
+                <button id="logout-all-others-btn" style="display:none;">他のすべての端末をログアウト</button>
 
                 <div class="link-group">
                     <a href="/account/security" class="link-item">セキュリティ設定へ戻る</a>
                 </div>
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>

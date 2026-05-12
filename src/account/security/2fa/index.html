@@ -19,13 +19,12 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <div class="account-container">
+        <main>            <div class="account-container">
                 <h1 class="home-title">二段階認証</h1>
                 <p class="subtitle">アカウントのセキュリティを強化します</p>
 
@@ -40,12 +39,13 @@
                     </p>
                 </div>
 
-                <div class="settings-list">
-                    <!-- 有効化ボタン -->
-                    <button type="button" class="btn-primary" id="toggle-2fa-btn">
-                        二段階認証を有効にする
-                    </button>
-                </div>
+                <span id="2fa-status-badge" class="status-badge disabled">無効</span>
+                <label class="switch">
+                    <input type="checkbox" id="two-factor-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span id="two-factor-status-label">無効</span>
+                <p id="two-factor-msg" class="settings-msg"></p>
 
                 <div class="divider">設定済みの方</div>
 
@@ -61,9 +61,10 @@
                 </div>
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>

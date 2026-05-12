@@ -19,52 +19,34 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <div class="account-container">
+        <main>            <div class="account-container">
                 <h1 class="home-title">パスワードの変更</h1>
                 <p class="subtitle">安全なパスワードを設定してアカウントを保護しましょう</p>
 
-                <form action="/auth/update-password" method="POST">
-                    <div class="form-group">
-                        <label class="form-label" for="current-password">現在のパスワード</label>
-                        <input type="password" id="current-password" name="current-password" class="form-input" required autofocus>
-                    </div>
-
-                    <div class="divider">新しいパスワードの設定</div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="new-password">新しいパスワード</label>
-                        <input type="password" id="new-password" name="new-password" class="form-input" required minlength="8">
-                        <!-- パスワード強度メーター（任意でJS制御） -->
-                        <div class="password-strength">
-                            <div class="strength-bar" id="strength-meter"></div>
-                        </div>
-                        <p class="form-hint">8文字以上の英数字を組み合わせてください</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="confirm-password">新しいパスワード（確認）</label>
-                        <input type="password" id="confirm-password" name="confirm-password" class="form-input" required minlength="8">
-                    </div>
-
-                    <div class="action-area">
-                        <button type="submit" class="btn-primary">パスワードを更新</button>
-                    </div>
-                </form>
+                <p id="pass-card-title">🔑 パスワード</p>
+                <div id="current-password-row">
+                    <input id="current-password" type="password" class="form-input" placeholder="現在のパスワード">
+                </div>
+                <span id="new-password-label">新しいパスワード</span>
+                <input id="new-password"     type="password" class="form-input">
+                <input id="confirm-password" type="password" class="form-input" placeholder="確認">
+                <p id="pass-msg" class="settings-msg"></p>
+                <button id="pass-submit-btn" class="btn-primary">パスワードを変更する</button>
 
                 <div class="link-group">
-                    <a href="/account/security" class="link-item">キャンセルして戻る</a>
+                    <a href="/account/security" class="link-item">変更せずに戻る</a>
                 </div>
             </div>
         </main>
-        <div id="footer"></div>
+
         <script type="module" src="/assets/js/important.js"></script>
-        <script src="/assets/js/account.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
         <script src="/assets/js/access-log.js"></script>
     </body>
 </html>
