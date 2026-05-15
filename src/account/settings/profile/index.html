@@ -23,73 +23,53 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
-        <main>            <div class="account-container activity-wide">
-                <h1 class="home-title">プロフィール</h1>
-                <p class="subtitle">あなたのアカウント情報と学習の進捗</p>
-
-                <!-- アカウント基本情報 -->
-                <div id="settings-avatar-wrap"></div>
-                <p id="settings-user-name"></p>
-                <p id="settings-user-email"></p>
-                <p id="settings-user-uuid" style="font-size:11px;color:#aaa;"></p>
-                <p>最終ログイン: <span id="settings-last-signin"></span></p>
-
-                <!-- 表示名変更 -->
-                <input id="profile-display-name" type="text" class="form-input">
-                <p id="profile-msg" class="settings-msg"></p>
-                <button id="profile-save-btn" class="btn-primary">保存</button>
-
-                <!-- メール確認バナー -->
-                <div id="email-verify-banner">
-                    <p>⚠️ メールアドレスが未確認です</p>
-                    <button id="send-verify-email-btn" class="btn-secondary">確認メールを再送する</button>
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <a href="/account/settings/" class="back-link">← アカウント設定に戻る</a>
+                <h1 class="account-title">プロフィール</h1>
+            
+                <!-- ユーザーカード -->
+                <div class="user-card">
+                    <div id="settings-avatar-wrap"></div>
+                    <div class="user-card-info">
+                        <div class="user-card-name" id="settings-user-name"></div>
+                        <div class="user-card-email" id="settings-user-email"></div>
+                        <!-- #4 UUID + コピーボタン -->
+                        <div class="user-card-uuid">
+                            <span id="settings-user-uuid"></span>
+                            <button id="copy-uuid-btn" class="copy-uuid-btn">コピー</button>
+                        </div>
+                        <div class="user-card-last-signin">最終ログイン: <span id="settings-last-signin">--</span></div>
+                    </div>
+                </div>
+            
+                <!-- #3 表示名変更ボタン -->
+                <div style="margin-bottom:20px;">
+                    <button id="edit-displayname-btn" class="btn-secondary">
+                        ✏️ 表示名を変更する
+                    </button>
+                </div>
+            
+                <!-- #2 メール確認バナー -->
+                <div id="email-verify-banner" class="banner banner-warn" style="display:none;">
+                    <p class="banner-title">📧 メールアドレスが未確認です</p>
+                    <p style="font-size:0.85rem;">一部のセキュリティ機能はメール確認後に利用できます。</p>
+                    <button id="send-verify-email-btn" class="btn-primary"
+                            style="margin-top:10px;padding:9px;font-size:0.88rem;">
+                        確認メールを再送する
+                    </button>
                     <p id="verify-email-msg" class="settings-msg"></p>
                 </div>
-
-                <div class="divider">コンテンツ進捗状況</div>
-
-                <!-- 学習進捗一覧（未来実装予定のプレースホルダー） -->
-                <div class="progress-section">
-                    <div class="progress-item">
-                        <div class="progress-header">
-                            <span class="content-name">憲法 基礎講座</span>
-                            <span class="progress-percentage">45%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" style="width: 45%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="progress-item">
-                        <div class="progress-header">
-                            <span class="content-name">民法 判例集</span>
-                            <span class="progress-percentage">12%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" style="width: 12%;"></div>
-                        </div>
-                    </div>
-                    
-                    <p class="info-text" style="text-align: center; margin-top: 16px;">
-                        ※詳細な進捗管理機能は順次アップデート予定です
-                    </p>
-                </div>
-
-                <div class="divider">危険な操作</div>
-
-                <!-- アカウント削除への導線 -->
-                <div class="danger-zone">
-                    <p class="danger-description">
-                        アカウントを削除すると、すべてのデータが完全に消去されます。
-                    </p>
-                    <a href="/account/delete" class="btn-secondary danger-text" style="display: block; text-align: center; text-decoration: none;">
-                        アカウントの削除...
-                    </a>
-                </div>
-
-                <div class="link-group">
-                    <a href="/account/settings" class="link-item">アカウント設定へ戻る</a>
+            
+                <!-- アカウント削除へのリンク -->
+                <div class="section-divider">危険な操作</div>
+                <a href="/account/delete" class="btn-danger" style="display:block;text-align:center;text-decoration:none;padding:11px;">
+                    アカウントを削除する
+                </a>
+            
+                <div class="link-group" style="margin-top:20px;">
+                    <a href="/account/settings/" class="link-item">アカウント設定に戻る</a>
                 </div>
             </div>
         </main>

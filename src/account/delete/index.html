@@ -23,37 +23,53 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
+    <body class="account-page">
         <main>
             <div class="account-container">
-                <h1 class="home-title">アカウントの削除</h1>
-                <p class="subtitle">legal&life Platform アカウントを完全に削除します</p>
+                <a href="/account/settings/" class="back-link">← アカウント設定に戻る</a>
+                <h1 class="account-title">アカウントの削除</h1>
+                <p class="account-subtitle">削除申請後、30日間はキャンセル可能です</p>
+            
                 <div id="delete-form-wrapper">
-                    <!-- チェックリスト -->
-                    <label class="deletion-check-item">
-                        <input type="checkbox" class="deletion-checkbox">
-                        <span>削除後すべてのデータの復元は不可能です</span>
-                    </label>
-                    <label class="deletion-check-item">
-                        <input type="checkbox" class="deletion-checkbox">
-                        <span>削除申請後はサービス利用が制限されます</span>
-                    </label>
-                    <label class="deletion-check-item">
-                        <input type="checkbox" class="deletion-checkbox">
-                        <span>利用履歴は匿名化してシステム改善に使用される場合があります</span>
-                    </label>
-                    <label class="deletion-check-item">
-                        <input type="checkbox" class="deletion-checkbox">
-                        <span>上記をすべて理解し削除を申請する</span>
-                    </label>
+                    <div class="banner banner-error">
+                        <p class="banner-title">⚠️ 削除前に必ずご確認ください</p>
+                        <p>削除申請から30日後にすべてのデータが完全削除されます。この操作は取り消せません。</p>
+                    </div>
+            
+                    <div class="deletion-checklist">
+                        <label class="deletion-check-item">
+                            <input type="checkbox" class="deletion-checkbox">
+                            <span>削除後、すべてのデータ（チャット履歴・アカウント情報）は完全に消去され復元不可です</span>
+                        </label>
+                        <label class="deletion-check-item">
+                            <input type="checkbox" class="deletion-checkbox">
+                            <span>削除申請後はコンテンツの利用が制限されます</span>
+                        </label>
+                        <label class="deletion-check-item">
+                            <input type="checkbox" class="deletion-checkbox">
+                            <span>利用履歴はシステム改善のために匿名化して使用される場合があります</span>
+                        </label>
+                        <label class="deletion-check-item">
+                            <input type="checkbox" class="deletion-checkbox">
+                            <span>上記をすべて理解し、アカウントの削除を申請します</span>
+                        </label>
+                    </div>
+            
                     <p id="delete-msg" class="settings-msg"></p>
+                    <div id="delete-otp-container" style="display:none;"></div>
                     <button id="delete-execute-btn" class="btn-danger" disabled>削除を申請する</button>
                 </div>
-                <div id="delete-success" style="display:none;">
-                    ✅ 削除を申請しました。30日後に完全削除されます。
-                </div>
-                <div class="link-group">
-                    <a href="/account/settings/profile" class="link-item">削除せずに戻る</a>
+            
+                <div id="delete-success" style="display:none;text-align:center;">
+                    <p style="font-size:2rem;margin-bottom:12px;">✅</p>
+                    <p style="font-size:1rem;font-weight:700;">削除を申請しました</p>
+                    <p style="font-size:0.88rem;color:#888;margin-top:8px;line-height:1.6;">
+                        30日後に完全削除されます。<br>
+                        キャンセルはアカウント設定ページから可能です。
+                    </p>
+                    <div class="link-group" style="margin-top:20px;">
+                        <a href="/" class="link-item">ホームへ戻る</a>
+                    </div>
                 </div>
             </div>
         </main>

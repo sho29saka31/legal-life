@@ -1,17 +1,36 @@
 /**
- * account.js v2.0
+ * account.js v3.0
  * アカウント関連ページ統合スクリプト
+ * ─────────────────────────────────────────────
+ * 修正済み:
+ * #0  ログイン時2FAバイパス → signOut後に再認証方式へ変更
+ * #1  最終ログイン表示
+ * #2  メール確認送信 + スペーシング
+ * #3  ユーザーネーム変更 → ポップアップ
+ * #4  UUID コピーボタン
+ * #5  プライバシー通知項目を充実
+ * #6  セキュリティページ読み込み高速化 (Promise.all並列化)
+ * #7  バックアップコード番号付き / BackUpCode / 2FA代替使用
+ * #8  ログイン方法ページ全メソッド表示
+ * #9  パスワード未設定時のみポップアップで設定
+ * #10 アクティビティ → users/{uid}/security/activity
+ * #11 現在の端末からはログアウト不可
+ * #12 設定ページにログアウトボタン
+ * #13 ログイン・登録ページにGoogle追加
+ * #14 Googleログイン popup + 同意画面1ヶ月ルール
+ * #15 signup動作修正
+ * #16 リダイレクトURL暗号化
  */
 
 import { getApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import {
     getAuth, onAuthStateChanged, signOut, GoogleAuthProvider,
-    signInWithRedirect, getRedirectResult, signInWithPopup,
+    signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     EmailAuthProvider, linkWithCredential, linkWithPopup,
     unlink, reauthenticateWithCredential, updatePassword, updateEmail,
     updateProfile, sendEmailVerification, sendPasswordResetEmail,
-    setPersistence, browserLocalPersistence, fetchSignInMethodsForEmail
+    setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 import {
     getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc,
@@ -36,16 +55,16 @@ async function getFirebase() {
 }
 
 // ============================================================
-// 定数・設定
+// 定数
 // ============================================================
-// ★ Firebase Console → Authentication → Google → ウェブクライアントID を設定
-const GOOGLE_CLIENT_ID   = "218375080608-kc02r32e2fjf6vdud3op740udcv5o4e2.apps.googleusercontent.com";
-const EMAILJS_SERVICE    = "service_glirsis";
-const EMAILJS_OTP_TPL    = "template_w2ile0p";
-const OTP_EXPIRE_MIN     = 5;
-const SESSION_KEY        = "legallife_session_id";
-const ACTIVITY_MAX_DAYS  = 365;
-const BACKUP_CODE_COUNT  = 10;
+const GOOGLE_CLIENT_ID  = "";   // Firebase Console → Auth → Google → ウェブクライアントID
+const EMAILJS_SERVICE   = "service_glirsis";
+const EMAILJS_OTP_TPL   = "template_w2ile0p";
+const OTP_EXPIRE_MIN    = 5;
+const SESSION_KEY       = "legallife_session_id";
+const ACTIVITY_MAX_DAYS = 365;
+const BACKUP_CODE_COUNT = 10;
+const CONSENT_INTERVAL  = 30 * 24 * 60 * 60 * 1000; // 30日
 
 // ページ判定
 const PAGE = (() => {
@@ -72,31 +91,61 @@ const PAGE = (() => {
 // ============================================================
 // ユーティリティ
 // ============================================================
-function esc(s) {
-    return String(s ?? "").replace(/[<>&"']/g,
-        c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"})[c]);
+const esc = (s) => String(s ?? "").replace(
+    /[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"})[c]);
+
+function setMsg(elId, text, type = "") {
+    const el = typeof elId === "string" ? document.getElementById(elId) : elId;
+    if (!el) return;
+    el.textContent = text;
+    el.className = `settings-msg ${type}`;
+}
+function btnState(id, text = null, disabled = null) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (text !== null)     el.textContent = text;
+    if (disabled !== null) el.disabled    = disabled;
+}
+function show(id) { const el = document.getElementById(id); if (el) el.style.display = "block"; }
+function hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
+
+function formatDate(ts) {
+    if (!ts) return "不明";
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+}
+function relativeDate(ts) {
+    if (!ts) return "不明";
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const diff = Date.now() - d.getTime();
+    const min = Math.floor(diff / 60000), hr = Math.floor(diff / 3600000), day = Math.floor(diff / 86400000);
+    if (min < 1)  return "たった今";
+    if (min < 60) return `${min}分前`;
+    if (hr  < 24) return `${hr}時間前`;
+    if (day < 7)  return `${day}日前`;
+    return d.toLocaleDateString("ja-JP", { year:"numeric", month:"short", day:"numeric" });
 }
 
 function parseUA() {
     const ua = navigator.userAgent;
     let browser = "その他";
-    if (ua.includes("Edg/"))           browser = "Edge";
-    else if (ua.includes("Chrome/"))   browser = "Chrome";
-    else if (ua.includes("Firefox/"))  browser = "Firefox";
-    else if (ua.includes("Safari/"))   browser = "Safari";
+    if (ua.includes("Edg/"))          browser = "Edge";
+    else if (ua.includes("Chrome/"))  browser = "Chrome";
+    else if (ua.includes("Firefox/")) browser = "Firefox";
+    else if (ua.includes("Safari/"))  browser = "Safari";
     let os = "その他";
-    if (/iPhone|iPad|iPod/.test(ua))   os = "iOS";
-    else if (ua.includes("Android"))   os = "Android";
-    else if (ua.includes("Windows"))   os = "Windows";
-    else if (ua.includes("Mac OS X"))  os = "macOS";
-    else if (ua.includes("Linux"))     os = "Linux";
+    if (/iPhone|iPad|iPod/.test(ua))  os = "iOS";
+    else if (ua.includes("Android"))  os = "Android";
+    else if (ua.includes("Windows"))  os = "Windows";
+    else if (ua.includes("Mac OS X")) os = "macOS";
+    else if (ua.includes("Linux"))    os = "Linux";
     const device = /Mobi|Android|iPhone|iPad/i.test(ua) ? "スマートフォン/タブレット" : "PC";
     return { browser, os, device };
 }
 
 async function fetchLocation() {
     try {
-        const r = await fetch("https://ipapi.run/json", { signal: AbortSignal.timeout(3000) });
+        const r = await fetch("https://ipapi.co/json", { signal: AbortSignal.timeout(3000) });
         if (r.ok) {
             const d = await r.json();
             if (d?.country_name) return [d.city, d.country_name].filter(Boolean).join(", ");
@@ -109,68 +158,50 @@ async function fetchLocation() {
     return "不明";
 }
 
-function setMsg(elId, text, type = "") {
-    const el = typeof elId === "string" ? document.getElementById(elId) : elId;
-    if (!el) return;
-    el.textContent = text;
-    el.className = `settings-msg ${type}`;
+// ============================================================
+// #16 リダイレクトURL暗号化
+// ============================================================
+function encodeRedirect(url) {
+    try { return btoa(unescape(encodeURIComponent(url))); } catch { return ""; }
 }
-
-function btn(id, text = null, disabled = null) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (text !== null)     el.textContent = text;
-    if (disabled !== null) el.disabled    = disabled;
+function decodeRedirect(encoded) {
+    try {
+        const decoded = decodeURIComponent(escape(atob(encoded)));
+        return decoded.startsWith("/") ? decoded : null;
+    } catch { return null; }
 }
-
-function show(id) { const el = document.getElementById(id); if (el) el.style.display = "block"; }
-function hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
-
-function formatDate(ts) {
-    if (!ts) return "不明";
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-}
-
-function relativeDate(ts) {
-    if (!ts) return "不明";
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    const diff = Date.now() - d.getTime();
-    const min  = Math.floor(diff / 60000);
-    const hr   = Math.floor(diff / 3600000);
-    const day  = Math.floor(diff / 86400000);
-    if (min < 1)  return "たった今";
-    if (min < 60) return `${min}分前`;
-    if (hr  < 24) return `${hr}時間前`;
-    if (day < 7)  return `${day}日前`;
-    return d.toLocaleDateString("ja-JP", { month: "short", day: "numeric" });
+function redirectAfterLogin() {
+    const params = new URLSearchParams(location.search);
+    const r = params.get("r");
+    const decoded = r ? decodeRedirect(r) : null;
+    window.location.replace(decoded || "/account/settings/");
 }
 
 // ============================================================
-// アクティビティログ
+// #10 アクティビティログ → users/{uid}/security/activity
 // ============================================================
 async function logActivity(uid, type, detail = "") {
     const { db } = await getFirebase();
     const ua = parseUA();
     try {
-        await addDoc(collection(db, "users", uid, "activity"), {
+        await addDoc(collection(db, "users", uid, "security", "activity"), {
             type, detail,
             timestamp: serverTimestamp(),
-            browser:   ua.browser,
-            os:        ua.os,
-            device:    ua.device,
+            browser: ua.browser,
+            os:      ua.os,
+            device:  ua.device,
         });
-        // 1年以上前のログを非同期で削除
         cleanupOldActivity(uid, db);
-    } catch (e) {
-        console.warn("Activity log failed:", e);
-    }
+    } catch (e) { console.warn("Activity log failed:", e); }
 }
 
 async function cleanupOldActivity(uid, db) {
     try {
         const cutoff = Timestamp.fromMillis(Date.now() - ACTIVITY_MAX_DAYS * 86400000);
-        const q    = query(collection(db, "users", uid, "activity"), where("timestamp", "<", cutoff));
+        const q = query(
+            collection(db, "users", uid, "security", "activity"),
+            where("timestamp", "<", cutoff)
+        );
         const snap = await getDocs(q);
         await Promise.allSettled(snap.docs.map(d => deleteDoc(d.ref)));
     } catch (_) {}
@@ -179,15 +210,13 @@ async function cleanupOldActivity(uid, db) {
 // ============================================================
 // OTP ユーティリティ
 // ============================================================
-function genOTP() {
-    return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
-}
+const genOTP = () => String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
 
 async function saveOTP(uid, db, code, purpose) {
     await setDoc(doc(db, "users", uid, "security", "twoFactor"), {
         otpCode: code,
         otpExpiryMs: Date.now() + OTP_EXPIRE_MIN * 60_000,
-        otpPurpose:  purpose,
+        otpPurpose: purpose,
     }, { merge: true });
 }
 
@@ -195,9 +224,9 @@ async function verifyOTP(uid, db, input, purpose) {
     const snap = await getDoc(doc(db, "users", uid, "security", "twoFactor"));
     if (!snap.exists()) return { ok: false, reason: "コードが見つかりません" };
     const { otpCode, otpExpiryMs, otpPurpose } = snap.data();
-    if (otpPurpose !== purpose)      return { ok: false, reason: "用途が一致しません" };
-    if (Date.now() > otpExpiryMs)    return { ok: false, reason: "有効期限が切れています" };
-    if (otpCode !== input)           return { ok: false, reason: "コードが正しくありません" };
+    if (otpPurpose !== purpose)   return { ok: false, reason: "用途が一致しません" };
+    if (Date.now() > otpExpiryMs) return { ok: false, reason: "有効期限が切れています" };
+    if (otpCode !== input)        return { ok: false, reason: "コードが正しくありません" };
     return { ok: true };
 }
 
@@ -210,9 +239,9 @@ async function clearOTP(uid, db) {
 async function sendOTPEmail(user, code, purpose) {
     if (!window.emailjs) throw new Error("EmailJS未初期化");
     await window.emailjs.send(EMAILJS_SERVICE, EMAILJS_OTP_TPL, {
-        to_email:       user.email,
-        to_name:        user.displayName || "ユーザー",
-        otp_code:       code,
+        to_email: user.email,
+        to_name:  user.displayName || "ユーザー",
+        otp_code: code,
         expiry_minutes: OTP_EXPIRE_MIN,
         purpose,
     });
@@ -223,48 +252,103 @@ async function is2FAEnabled(uid, db) {
     return snap.exists() && (snap.data().enabled ?? false);
 }
 
-// OTP確認UIをモーダルで表示 → Promise<boolean>
-function showOTPModal(purpose, labelText) {
-    return new Promise((resolve) => {
-        const overlay = Object.assign(document.createElement("div"), {
-            className: "otp-modal-overlay",
-            innerHTML: `
-<div class="otp-modal-box">
-    <p class="otp-modal-title">🔐 認証コードを入力</p>
-    <p class="otp-modal-desc">${esc(labelText)}</p>
-    <input id="_otpInput" type="text" inputmode="numeric" maxlength="6"
-           placeholder="000000" class="otp-input" autocomplete="one-time-code">
-    <p id="_otpError" class="otp-error"></p>
-    <div class="otp-btns">
-        <button id="_otpCancel" class="otp-btn-cancel">キャンセル</button>
-        <button id="_otpSubmit" class="otp-btn-submit">確認する</button>
+// ============================================================
+// #7 バックアップコード照合 → users/{uid}/security/BackUpCode
+// ============================================================
+async function tryBackupCode(uid, db, input) {
+    if (!input || input.length < 6) return { ok: false };
+    try {
+        const snap = await getDoc(doc(db, "users", uid, "security", "BackUpCode"));
+        if (!snap.exists()) return { ok: false };
+        const codes = snap.data().codes || [];
+        const idx   = codes.findIndex(c => !c.used && c.code === input.toUpperCase());
+        if (idx === -1) return { ok: false, reason: "バックアップコードが正しくありません" };
+        // 使用済みにマーク
+        codes[idx].used = true;
+        await setDoc(doc(db, "users", uid, "security", "BackUpCode"),
+            { codes }, { merge: true });
+        return { ok: true };
+    } catch (e) { return { ok: false }; }
+}
+
+// ============================================================
+// OTPモーダル (インラインパネル方式)
+// ============================================================
+function showOTPPanel(containerId, {
+    title = "認証コードを入力",
+    desc  = "",
+    showBackupInput = false,
+    onVerify,       // async (code: string) => { ok, reason }
+    onCancel,
+}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = `
+<div class="otp-panel">
+    <p class="otp-panel-title">${esc(title)}</p>
+    <p class="otp-panel-desc">${esc(desc)}</p>
+    <input id="_otp_code" type="text" inputmode="numeric" maxlength="6"
+           placeholder="000000" class="otp-panel-input" autocomplete="one-time-code">
+    ${showBackupInput ? `
+    <p class="otp-panel-or">または</p>
+    <input id="_otp_backup" type="text" maxlength="16"
+           placeholder="バックアップコード" class="otp-panel-input otp-panel-backup">
+    ` : ""}
+    <p id="_otp_error" class="otp-error"></p>
+    <div class="otp-panel-btns">
+        <button id="_otp_cancel" class="btn-secondary-sm">キャンセル</button>
+        <button id="_otp_submit" class="btn-primary-sm">確認する</button>
     </div>
-</div>`,
-        });
-        document.body.appendChild(overlay);
-        setTimeout(() => overlay.querySelector("#_otpInput")?.focus(), 50);
+</div>`;
 
-        const cleanup = (result) => {
-            document.body.removeChild(overlay);
-            resolve(result);
-        };
+    container.style.display = "block";
 
-        overlay.querySelector("#_otpCancel").onclick = () => cleanup(false);
-        overlay.querySelector("#_otpSubmit").onclick = async () => {
-            const code    = overlay.querySelector("#_otpInput").value.trim();
-            const submitB = overlay.querySelector("#_otpSubmit");
-            const errEl   = overlay.querySelector("#_otpError");
-            if (!code) { errEl.textContent = "コードを入力してください"; return; }
-            submitB.disabled = true; submitB.textContent = "確認中...";
-            errEl.textContent = "";
-            // 呼び出し元でVerify処理を行うため、入力値をカスタムイベントで返す
-            overlay.dataset.code = code;
-            cleanup(code);
-        };
-        overlay.querySelector("#_otpInput").onkeydown = (e) => {
-            if (e.key === "Enter") overlay.querySelector("#_otpSubmit").click();
-        };
+    const codeInput   = container.querySelector("#_otp_code");
+    const backupInput = container.querySelector("#_otp_backup");
+    const errEl       = container.querySelector("#_otp_error");
+    const submitBtn   = container.querySelector("#_otp_submit");
+    const cancelBtn   = container.querySelector("#_otp_cancel");
+
+    setTimeout(() => codeInput?.focus(), 50);
+
+    const cleanup = () => { container.innerHTML = ""; container.style.display = "none"; };
+
+    cancelBtn.onclick = () => { cleanup(); onCancel?.(); };
+
+    submitBtn.onclick = async () => {
+        const code   = codeInput?.value.trim() || "";
+        const backup = backupInput?.value.trim() || "";
+        const input  = code || backup;
+        if (!input) { errEl.textContent = "コードを入力してください"; return; }
+
+        submitBtn.disabled    = true;
+        submitBtn.textContent = "確認中...";
+        errEl.textContent     = "";
+
+        const result = await onVerify(input, !!backup);
+        if (result.ok) {
+            cleanup();
+        } else {
+            errEl.textContent    = result.reason || "コードが正しくありません";
+            submitBtn.disabled   = false;
+            submitBtn.textContent = "確認する";
+        }
+    };
+
+    if (codeInput) {
+        codeInput.onkeydown = (e) => { if (e.key === "Enter") submitBtn.click(); };
+    }
+}
+
+// ポップアップモーダル (汎用)
+function createPopup(innerHTML) {
+    const overlay = Object.assign(document.createElement("div"), {
+        className: "popup-overlay",
+        innerHTML: `<div class="popup-box">${innerHTML}</div>`,
     });
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+    return overlay;
 }
 
 // ============================================================
@@ -276,18 +360,19 @@ async function sendNotification(user, db, actionType, detail = "") {
         const prefSnap = await getDoc(doc(db, "users", user.uid, "settings", "notifications"));
         const prefs = prefSnap.exists() ? prefSnap.data() : {};
         if (prefs[actionType] === false) return;
+        if (!window.emailjs) return;
         const msgs = {
-            login:           { s:"ログイン通知",         b:`${detail || "アカウントにログインがありました"}\n\n身に覚えがない場合はすぐにパスワードを変更してください。` },
-            passwordChange:  { s:"パスワード変更通知",   b:"パスワードが変更されました。身に覚えがない場合は対処してください。" },
-            otpChange:       { s:"二段階認証設定変更通知", b:`二段階認証が${detail}されました。` },
-            deletionRequest: { s:"アカウント削除依頼",    b:"アカウント削除が申請されました。30日以内にキャンセル可能です。" },
+            login:           "アカウントにログインがありました",
+            passwordChange:  "パスワードが変更されました",
+            emailChange:     "メールアドレスが変更されました",
+            otpChange:       `二段階認証が${detail}されました`,
+            deletionRequest: "アカウント削除が申請されました（30日以内にキャンセル可能）",
         };
-        const msg = msgs[actionType];
-        if (!msg || !window.emailjs) return;
+        const body = msgs[actionType] || detail;
+        if (!body) return;
         await window.emailjs.send(EMAILJS_SERVICE, EMAILJS_OTP_TPL, {
             to_email: user.email, to_name: user.displayName || "ユーザー",
-            otp_code: "", expiry_minutes: "", purpose: msg.s,
-            message_body: msg.b,
+            otp_code: "", expiry_minutes: "", purpose: body,
         });
     } catch (_) {}
 }
@@ -311,10 +396,10 @@ async function registerSession(user, db) {
     try {
         const snap = await getDoc(ref);
         if (!snap.exists()) {
-            const location = await fetchLocation();
+            const location_ = await fetchLocation();
             await setDoc(ref, {
                 sessionId: sid, browser: ua.browser, os: ua.os, device: ua.device,
-                location, loginAt: serverTimestamp(), lastActive: serverTimestamp(),
+                location: location_, loginAt: serverTimestamp(), lastActive: serverTimestamp(),
                 shouldLogout: false,
             });
         } else {
@@ -334,15 +419,7 @@ async function removeSession(user, db) {
 }
 
 // ============================================================
-// ログイン後のリダイレクト先
-// ============================================================
-function redirectAfterLogin() {
-    const next = new URLSearchParams(location.search).get("next");
-    window.location.replace(next || "/account/settings/");
-}
-
-// ============================================================
-// 認証必須チェック (ログインが必要なページで使用)
+// 認証必須 (未ログイン時は暗号化URLへ)
 // ============================================================
 async function requireAuth() {
     const { auth } = await getFirebase();
@@ -350,7 +427,8 @@ async function requireAuth() {
         const unsub = onAuthStateChanged(auth, (user) => {
             unsub();
             if (!user) {
-                window.location.replace("/account/login?next=" + encodeURIComponent(location.pathname));
+                const encoded = encodeRedirect(location.pathname + location.search);
+                window.location.replace(`/account/login?r=${encoded}`);
             } else {
                 resolve(user);
             }
@@ -360,139 +438,179 @@ async function requireAuth() {
 
 // ============================================================
 // ============================================================
-// ページ初期化関数
+// ページ初期化
 // ============================================================
 // ============================================================
 
 // ─────────────────────────────────────────
-// /account/signup  アカウント作成
+// #13 /account/login  (Google + メール, 2FA対応)
 // ─────────────────────────────────────────
-async function initSignup() {
-    const { auth, db } = await getFirebase();
-    onAuthStateChanged(auth, (u) => { if (u) redirectAfterLogin(); });
+let _pendingLoginEmail = "";   // 2FA一時保管 (メモリのみ)
+let _pendingLoginPass  = "";
 
-    // Googleボタン
-    document.getElementById("google-signup-btn")?.addEventListener("click", async () => {
-        try {
-            const provider = new GoogleAuthProvider();
-            await signInWithRedirect(auth, provider);
-        } catch (e) { showFormError("google-error", e.message); }
-    });
-
-    // リダイレクト結果の処理
-    try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-            await logActivity(result.user.uid, "signup", "Google");
-            redirectAfterLogin();
-        }
-    } catch (e) { showFormError("google-error", e.message); }
-
-    // メール登録フォーム
-    document.getElementById("signup-submit")?.addEventListener("click", async () => {
-        const name  = document.getElementById("signup-name")?.value.trim();
-        const email = document.getElementById("signup-email")?.value.trim();
-        const pass  = document.getElementById("signup-password")?.value;
-        const pass2 = document.getElementById("signup-password-confirm")?.value;
-        const msgEl = document.getElementById("signup-msg");
-
-        if (!name)              return setMsg(msgEl, "お名前を入力してください", "error");
-        if (!email)             return setMsg(msgEl, "メールアドレスを入力してください", "error");
-        if (pass.length < 6)    return setMsg(msgEl, "パスワードは6文字以上にしてください", "error");
-        if (pass !== pass2)     return setMsg(msgEl, "パスワードが一致しません", "error");
-
-        btn("signup-submit", "作成中...", true);
-        setMsg(msgEl, "", "");
-
-        try {
-            const cred = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(cred.user, { displayName: name });
-            await sendEmailVerification(cred.user);
-            await logActivity(cred.user.uid, "signup", "メール");
-            redirectAfterLogin();
-        } catch (e) {
-            const M = {
-                "auth/email-already-in-use": "このメールアドレスはすでに使用されています",
-                "auth/invalid-email":        "メールアドレスの形式が正しくありません",
-                "auth/weak-password":        "パスワードは6文字以上にしてください",
-            };
-            setMsg(msgEl, M[e.code] || e.message, "error");
-            btn("signup-submit", "作成", false);
-        }
-    });
-}
-
-// ─────────────────────────────────────────
-// /account/login  ログイン
-// ─────────────────────────────────────────
 async function initLogin() {
     const { auth, db } = await getFirebase();
 
-    // すでにログイン済みなら即リダイレクト
+    // ログイン済みなら即リダイレクト
     onAuthStateChanged(auth, (u) => { if (u) redirectAfterLogin(); });
 
-    // ──── Googleリダイレクト結果の処理 ────
-    try {
-        btn("google-login-btn", "確認中...", true);
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-            await _afterLoginSuccess(result.user, "Google", db);
-            return;
+    // ──── #14 Google ログイン (popup / 同意画面1ヶ月ルール) ────
+    const _doGoogleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        // 最後の同意から30日以上経過 or 初回 → consent
+        const lastConsent = localStorage.getItem("ll_last_consent");
+        if (!lastConsent || Date.now() - parseInt(lastConsent) > CONSENT_INTERVAL) {
+            provider.setCustomParameters({ prompt: "consent" });
+        } else {
+            provider.setCustomParameters({ prompt: "select_account" });
         }
-    } catch (e) {
-        const M = {
-            "auth/account-exists-with-different-credential":
-                "このメールアドレスは別の方法で登録済みです",
-        };
-        setMsg("google-error", M[e.code] || e.message, "error");
-    } finally {
-        btn("google-login-btn", "Googleでログイン", false);
+        try {
+            // popup で試みる (ブロックされたら redirect にフォールバック)
+            const result = await signInWithPopup(auth, provider);
+            localStorage.setItem("ll_last_consent", Date.now().toString());
+            await _afterLoginSuccess(result.user, "Google", db);
+        } catch (e) {
+            if (e.code === "auth/popup-blocked" || e.code === "auth/popup-closed-by-user") {
+                // フォールバック: リダイレクト
+                sessionStorage.setItem("ll_redirect_login", "1");
+                await signInWithRedirect(auth, provider);
+            } else {
+                const M = {
+                    "auth/account-exists-with-different-credential": "このメールアドレスは別の方法で登録済みです",
+                };
+                setMsg("google-error", M[e.code] || e.message, "error");
+            }
+        }
+    };
+
+    // リダイレクト結果の処理 (popup blocked時のフォールバック)
+    if (sessionStorage.getItem("ll_redirect_login")) {
+        sessionStorage.removeItem("ll_redirect_login");
+        try {
+            btnState("google-login-btn", "確認中...", true);
+            const result = await getRedirectResult(auth);
+            if (result?.user) {
+                localStorage.setItem("ll_last_consent", Date.now().toString());
+                await _afterLoginSuccess(result.user, "Google", db);
+                return;
+            }
+        } catch (e) {
+            setMsg("google-error", e.message, "error");
+        } finally {
+            btnState("google-login-btn", "Googleでログイン", false);
+        }
     }
 
-    // ──── Google OneTap (GOOGLE_CLIENT_IDが設定されている場合のみ) ────
+    document.getElementById("google-login-btn")?.addEventListener("click", _doGoogleLogin);
+
+    // OneTap (GOOGLE_CLIENT_ID設定時のみ)
     if (GOOGLE_CLIENT_ID && window.google?.accounts) {
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
-            callback: async (response) => {
+            callback: async (resp) => {
                 try {
-                    const { GoogleAuthProvider } = await import(
-                        "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js"
-                    );
-                    const credential = GoogleAuthProvider.credential(response.credential);
+                    const cred = GoogleAuthProvider.credential(resp.credential);
                     const result = await signInWithPopup(auth, new GoogleAuthProvider());
                     await _afterLoginSuccess(result.user, "Google OneTap", db);
                 } catch (e) { setMsg("google-error", e.message, "error"); }
             },
             auto_select: false,
-            cancel_on_tap_outside: true,
         });
-        const container = document.getElementById("google-onetap-container");
-        if (container) {
-            google.accounts.id.renderButton(container, {
-                type: "standard", theme: "outline", size: "large", width: 340, locale: "ja",
-            });
-        }
+        const c = document.getElementById("google-onetap-container");
+        if (c) google.accounts.id.renderButton(c, { type:"standard", theme:"outline", size:"large", width:320, locale:"ja" });
         google.accounts.id.prompt();
     }
 
-    // ──── Googleボタン（リダイレクト方式） ────
-    document.getElementById("google-login-btn")?.addEventListener("click", async () => {
-        try {
-            btn("google-login-btn", "Googleへ移動中...", true);
-            await signInWithRedirect(auth, new GoogleAuthProvider());
-        } catch (e) {
-            setMsg("google-error", e.message, "error");
-            btn("google-login-btn", "Googleでログイン", false);
-        }
-    });
-
     // ──── メールログイン ────
-    document.getElementById("login-submit")?.addEventListener("click", _handleEmailLogin.bind(null, auth, db));
-    document.getElementById("login-password")?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") document.getElementById("login-submit")?.click();
-    });
+    const doEmailLogin = async () => {
+        const email = document.getElementById("login-email")?.value.trim();
+        const pass  = document.getElementById("login-password")?.value;
+        const msgEl = document.getElementById("login-msg");
 
-    // ──── パスワードリセット ────
+        if (!email || !pass) return setMsg(msgEl, "メールアドレスとパスワードを入力してください", "error");
+        btnState("login-submit", "確認中...", true);
+        setMsg(msgEl, "", "");
+
+        try {
+            // Step1: 認証情報確認 (ログイン実行)
+            const cred = await signInWithEmailAndPassword(auth, email, pass);
+
+            // Step2: 2FA チェック
+            const enabled = await is2FAEnabled(cred.user.uid, db);
+            if (enabled && cred.user.email) {
+                // OTP保存・送信 (認証済み状態で実行)
+                const code = genOTP();
+                await saveOTP(cred.user.uid, db, code, "login_verify");
+                await sendOTPEmail(cred.user, code, "ログイン認証");
+
+                // #0 FIX: 一時ログアウト → 2FA確認後に再ログイン
+                await signOut(auth);
+
+                // 認証情報をメモリに保持 (Firestoreには保存しない)
+                _pendingLoginEmail = email;
+                _pendingLoginPass  = pass;
+
+                setMsg(msgEl, `📧 ${cred.user.email} に認証コードを送信しました`, "success");
+
+                // 2FAパネルを表示
+                hide("login-form-section");
+                show("twofa-verify-section");
+
+                showOTPPanel("twofa-panel-container", {
+                    title: "二段階認証",
+                    desc:  `メールに送信された6桁のコードを入力してください (有効期限${OTP_EXPIRE_MIN}分)`,
+                    showBackupInput: true,
+                    onVerify: async (input, isBackup) => {
+                        // 再認証
+                        const cred2 = await signInWithEmailAndPassword(auth, _pendingLoginEmail, _pendingLoginPass)
+                            .catch(() => null);
+                        if (!cred2) return { ok: false, reason: "再認証に失敗しました" };
+
+                        if (isBackup) {
+                            // バックアップコード照合
+                            const res = await tryBackupCode(cred2.user.uid, db, input);
+                            if (!res.ok) { await signOut(auth); return { ok: false, reason: res.reason || "バックアップコードが正しくありません" }; }
+                        } else {
+                            // OTP照合
+                            const res = await verifyOTP(cred2.user.uid, db, input, "login_verify");
+                            if (!res.ok) { await signOut(auth); return res; }
+                            await clearOTP(cred2.user.uid, db);
+                        }
+
+                        _pendingLoginEmail = "";
+                        _pendingLoginPass  = "";
+                        await _afterLoginSuccess(cred2.user, "メール+2FA", db);
+                        return { ok: true };
+                    },
+                    onCancel: () => {
+                        _pendingLoginEmail = "";
+                        _pendingLoginPass  = "";
+                        show("login-form-section");
+                        hide("twofa-verify-section");
+                        btnState("login-submit", "ログイン", false);
+                    },
+                });
+                return;
+            }
+
+            await _afterLoginSuccess(cred.user, "メール", db);
+        } catch (e) {
+            const M = {
+                "auth/user-not-found":     "このメールアドレスは登録されていません",
+                "auth/wrong-password":     "パスワードが間違っています",
+                "auth/invalid-credential": "メールアドレスまたはパスワードが間違っています",
+                "auth/too-many-requests":  "しばらく時間をおいてから再試行してください",
+            };
+            setMsg(document.getElementById("login-msg"), M[e.code] || e.message, "error");
+        } finally {
+            btnState("login-submit", "ログイン", false);
+        }
+    };
+
+    document.getElementById("login-submit")?.addEventListener("click", doEmailLogin);
+    document.getElementById("login-password")?.addEventListener("keydown", e => { if (e.key === "Enter") doEmailLogin(); });
+
+    // パスワードリセット
     document.getElementById("forgot-password-btn")?.addEventListener("click", async () => {
         const email = document.getElementById("login-email")?.value.trim();
         const msgEl = document.getElementById("login-msg");
@@ -501,74 +619,9 @@ async function initLogin() {
             await sendPasswordResetEmail(auth, email);
             setMsg(msgEl, "✅ パスワードリセットメールを送信しました", "success");
         } catch (e) {
-            const M = {
-                "auth/user-not-found": "このメールアドレスは登録されていません",
-                "auth/invalid-email":  "メールアドレスの形式が正しくありません",
-            };
-            setMsg(msgEl, M[e.code] || e.message, "error");
+            setMsg(msgEl, e.code === "auth/user-not-found" ? "登録されていません" : e.message, "error");
         }
     });
-
-    // ──── 新規登録リンク ────
-    document.getElementById("to-signup-btn")?.addEventListener("click", () => {
-        window.location.href = "/account/signup";
-    });
-}
-
-async function _handleEmailLogin(auth, db) {
-    const email = document.getElementById("login-email")?.value.trim();
-    const pass  = document.getElementById("login-password")?.value;
-    const msgEl = document.getElementById("login-msg");
-
-    if (!email || !pass) return setMsg(msgEl, "メールアドレスとパスワードを入力してください", "error");
-
-    btn("login-submit", "ログイン中...", true);
-    setMsg(msgEl, "", "");
-
-    try {
-        const cred = await signInWithEmailAndPassword(auth, email, pass);
-
-        // ── ログイン時2FAチェック ──
-        const enabled = await is2FAEnabled(cred.user.uid, db);
-        if (enabled && cred.user.email) {
-            // OTP送信
-            const code = genOTP();
-            await saveOTP(cred.user.uid, db, code, "login_verify");
-            await sendOTPEmail(cred.user, code, "ログイン認証");
-
-            // OTP確認モーダル表示
-            setMsg(msgEl, `📧 ${cred.user.email} に認証コードを送信しました`, "success");
-
-            const inputCode = await showOTPModal("login_verify", `${cred.user.email} に送信した6桁のコードを入力してください`);
-            if (!inputCode) {
-                // キャンセル → ログアウト
-                await signOut(auth);
-                setMsg(msgEl, "認証がキャンセルされました", "error");
-                btn("login-submit", "ログイン", false);
-                return;
-            }
-
-            const result = await verifyOTP(cred.user.uid, db, inputCode, "login_verify");
-            if (!result.ok) {
-                await signOut(auth);
-                setMsg(msgEl, result.reason, "error");
-                btn("login-submit", "ログイン", false);
-                return;
-            }
-            await clearOTP(cred.user.uid, db);
-        }
-
-        await _afterLoginSuccess(cred.user, "メール", db);
-    } catch (e) {
-        const M = {
-            "auth/user-not-found":     "このメールアドレスは登録されていません",
-            "auth/wrong-password":     "パスワードが間違っています",
-            "auth/invalid-credential": "メールアドレスまたはパスワードが間違っています",
-            "auth/too-many-requests":  "しばらく時間をおいてから再試行してください",
-        };
-        setMsg(msgEl, M[e.code] || e.message, "error");
-        btn("login-submit", "ログイン", false);
-    }
 }
 
 async function _afterLoginSuccess(user, method, db) {
@@ -579,52 +632,122 @@ async function _afterLoginSuccess(user, method, db) {
 }
 
 // ─────────────────────────────────────────
-// /account/logout  ログアウト
+// #13/#15 /account/signup  (Google + メール)
+// ─────────────────────────────────────────
+async function initSignup() {
+    const { auth, db } = await getFirebase();
+    onAuthStateChanged(auth, (u) => { if (u) redirectAfterLogin(); });
+
+    // Google登録
+    const _doGoogleSignup = async () => {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "consent" });
+        localStorage.setItem("ll_last_consent", Date.now().toString());
+        try {
+            const result = await signInWithPopup(auth, provider);
+            await logActivity(result.user.uid, "signup", "Google");
+            redirectAfterLogin();
+        } catch (e) {
+            if (e.code === "auth/popup-blocked") {
+                sessionStorage.setItem("ll_redirect_signup", "1");
+                await signInWithRedirect(auth, provider);
+            } else {
+                setMsg("google-error", e.message, "error");
+            }
+        }
+    };
+
+    if (sessionStorage.getItem("ll_redirect_signup")) {
+        sessionStorage.removeItem("ll_redirect_signup");
+        try {
+            const result = await getRedirectResult(auth);
+            if (result?.user) {
+                await logActivity(result.user.uid, "signup", "Google");
+                redirectAfterLogin();
+                return;
+            }
+        } catch (_) {}
+    }
+
+    document.getElementById("google-signup-btn")?.addEventListener("click", _doGoogleSignup);
+
+    // メール登録
+    document.getElementById("signup-submit")?.addEventListener("click", async () => {
+        const name  = document.getElementById("signup-name")?.value.trim();
+        const email = document.getElementById("signup-email")?.value.trim();
+        const pass  = document.getElementById("signup-password")?.value;
+        const pass2 = document.getElementById("signup-password-confirm")?.value;
+        const msgEl = document.getElementById("signup-msg");
+
+        if (!name)             return setMsg(msgEl, "お名前を入力してください", "error");
+        if (!email)            return setMsg(msgEl, "メールアドレスを入力してください", "error");
+        if (pass.length < 6)   return setMsg(msgEl, "パスワードは6文字以上にしてください", "error");
+        if (pass !== pass2)    return setMsg(msgEl, "パスワードが一致しません", "error");
+
+        btnState("signup-submit", "作成中...", true);
+        setMsg(msgEl, "", "");
+
+        try {
+            const cred = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(cred.user, { displayName: name });
+            // メール確認送信
+            await sendEmailVerification(cred.user).catch(() => {});
+            await logActivity(cred.user.uid, "signup", "メール");
+            redirectAfterLogin();
+        } catch (e) {
+            const M = {
+                "auth/email-already-in-use": "このメールアドレスはすでに使用されています",
+                "auth/invalid-email":        "メールアドレスの形式が正しくありません",
+                "auth/weak-password":        "パスワードは6文字以上にしてください",
+            };
+            setMsg(msgEl, M[e.code] || e.message, "error");
+            btnState("signup-submit", "作成", false);
+        }
+    });
+}
+
+// ─────────────────────────────────────────
+// /account/logout
 // ─────────────────────────────────────────
 async function initLogout() {
     const { auth, db } = await getFirebase();
     try {
         const user = auth.currentUser;
         if (user) {
-            await logActivity(user.uid, "logout", "");
-            await removeSession(user, db);
+            await Promise.allSettled([
+                logActivity(user.uid, "logout", ""),
+                removeSession(user, db),
+            ]);
         }
         await signOut(auth);
-        // セッションキャッシュもクリア
         sessionStorage.removeItem("ll_auth_cache");
-        // ログアウト完了UI表示
         show("logout-success");
         hide("logout-loading");
-        // 3秒後にトップへ
         setTimeout(() => window.location.replace("/"), 3000);
     } catch (e) {
-        console.error("Logout error:", e);
         window.location.replace("/");
     }
 }
 
 // ─────────────────────────────────────────
-// /account/delete  アカウント削除
+// /account/delete
 // ─────────────────────────────────────────
 async function initDelete() {
-    const user        = await requireAuth();
+    const user = await requireAuth();
     const { auth, db } = await getFirebase();
 
-    // チェックボックス監視
-    const checkboxes  = document.querySelectorAll(".deletion-checkbox");
-    const executeBtn  = document.getElementById("delete-execute-btn");
+    const checkboxes = document.querySelectorAll(".deletion-checkbox");
+    const execBtn    = document.getElementById("delete-execute-btn");
+
     const updateCheck = () => {
-        if (executeBtn) executeBtn.disabled =
-            ![...checkboxes].every(c => c.checked);
+        if (execBtn) execBtn.disabled = ![...checkboxes].every(c => c.checked);
     };
     checkboxes.forEach(c => c.addEventListener("change", updateCheck));
     updateCheck();
 
-    // 削除申請
-    executeBtn?.addEventListener("click", async () => {
+    execBtn?.addEventListener("click", async () => {
         const msgEl = document.getElementById("delete-msg");
-        btn("delete-execute-btn", "処理中...", true);
-        setMsg(msgEl, "", "");
+        btnState("delete-execute-btn", "処理中...", true);
 
         // 2FA確認
         const enabled = await is2FAEnabled(user.uid, db);
@@ -634,48 +757,48 @@ async function initDelete() {
             await sendOTPEmail(user, code, "アカウント削除申請");
             setMsg(msgEl, `📧 ${user.email} に認証コードを送信しました`, "success");
 
-            const inputCode = await showOTPModal("account_delete",
-                `${user.email} に送信した6桁のコードを入力してください`);
-            if (!inputCode) {
-                setMsg(msgEl, "キャンセルしました", "error");
-                btn("delete-execute-btn", "削除を申請する", false);
-                return;
-            }
-            const res = await verifyOTP(user.uid, db, inputCode, "account_delete");
-            if (!res.ok) {
-                setMsg(msgEl, res.reason, "error");
-                btn("delete-execute-btn", "削除を申請する", false);
-                return;
-            }
-            await clearOTP(user.uid, db);
+            showOTPPanel("delete-otp-container", {
+                title: "本人確認",
+                desc:  `${user.email} に送信した6桁のコードを入力してください`,
+                onVerify: async (input) => {
+                    const res = await verifyOTP(user.uid, db, input, "account_delete");
+                    if (!res.ok) { btnState("delete-execute-btn", "削除を申請する", false); return res; }
+                    await clearOTP(user.uid, db);
+                    await _executeDeletion(user, auth, db);
+                    return { ok: true };
+                },
+                onCancel: () => btnState("delete-execute-btn", "削除を申請する", false),
+            });
+            return;
         }
 
-        // Firestoreに削除スケジュールを記録
-        const scheduledAt = Timestamp.fromMillis(Date.now() + 30 * 86400000);
-        await setDoc(doc(db, "users", user.uid), {
-            deletionPending:   true,
-            scheduledDeletion: scheduledAt,
-            deletionRequestAt: serverTimestamp(),
-        }, { merge: true });
-
-        await logActivity(user.uid, "deletion_request", "30日後削除予定");
-        await sendNotification(user, db, "deletionRequest", "");
-
-        // ログアウトして完了画面へ
-        await removeSession(user, db);
-        await signOut(auth);
-        sessionStorage.removeItem("ll_auth_cache");
-        hide("delete-form-wrapper");
-        show("delete-success");
+        await _executeDeletion(user, auth, db);
     });
 }
 
+async function _executeDeletion(user, auth, db) {
+    const scheduledAt = Timestamp.fromMillis(Date.now() + 30 * 86400000);
+    await setDoc(doc(db, "users", user.uid), {
+        deletionPending: true, scheduledDeletion: scheduledAt,
+        deletionRequestAt: serverTimestamp(),
+    }, { merge: true });
+    await logActivity(user.uid, "deletion_request", "30日後削除予定");
+    await sendNotification(user, db, "deletionRequest", "");
+    await removeSession(user, db);
+    await signOut(auth);
+    sessionStorage.removeItem("ll_auth_cache");
+    hide("delete-form-wrapper");
+    show("delete-success");
+}
+
 // ─────────────────────────────────────────
-// /account/settings/  設定ハブ
+// #12 /account/settings/  (ログアウトボタン追加)
 // ─────────────────────────────────────────
 async function initSettings() {
     const user = await requireAuth();
     const { db } = await getFirebase();
+
+    _renderUserCard(user);
 
     // 削除申請中バナー
     const snap = await getDoc(doc(db, "users", user.uid));
@@ -686,19 +809,20 @@ async function initSettings() {
         if (el && d) el.textContent = d.toLocaleString("ja-JP");
     }
 
-    // ユーザー情報表示
-    _renderUserCard(user);
-
-    // 削除キャンセル
     document.getElementById("cancel-deletion-btn")?.addEventListener("click", async () => {
         if (!confirm("アカウント削除をキャンセルしますか？")) return;
         await setDoc(doc(db, "users", user.uid), { deletionPending: false, scheduledDeletion: null }, { merge: true });
         hide("deletion-pending-banner");
     });
+
+    // #12 ログアウトリンク
+    document.getElementById("settings-logout-btn")?.addEventListener("click", () => {
+        window.location.href = "/account/logout";
+    });
 }
 
 // ─────────────────────────────────────────
-// /account/settings/profile  プロフィール
+// #3 #4 /account/settings/profile  (ポップアップ名前変更, UUID コピー)
 // ─────────────────────────────────────────
 async function initProfile() {
     const user = await requireAuth();
@@ -706,55 +830,84 @@ async function initProfile() {
 
     _renderUserCard(user);
 
-    // 表示名変更
-    const nameInput = document.getElementById("profile-display-name");
-    if (nameInput) nameInput.value = user.displayName || "";
+    // #3 表示名変更 → ポップアップ
+    document.getElementById("edit-displayname-btn")?.addEventListener("click", () => {
+        const overlay = createPopup(`
+<h3 class="popup-title">表示名を変更</h3>
+<input id="_name_input" type="text" class="form-input"
+       value="${esc(user.displayName || "")}" placeholder="新しい表示名" maxlength="50">
+<p id="_name_msg" class="settings-msg"></p>
+<div class="popup-btns">
+    <button id="_name_cancel" class="btn-secondary-sm">キャンセル</button>
+    <button id="_name_save"   class="btn-primary-sm">保存する</button>
+</div>`);
 
-    document.getElementById("profile-save-btn")?.addEventListener("click", async () => {
-        const name  = document.getElementById("profile-display-name")?.value.trim();
-        const msgEl = document.getElementById("profile-msg");
-        if (!name) return setMsg(msgEl, "名前を入力してください", "error");
-        btn("profile-save-btn", "保存中...", true);
-        try {
-            await updateProfile(user, { displayName: name });
-            setMsg(msgEl, "✅ 更新しました", "success");
-            _renderUserCard(user);
-            await logActivity(user.uid, "profile_update", "表示名変更");
-        } catch (e) {
-            setMsg(msgEl, e.message, "error");
-        } finally {
-            btn("profile-save-btn", "保存", false);
-        }
+        overlay.querySelector("#_name_cancel").onclick = () => overlay.remove();
+        overlay.querySelector("#_name_save").onclick = async () => {
+            const name  = overlay.querySelector("#_name_input")?.value.trim();
+            const msgEl = overlay.querySelector("#_name_msg");
+            if (!name) { setMsg(msgEl, "名前を入力してください", "error"); return; }
+            overlay.querySelector("#_name_save").disabled = true;
+            try {
+                await updateProfile(user, { displayName: name });
+                await logActivity(user.uid, "profile_update", "表示名変更");
+                _renderUserCard(user);
+                overlay.remove();
+            } catch (e) {
+                setMsg(msgEl, e.message, "error");
+                overlay.querySelector("#_name_save").disabled = false;
+            }
+        };
+        setTimeout(() => overlay.querySelector("#_name_input")?.focus(), 50);
     });
 
-    // メール確認バナー
-    if (user.email && !user.emailVerified &&
-        user.providerData.some(p => p.providerId === "password")) {
+    // #4 UUID コピーボタン
+    document.getElementById("copy-uuid-btn")?.addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(user.uid);
+            const btn = document.getElementById("copy-uuid-btn");
+            if (btn) { btn.textContent = "✅ コピー済み"; setTimeout(() => btn.textContent = "コピー", 2000); }
+        } catch (_) {}
+    });
+
+    // メール確認
+    // #2 表示制御
+    const needsVerify = user.email && !user.emailVerified &&
+        user.providerData.some(p => p.providerId === "password");
+    if (needsVerify) {
         show("email-verify-banner");
     }
 
     document.getElementById("send-verify-email-btn")?.addEventListener("click", async () => {
-        btn("send-verify-email-btn", "送信中...", true);
+        const btn   = document.getElementById("send-verify-email-btn");
+        const msgEl = document.getElementById("verify-email-msg");
+        btnState("send-verify-email-btn", "送信中...", true);
+        setMsg(msgEl, "", "");
         try {
             await sendEmailVerification(user);
-            setMsg("verify-email-msg", "✅ 確認メールを送信しました", "success");
+            setMsg(msgEl, "✅ 確認メールを送信しました", "success");
         } catch (e) {
-            setMsg("verify-email-msg", e.message, "error");
+            const M = { "auth/too-many-requests": "送信が多すぎます。しばらく待ってから再試行してください。" };
+            setMsg(msgEl, M[e.code] || e.message, "error");
         } finally {
-            setTimeout(() => btn("send-verify-email-btn", "確認メールを再送する", false), 60000);
+            setTimeout(() => btnState("send-verify-email-btn", "確認メールを再送する", false), 60000);
         }
     });
 }
 
 // ─────────────────────────────────────────
-// /account/settings/privacy  プライバシー
+// #5 /account/settings/privacy  (通知設定を充実)
 // ─────────────────────────────────────────
-const NOTIF_LABELS = {
-    login:           "ログイン通知",
-    passwordChange:  "パスワード変更通知",
-    otpChange:       "二段階認証変更通知",
-    deletionRequest: "アカウント削除依頼通知",
-};
+const NOTIF_SETTINGS = [
+    { key: "login",           label: "ログイン通知",               desc: "アカウントへのログイン時にメールを受け取る" },
+    { key: "passwordChange",  label: "パスワード変更通知",         desc: "パスワードが変更された際にメールを受け取る" },
+    { key: "emailChange",     label: "メールアドレス変更通知",     desc: "メールアドレスが変更された際に通知を受け取る" },
+    { key: "otpChange",       label: "二段階認証変更通知",         desc: "二段階認証の設定が変更された際に通知を受け取る" },
+    { key: "deletionRequest", label: "アカウント削除依頼通知",     desc: "削除申請が行われた際にメールを受け取る" },
+    { key: "maintenance",     label: "メンテナンス・障害通知",     desc: "サービスのメンテナンスや障害情報を受け取る" },
+    { key: "newFeature",      label: "新機能・アップデート通知",   desc: "新機能のリリース情報などを受け取る" },
+    { key: "newsletter",      label: "ニュースレター",             desc: "法令に関するニュースや解説記事の配信を受け取る" },
+];
 
 async function initPrivacy() {
     const user = await requireAuth();
@@ -766,17 +919,17 @@ async function initPrivacy() {
     const snap  = await getDoc(doc(db, "users", user.uid, "settings", "notifications"));
     const prefs = snap.exists() ? snap.data() : {};
 
-    container.innerHTML = Object.entries(NOTIF_LABELS).map(([key, label]) => {
+    container.innerHTML = NOTIF_SETTINGS.map(({ key, label, desc }) => {
         const on = prefs[key] !== false;
         return `
 <div class="setting-toggle-item">
     <div class="setting-text">
         <span class="setting-label">${label}</span>
-        <p class="setting-description">メールアドレス確認済みの場合のみ有効</p>
+        <p class="setting-description">${desc}</p>
     </div>
     <label class="switch">
-        <input type="checkbox" class="notif-toggle" data-key="${key}" ${on ? "checked" : ""}
-               ${!user.emailVerified ? "disabled" : ""}>
+        <input type="checkbox" class="notif-toggle" data-key="${key}"
+               ${on ? "checked" : ""} ${!user.emailVerified ? "disabled title='メールアドレス確認後に有効になります'" : ""}>
         <span class="slider round"></span>
     </label>
 </div>`;
@@ -784,12 +937,13 @@ async function initPrivacy() {
 
     if (!user.emailVerified) {
         container.insertAdjacentHTML("beforeend",
-            `<p class="info-text" style="color:#e74c3c;margin-top:8px;">
-             ⚠️ メールアドレスが確認済みでないと通知を受け取れません</p>`);
+            `<p class="info-text" style="color:#e74c3c;margin-top:12px;font-size:13px;">
+             ⚠️ メールアドレスが未確認のため、通知は届きません。<br>
+             プロフィールページからメール確認を行ってください。</p>`);
     }
 
     container.querySelectorAll(".notif-toggle").forEach(toggle => {
-        toggle.addEventListener("change", async (e) => {
+        toggle.addEventListener("change", async e => {
             await setDoc(doc(db, "users", user.uid, "settings", "notifications"),
                 { [e.target.dataset.key]: e.target.checked }, { merge: true });
         });
@@ -797,36 +951,35 @@ async function initPrivacy() {
 }
 
 // ─────────────────────────────────────────
-// /account/security  セキュリティハブ
+// #6 /account/security  (並列読み込み)
 // ─────────────────────────────────────────
 async function initSecurity() {
     const user = await requireAuth();
     const { db } = await getFirebase();
 
-    // 2FAステータス表示
-    const enabled = await is2FAEnabled(user.uid, db);
-    const el2fa = document.getElementById("2fa-status-badge");
-    if (el2fa) {
-        el2fa.textContent  = enabled ? "有効" : "無効";
-        el2fa.className    = `status-badge ${enabled ? "enabled" : "disabled"}`;
-    }
+    // #6 Promise.all で並列取得 → ガタつき解消
+    const [twoFaSnap] = await Promise.all([
+        getDoc(doc(db, "users", user.uid, "security", "twoFactor")),
+    ]);
 
-    // パスワード設定状況
+    const enabled = twoFaSnap.exists() && (twoFaSnap.data().enabled ?? false);
     const hasPass = user.providerData.some(p => p.providerId === "password");
-    const elPass  = document.getElementById("password-status-badge");
-    if (elPass) elPass.textContent = hasPass ? "設定済み" : "未設定";
 
-    // 最終ログイン
+    const badge = document.getElementById("2fa-status-badge");
+    if (badge) { badge.textContent = enabled ? "有効" : "無効"; badge.className = `status-badge ${enabled ? "enabled" : "disabled"}`; }
+
+    const passBadge = document.getElementById("password-status-badge");
+    if (passBadge) { passBadge.textContent = hasPass ? "設定済み" : "未設定"; }
+
     const lastSignIn = user.metadata?.lastSignInTime;
-    const elSign = document.getElementById("last-signin-date");
-    if (elSign && lastSignIn)
-        elSign.textContent = new Date(lastSignIn).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+    const el = document.getElementById("last-signin-date");
+    if (el && lastSignIn) el.textContent = new Date(lastSignIn).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 }
 
 // ─────────────────────────────────────────
-// /account/security/activity  アクティビティ
+// #10 /account/security/activity  (users/{uid}/security/activity)
 // ─────────────────────────────────────────
-const ACTIVITY_LABELS = {
+const ACTIVITY_ICONS = {
     login:            { icon: "🔑", label: "ログイン" },
     logout:           { icon: "🚪", label: "ログアウト" },
     signup:           { icon: "✨", label: "アカウント作成" },
@@ -848,23 +1001,25 @@ async function initActivity() {
     listEl.innerHTML = '<p class="loading-text">読み込み中...</p>';
 
     try {
-        const q    = query(collection(db, "users", user.uid, "activity"),
-                           orderBy("timestamp", "desc"), limit(50));
+        const q = query(
+            collection(db, "users", user.uid, "security", "activity"),
+            orderBy("timestamp", "desc"), limit(50)
+        );
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            listEl.innerHTML = '<p class="empty-text">アクティビティがありません</p>';
+            listEl.innerHTML = '<p class="empty-text">過去1年間まで遡りましたがアクティビティ履歴はありません</p>';
             return;
         }
 
         listEl.innerHTML = snap.docs.map(d => {
-            const data   = d.data();
-            const info   = ACTIVITY_LABELS[data.type] || { icon: "📋", label: data.type };
-            const ts     = data.timestamp;
+            const data = d.data();
+            const info = ACTIVITY_ICONS[data.type] || { icon: "📋", label: data.type };
+            const ts   = data.timestamp;
             return `
 <div class="activity-item">
     <div class="activity-icon-wrap">
-        <span style="font-size:1.2rem;">${info.icon}</span>
+        <span style="font-size:1.2rem">${info.icon}</span>
     </div>
     <div class="activity-details">
         <div class="activity-main">
@@ -875,9 +1030,7 @@ async function initActivity() {
             ${esc(data.browser || "")} / ${esc(data.os || "")}
             ${data.detail ? ` — ${esc(data.detail)}` : ""}
         </p>
-        <p class="activity-info" style="color:#aaa;font-size:12px;">
-            ${ts ? formatDate(ts) : ""}
-        </p>
+        <p class="activity-info" style="color:#aaa;font-size:11px;">${ts ? formatDate(ts) : ""}</p>
     </div>
 </div>`;
         }).join("");
@@ -887,26 +1040,26 @@ async function initActivity() {
 }
 
 // ─────────────────────────────────────────
-// /account/security/device  デバイス管理
+// #11 /account/security/device  (現在端末は除外)
 // ─────────────────────────────────────────
 async function initDevice() {
     const user = await requireAuth();
     const { db } = await getFirebase();
 
-    const listEl = document.getElementById("device-list");
-    if (listEl) await _renderDeviceList(user, db, listEl);
-
-    document.getElementById("logout-all-others-btn")
-        ?.addEventListener("click", () => _logoutAllOthers(user, db, listEl));
+    await _renderDeviceList(user, db);
+    document.getElementById("logout-all-others-btn")?.addEventListener("click", () => _logoutAllOthers(user, db));
 }
 
-async function _renderDeviceList(user, db, listEl) {
+async function _renderDeviceList(user, db) {
+    const listEl = document.getElementById("device-list");
+    if (!listEl) return;
     listEl.innerHTML = '<p class="loading-text">読み込み中...</p>';
+
+    const currentSid = localStorage.getItem(SESSION_KEY);
+
     try {
-        const q    = query(collection(db, "users", user.uid, "sessions"),
-                           orderBy("lastActive", "desc"), limit(10));
+        const q = query(collection(db, "users", user.uid, "sessions"), orderBy("lastActive", "desc"), limit(10));
         const snap = await getDocs(q);
-        const currentSid = localStorage.getItem(SESSION_KEY);
 
         if (snap.empty) {
             listEl.innerHTML = '<p class="empty-text">セッション情報がありません</p>';
@@ -916,32 +1069,31 @@ async function _renderDeviceList(user, db, listEl) {
 
         let hasOthers = false;
         listEl.innerHTML = snap.docs.map(d => {
-            const data      = d.data();
+            const data = d.data();
             const isCurrent = data.sessionId === currentSid;
             if (!isCurrent) hasOthers = true;
             const icon = (data.device || "").includes("スマートフォン") ? "📱" : "💻";
             return `
-<div class="device-item${isCurrent ? " current" : ""}" data-session-id="${esc(data.sessionId)}">
+<div class="device-item${isCurrent ? " current" : ""}" data-sid="${esc(data.sessionId)}">
     <div class="device-icon">${icon}</div>
     <div class="device-info">
         <div class="device-name">
-            ${esc(data.browser || "不明")}
+            ${esc(data.browser || "不明")} / ${esc(data.os || "不明")}
             ${isCurrent ? '<span class="current-badge">現在の端末</span>' : ""}
         </div>
         <p class="device-meta">
-            ${esc(data.os || "不明")} · ${esc(data.location || "不明")} ·
+            ${esc(data.location || "不明")} ·
             ${data.lastActive ? relativeDate(data.lastActive) : "不明"}
         </p>
     </div>
-    ${!isCurrent ? `<button class="btn-text-only session-logout-btn"
-        data-sid="${esc(data.sessionId)}">ログアウト</button>` : ""}
+    ${!isCurrent ? `<button class="session-logout-btn" data-sid="${esc(data.sessionId)}">ログアウト</button>` : ""}
 </div>`;
         }).join("");
 
         if (hasOthers) show("logout-all-others-btn");
         else           hide("logout-all-others-btn");
 
-        // 個別ログアウト
+        // 個別ログアウト (#11 現在端末は除外済み)
         listEl.querySelectorAll(".session-logout-btn").forEach(b => {
             b.addEventListener("click", async () => {
                 if (!confirm("この端末からログアウトしますか？")) return;
@@ -950,22 +1102,21 @@ async function _renderDeviceList(user, db, listEl) {
                     await setDoc(doc(db, "users", user.uid, "sessions", sid),
                         { shouldLogout: true }, { merge: true });
                     b.closest(".device-item")?.remove();
-                    const remaining = listEl.querySelectorAll(".device-item:not(.current)");
-                    if (remaining.length === 0) hide("logout-all-others-btn");
+                    const rem = listEl.querySelectorAll(".device-item:not(.current)");
+                    if (rem.length === 0) hide("logout-all-others-btn");
                 } catch (e) { alert("失敗しました: " + e.message); }
             });
         });
     } catch (e) {
-        listEl.innerHTML = `<p class="error-text">読み込みに失敗しました</p>`;
+        listEl.innerHTML = '<p class="error-text">読み込みに失敗しました</p>';
     }
 }
 
-async function _logoutAllOthers(user, db, listEl) {
+async function _logoutAllOthers(user, db) {
+    const currentSid = localStorage.getItem(SESSION_KEY);
     const others = document.querySelectorAll(".device-item:not(.current)");
     if (others.length === 0) { alert("他にアクティブな端末はありません"); return; }
     if (!confirm(`${others.length}台の端末からログアウトしますか？`)) return;
-
-    const currentSid = localStorage.getItem(SESSION_KEY);
     try {
         const snap = await getDocs(collection(db, "users", user.uid, "sessions"));
         await Promise.allSettled(
@@ -975,37 +1126,34 @@ async function _logoutAllOthers(user, db, listEl) {
         );
         others.forEach(el => el.remove());
         hide("logout-all-others-btn");
-    } catch (e) { alert("失敗しました: " + e.message); }
+    } catch (e) { alert("失敗: " + e.message); }
 }
 
 // ─────────────────────────────────────────
-// /account/security/pass  パスワード変更
+// /account/security/pass
 // ─────────────────────────────────────────
 async function initPass() {
     const user = await requireAuth();
-    const { auth, db } = await getFirebase();
+    const { db } = await getFirebase();
 
     const hasPass = user.providerData.some(p => p.providerId === "password");
     const row     = document.getElementById("current-password-row");
     const title   = document.getElementById("pass-card-title");
-    const submitB = document.getElementById("pass-submit-btn");
+    const subBtn  = document.getElementById("pass-submit-btn");
+    if (row)   row.style.display   = hasPass ? "block" : "none";
+    if (title) title.textContent   = hasPass ? "🔑 パスワードを変更する" : "🔑 パスワードを設定する";
+    if (subBtn) subBtn.textContent = hasPass ? "パスワードを変更する" : "パスワードを設定する";
 
-    if (row)     row.style.display     = hasPass ? "block" : "none";
-    if (title)   title.textContent     = hasPass ? "🔑 パスワードを変更する" : "🔑 パスワードを設定する";
-    if (submitB) submitB.textContent   = hasPass ? "パスワードを変更する" : "パスワードを設定する";
+    subBtn?.addEventListener("click", async () => {
+        const cur    = document.getElementById("current-password")?.value;
+        const newP   = document.getElementById("new-password")?.value;
+        const conf   = document.getElementById("confirm-password")?.value;
+        const msgEl  = document.getElementById("pass-msg");
+        if (!newP)           return setMsg(msgEl, "新しいパスワードを入力してください", "error");
+        if (newP.length < 6) return setMsg(msgEl, "パスワードは6文字以上にしてください", "error");
+        if (newP !== conf)   return setMsg(msgEl, "パスワードが一致しません", "error");
 
-    submitB?.addEventListener("click", async () => {
-        const current = document.getElementById("current-password")?.value;
-        const newPass = document.getElementById("new-password")?.value;
-        const confirm = document.getElementById("confirm-password")?.value;
-        const msgEl   = document.getElementById("pass-msg");
-
-        if (!newPass)         return setMsg(msgEl, "新しいパスワードを入力してください", "error");
-        if (newPass.length < 6) return setMsg(msgEl, "パスワードは6文字以上にしてください", "error");
-        if (newPass !== confirm) return setMsg(msgEl, "パスワードが一致しません", "error");
-
-        btn("pass-submit-btn", "処理中...", true);
-        setMsg(msgEl, "", "");
+        btnState("pass-submit-btn", "処理中...", true);
 
         // 2FA確認
         const enabled = await is2FAEnabled(user.uid, db);
@@ -1015,53 +1163,55 @@ async function initPass() {
             await sendOTPEmail(user, code, "パスワード変更");
             setMsg(msgEl, `📧 ${user.email} に認証コードを送信しました`, "success");
 
-            const inputCode = await showOTPModal("password_change",
-                `${user.email} に送信した6桁のコードを入力してください`);
-            if (!inputCode) {
-                setMsg(msgEl, "キャンセルしました", "error");
-                btn("pass-submit-btn", hasPass ? "パスワードを変更する" : "パスワードを設定する", false);
-                return;
-            }
-            const res = await verifyOTP(user.uid, db, inputCode, "password_change");
-            if (!res.ok) {
-                setMsg(msgEl, res.reason, "error");
-                btn("pass-submit-btn", hasPass ? "パスワードを変更する" : "パスワードを設定する", false);
-                return;
-            }
-            await clearOTP(user.uid, db);
+            showOTPPanel("pass-otp-container", {
+                title: "本人確認",
+                desc:  `${user.email} に送信した6桁のコードを入力してください`,
+                onVerify: async (input) => {
+                    const res = await verifyOTP(user.uid, db, input, "password_change");
+                    if (!res.ok) { btnState("pass-submit-btn", hasPass ? "パスワードを変更する" : "パスワードを設定する", false); return res; }
+                    await clearOTP(user.uid, db);
+                    await _executePasswordChange(user, db, cur, newP, hasPass, msgEl);
+                    return { ok: true };
+                },
+                onCancel: () => btnState("pass-submit-btn", hasPass ? "パスワードを変更する" : "パスワードを設定する", false),
+            });
+            return;
         }
-
-        try {
-            if (hasPass) {
-                if (!current) return setMsg(msgEl, "現在のパスワードを入力してください", "error");
-                const cred = EmailAuthProvider.credential(user.email, current);
-                await reauthenticateWithCredential(user, cred);
-                await updatePassword(user, newPass);
-            } else {
-                const cred = EmailAuthProvider.credential(user.email, newPass);
-                await linkWithCredential(user, cred);
-            }
-            document.getElementById("current-password").value  = "";
-            document.getElementById("new-password").value      = "";
-            document.getElementById("confirm-password").value  = "";
-            setMsg(msgEl, "✅ 変更しました", "success");
-            await logActivity(user.uid, "password_change", "");
-            await sendNotification(user, db, "passwordChange", "");
-        } catch (e) {
-            const M = {
-                "auth/wrong-password":        "現在のパスワードが間違っています",
-                "auth/requires-recent-login": "セキュリティのため再ログインが必要です",
-            };
-            setMsg(msgEl, M[e.code] || e.message, "error");
-        } finally {
-            const hp = user.providerData.some(p => p.providerId === "password");
-            btn("pass-submit-btn", hp ? "パスワードを変更する" : "パスワードを設定する", false);
-        }
+        await _executePasswordChange(user, db, cur, newP, hasPass, msgEl);
     });
 }
 
+async function _executePasswordChange(user, db, cur, newP, hasPass, msgEl) {
+    try {
+        if (hasPass) {
+            if (!cur) return setMsg(msgEl, "現在のパスワードを入力してください", "error");
+            const cred = EmailAuthProvider.credential(user.email, cur);
+            await reauthenticateWithCredential(user, cred);
+            await updatePassword(user, newP);
+        } else {
+            const cred = EmailAuthProvider.credential(user.email, newP);
+            await linkWithCredential(user, cred);
+        }
+        ["current-password","new-password","confirm-password"].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = "";
+        });
+        setMsg(msgEl, "✅ 変更しました", "success");
+        await logActivity(user.uid, "password_change", "");
+        await sendNotification(user, db, "passwordChange", "");
+    } catch (e) {
+        const M = {
+            "auth/wrong-password":        "現在のパスワードが間違っています",
+            "auth/requires-recent-login": "セキュリティのため再ログインが必要です",
+        };
+        setMsg(msgEl, M[e.code] || e.message, "error");
+    } finally {
+        const hp = user.providerData.some(p => p.providerId === "password");
+        btnState("pass-submit-btn", hp ? "パスワードを変更する" : "パスワードを設定する", false);
+    }
+}
+
 // ─────────────────────────────────────────
-// /account/security/2fa  二段階認証
+// /account/security/2fa
 // ─────────────────────────────────────────
 async function initTwoFA() {
     const user = await requireAuth();
@@ -1075,16 +1225,15 @@ async function initTwoFA() {
     if (label)  label.textContent = enabled ? "有効" : "無効";
     if (badge)  { badge.textContent = enabled ? "有効" : "無効"; badge.className = `status-badge ${enabled ? "enabled" : "disabled"}`; }
 
-    toggle?.addEventListener("change", async (e) => {
-        const newState  = e.target.checked;
-        const purpose   = newState ? "2fa_enable" : "2fa_disable";
+    toggle?.addEventListener("change", async e => {
+        const newState   = e.target.checked;
+        const purpose    = newState ? "2fa_enable" : "2fa_disable";
         const purposeTxt = newState ? "二段階認証の有効化" : "二段階認証の無効化";
-        const msgEl     = document.getElementById("two-factor-msg");
+        const msgEl      = document.getElementById("two-factor-msg");
 
         if (!user.email) {
             setMsg(msgEl, "二段階認証を使用するにはメールアドレスが必要です", "error");
-            toggle.checked = !newState;
-            return;
+            toggle.checked = !newState; return;
         }
 
         toggle.disabled = true;
@@ -1096,41 +1245,35 @@ async function initTwoFA() {
             await sendOTPEmail(user, code, purposeTxt);
             setMsg(msgEl, `📧 ${user.email} に認証コードを送信しました`, "success");
 
-            const inputCode = await showOTPModal(purpose,
-                `${user.email} に送信した6桁のコードを入力してください`);
-            if (!inputCode) {
-                toggle.checked = !newState;
-                setMsg(msgEl, "キャンセルしました", "error");
-                toggle.disabled = false;
-                return;
-            }
-            const res = await verifyOTP(user.uid, db, inputCode, purpose);
-            if (!res.ok) {
-                toggle.checked = !newState;
-                setMsg(msgEl, res.reason, "error");
-                toggle.disabled = false;
-                return;
-            }
-            await clearOTP(user.uid, db);
-            await setDoc(doc(db, "users", user.uid, "security", "twoFactor"),
-                { enabled: newState }, { merge: true });
-
-            if (label) label.textContent = newState ? "有効" : "無効";
-            if (badge) { badge.textContent = newState ? "有効" : "無効"; badge.className = `status-badge ${newState ? "enabled" : "disabled"}`; }
-            setMsg(msgEl, `✅ 二段階認証を${newState ? "有効" : "無効"}にしました`, "success");
-            await logActivity(user.uid, "twofa_change", newState ? "有効化" : "無効化");
-            await sendNotification(user, db, "otpChange", newState ? "有効化" : "無効化");
+            showOTPPanel("twofa-otp-container", {
+                title: "本人確認",
+                desc:  `${user.email} に送信した6桁のコードを入力してください`,
+                onVerify: async (input) => {
+                    const res = await verifyOTP(user.uid, db, input, purpose);
+                    if (!res.ok) { toggle.checked = !newState; toggle.disabled = false; return res; }
+                    await clearOTP(user.uid, db);
+                    await setDoc(doc(db, "users", user.uid, "security", "twoFactor"),
+                        { enabled: newState }, { merge: true });
+                    if (label) label.textContent = newState ? "有効" : "無効";
+                    if (badge) { badge.textContent = newState ? "有効" : "無効"; badge.className = `status-badge ${newState ? "enabled" : "disabled"}`; }
+                    setMsg(msgEl, `✅ 二段階認証を${newState ? "有効" : "無効"}にしました`, "success");
+                    await logActivity(user.uid, "twofa_change", newState ? "有効化" : "無効化");
+                    await sendNotification(user, db, "otpChange", newState ? "有効化" : "無効化");
+                    toggle.disabled = false;
+                    return { ok: true };
+                },
+                onCancel: () => { toggle.checked = !newState; toggle.disabled = false; setMsg(msgEl, "", ""); },
+            });
         } catch (err) {
             toggle.checked = !newState;
-            setMsg(msgEl, "送信に失敗しました。メールアドレスをご確認ください", "error");
-        } finally {
+            setMsg(msgEl, "送信に失敗しました", "error");
             toggle.disabled = false;
         }
     });
 }
 
 // ─────────────────────────────────────────
-// /account/security/2fa/backup-code  バックアップコード
+// #7 /account/security/2fa/backup-code  (番号付き, BackUpCode, 2FA代替)
 // ─────────────────────────────────────────
 function _genBackupCode() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -1144,237 +1287,245 @@ async function initBackupCode() {
     const gridEl = document.getElementById("backup-codes-grid");
     if (!gridEl) return;
 
-    // 既存コードの取得
-    const snap = await getDoc(doc(db, "users", user.uid, "security", "backupCodes"));
-    let codes   = snap.exists() ? snap.data().codes || [] : [];
+    // #7 BackUpCode コレクション
+    const snap  = await getDoc(doc(db, "users", user.uid, "security", "BackUpCode"));
+    let codes   = snap.exists() ? (snap.data().codes || []) : [];
+    if (codes.length === 0) codes = await _genAndSaveCodes(user.uid, db);
 
-    if (codes.length === 0) {
-        // 初回生成
-        codes = _generateAndSaveCodes(user.uid, db);
-    }
+    _renderBackupCodes(gridEl, codes);
 
-    _renderCodes(gridEl, Array.isArray(codes[0]) ? codes : codes.map(c => ({ code: c, used: false })));
-
-    // 再生成ボタン
     document.getElementById("regenerate-codes-btn")?.addEventListener("click", async () => {
         if (!confirm("現在のバックアップコードはすべて無効になります。よろしいですか？")) return;
-        const newCodes = await _generateAndSaveCodes(user.uid, db);
-        _renderCodes(gridEl, newCodes);
+        codes = await _genAndSaveCodes(user.uid, db);
+        _renderBackupCodes(gridEl, codes);
         await logActivity(user.uid, "twofa_change", "バックアップコード再生成");
     });
 
-    // コピーボタン
-    document.getElementById("copy-codes-btn")?.addEventListener("click", () => {
-        const text = codes.map(c => c.code || c).join("\n");
-        navigator.clipboard.writeText(text).then(() => alert("✅ コピーしました"));
+    document.getElementById("copy-codes-btn")?.addEventListener("click", async () => {
+        const text = codes.map((c, i) => `${i + 1}. ${c.code || c}`).join("\n");
+        await navigator.clipboard.writeText(text).catch(() => {});
+        const btn = document.getElementById("copy-codes-btn");
+        if (btn) { btn.textContent = "✅ コピー済み"; setTimeout(() => btn.textContent = "コードをコピー", 2000); }
     });
 }
 
-async function _generateAndSaveCodes(uid, db) {
+async function _genAndSaveCodes(uid, db) {
     const codes = Array.from({ length: BACKUP_CODE_COUNT }, () =>
         ({ code: _genBackupCode(), used: false }));
-    await setDoc(doc(db, "users", uid, "security", "backupCodes"),
-        { codes, generatedAt: serverTimestamp() }, { merge: false });
+    // #7 BackUpCode に保存
+    await setDoc(doc(db, "users", uid, "security", "BackUpCode"),
+        { codes, generatedAt: serverTimestamp() });
     return codes;
 }
 
-function _renderCodes(gridEl, codes) {
-    gridEl.innerHTML = codes.map(({ code, used }) =>
-        `<div class="code-item${used ? " code-used" : ""}">${used ? "<s>" + esc(code) + "</s>" : esc(code)}</div>`
+function _renderBackupCodes(gridEl, codes) {
+    // #7 番号付き
+    gridEl.innerHTML = codes.map(({ code, used }, i) =>
+        `<div class="code-item${used ? " code-used" : ""}">
+            <span class="code-num">${i + 1}.</span>
+            <span class="code-val">${used ? `<s>${esc(code)}</s>` : esc(code)}</span>
+        </div>`
     ).join("");
 }
 
 // ─────────────────────────────────────────
-// /account/security/methods  ログイン方法
+// #8 #9 /account/security/methods  (全メソッド表示, パスワードポップアップ)
 // ─────────────────────────────────────────
 async function initMethods() {
     const user = await requireAuth();
     const { auth, db } = await getFirebase();
 
-    _renderProviders(user, auth, db);
+    await _renderAllMethods(user, auth, db);
+}
 
-    // メールアドレス変更
+async function _renderAllMethods(user, auth, db) {
+    const ids   = user.providerData.map(p => p.providerId);
+    const total = ids.length;
+
+    // ──── パスワードログイン ────
+    const passLinked  = ids.includes("password");
+    const passStatus  = document.getElementById("status-password");
+    const passBtnEl   = document.getElementById("btn-password");
+
+    if (passStatus) {
+        passStatus.textContent = passLinked ? "設定済み" : "未設定";
+        passStatus.className   = `provider-status ${passLinked ? "linked" : "unlinked"}`;
+    }
+
+    if (passBtnEl) {
+        if (passLinked) {
+            // 解除ボタン
+            passBtnEl.textContent = "解除する";
+            passBtnEl.className   = "provider-link-btn unlink-btn";
+            passBtnEl.disabled    = total <= 1;
+            passBtnEl.title       = total <= 1 ? "最後のログイン方法は解除できません" : "";
+            passBtnEl.onclick     = async () => {
+                const msgEl = document.getElementById("provider-msg");
+                if (!confirm("メール/パスワードログインを解除しますか？")) return;
+                try {
+                    await unlink(auth.currentUser, "password");
+                    setMsg(msgEl, "✅ 解除しました", "success");
+                    await logActivity(user.uid, "method_change", "パスワード解除");
+                    await _renderAllMethods(auth.currentUser, auth, db);
+                } catch (e) { setMsg(msgEl, e.message, "error"); }
+            };
+        } else {
+            // #9 パスワード未設定時のみ「設定する」ポップアップ
+            passBtnEl.textContent = "設定する";
+            passBtnEl.className   = "provider-link-btn link-btn";
+            passBtnEl.disabled    = !user.email;
+            passBtnEl.title       = !user.email ? "先にメールアドレスを設定してください" : "";
+            passBtnEl.onclick     = () => {
+                if (!user.email) return;
+                const overlay = createPopup(`
+<h3 class="popup-title">🔑 パスワードを設定する</h3>
+<input id="_pw_new"  type="password" class="form-input" placeholder="新しいパスワード (6文字以上)">
+<input id="_pw_conf" type="password" class="form-input" placeholder="パスワード確認" style="margin-top:10px;">
+<p id="_pw_msg" class="settings-msg"></p>
+<div class="popup-btns">
+    <button id="_pw_cancel" class="btn-secondary-sm">キャンセル</button>
+    <button id="_pw_save"   class="btn-primary-sm">設定する</button>
+</div>`);
+
+                overlay.querySelector("#_pw_cancel").onclick = () => overlay.remove();
+                overlay.querySelector("#_pw_save").onclick = async () => {
+                    const newP = overlay.querySelector("#_pw_new")?.value;
+                    const conf = overlay.querySelector("#_pw_conf")?.value;
+                    const msgEl = overlay.querySelector("#_pw_msg");
+                    if (!newP || newP.length < 6) return setMsg(msgEl, "6文字以上のパスワードを入力してください", "error");
+                    if (newP !== conf)            return setMsg(msgEl, "パスワードが一致しません", "error");
+                    overlay.querySelector("#_pw_save").disabled = true;
+                    try {
+                        const cred = EmailAuthProvider.credential(user.email, newP);
+                        await linkWithCredential(auth.currentUser, cred);
+                        await logActivity(user.uid, "method_change", "パスワード設定");
+                        overlay.remove();
+                        setMsg(document.getElementById("provider-msg"), "✅ パスワードを設定しました", "success");
+                        await _renderAllMethods(auth.currentUser, auth, db);
+                    } catch (e) {
+                        setMsg(msgEl, e.message, "error");
+                        overlay.querySelector("#_pw_save").disabled = false;
+                    }
+                };
+            };
+        }
+    }
+
+    // メールアドレス未設定カード
+    const emailCard = document.getElementById("email-setup-card");
+    if (emailCard) emailCard.style.display = user.email ? "none" : "block";
+
+    // ──── Google ログイン ────
+    const googleLinked = ids.includes("google.com");
+    const googleStatus = document.getElementById("status-google");
+    const googleBtnEl  = document.getElementById("btn-google");
+
+    if (googleStatus) {
+        googleStatus.textContent = googleLinked ? "設定済み" : "未設定";
+        googleStatus.className   = `provider-status ${googleLinked ? "linked" : "unlinked"}`;
+    }
+
+    if (googleBtnEl) {
+        if (googleLinked) {
+            googleBtnEl.textContent = "解除する";
+            googleBtnEl.className   = "provider-link-btn unlink-btn";
+            googleBtnEl.disabled    = total <= 1;
+            googleBtnEl.title       = total <= 1 ? "最後のログイン方法は解除できません" : "";
+            googleBtnEl.onclick     = async () => {
+                const msgEl = document.getElementById("provider-msg");
+                if (!confirm("Google連携を解除しますか？")) return;
+                try {
+                    await unlink(auth.currentUser, "google.com");
+                    setMsg(msgEl, "✅ 解除しました", "success");
+                    await logActivity(user.uid, "method_change", "Google解除");
+                    await _renderAllMethods(auth.currentUser, auth, db);
+                } catch (e) { setMsg(msgEl, e.message, "error"); }
+            };
+        } else {
+            googleBtnEl.textContent = "連携する";
+            googleBtnEl.className   = "provider-link-btn link-btn";
+            googleBtnEl.onclick     = async () => {
+                const msgEl = document.getElementById("provider-msg");
+                try {
+                    await linkWithPopup(auth.currentUser, new GoogleAuthProvider());
+                    setMsg(msgEl, "✅ 連携しました", "success");
+                    await logActivity(user.uid, "method_change", "Google連携");
+                    await _renderAllMethods(auth.currentUser, auth, db);
+                } catch (e) {
+                    const M = { "auth/credential-already-in-use": "このGoogleアカウントはすでに別のユーザーと連携されています" };
+                    setMsg(msgEl, M[e.code] || e.message, "error");
+                }
+            };
+        }
+    }
+
+    // メールアドレス設定ボタン
     document.getElementById("set-email-btn")?.addEventListener("click", async () => {
         const email = document.getElementById("set-email-input")?.value.trim();
         const msgEl = document.getElementById("set-email-msg");
-        if (!email)               return setMsg(msgEl, "メールアドレスを入力してください", "error");
-        if (!email.includes("@")) return setMsg(msgEl, "正しいメールアドレスを入力してください", "error");
-
-        btn("set-email-btn", "処理中...", true);
+        if (!email || !email.includes("@")) return setMsg(msgEl, "正しいメールアドレスを入力してください", "error");
+        btnState("set-email-btn", "処理中...", true);
         try {
             await updateEmail(auth.currentUser, email);
-            await sendEmailVerification(auth.currentUser);
+            await sendEmailVerification(auth.currentUser).catch(() => {});
             setMsg(msgEl, "✅ 設定しました。確認メールをご確認ください。", "success");
             await logActivity(user.uid, "email_change", "");
-            _renderProviders(auth.currentUser, auth, db);
+            await _renderAllMethods(auth.currentUser, auth, db);
         } catch (e) {
-            const M = {
-                "auth/email-already-in-use": "このメールアドレスはすでに使用されています",
-                "auth/requires-recent-login": "セキュリティのため再ログインが必要です",
-            };
+            const M = { "auth/email-already-in-use": "このメールアドレスはすでに使用されています", "auth/requires-recent-login": "再ログインが必要です" };
             setMsg(msgEl, M[e.code] || e.message, "error");
-        } finally {
-            btn("set-email-btn", "設定する", false);
-        }
+        } finally { btnState("set-email-btn", "設定する", false); }
     });
 }
 
-function _renderProviders(user, auth, db) {
-    const ids       = user.providerData.map(p => p.providerId);
-    const total     = ids.length;
-    _renderProviderRow("google", "google.com", ids, total, user, auth, db);
-    _renderEmailRow(ids, total, user, auth, db);
-}
-
-function _renderProviderRow(key, providerId, ids, total, user, auth, db) {
-    const isLinked = ids.includes(providerId);
-    const statusEl = document.getElementById(`status-${key}`);
-    const btnEl    = document.getElementById(`btn-${key}`);
-    if (!statusEl || !btnEl) return;
-
-    statusEl.textContent = isLinked ? "連携済み ✓" : "未連携";
-    statusEl.className   = `provider-status ${isLinked ? "linked" : ""}`;
-
-    if (isLinked) {
-        btnEl.textContent = "解除する";
-        btnEl.className   = "provider-link-btn unlink-btn";
-        btnEl.disabled    = total <= 1;
-        btnEl.title       = total <= 1 ? "最後のログイン方法は解除できません" : "";
-        btnEl.onclick     = async () => {
-            const msgEl = document.getElementById("provider-msg");
-            if (!confirm("Google連携を解除しますか？")) return;
-            try {
-                await unlink(auth.currentUser, providerId);
-                setMsg(msgEl, "✅ 解除しました", "success");
-                await logActivity(user.uid, "method_change", "Google解除");
-                _renderProviders(auth.currentUser, auth, db);
-            } catch (e) { setMsg(msgEl, e.message, "error"); }
-        };
-    } else {
-        btnEl.textContent = "連携する";
-        btnEl.className   = "provider-link-btn link-btn";
-        btnEl.disabled    = false;
-        btnEl.onclick     = async () => {
-            const msgEl = document.getElementById("provider-msg");
-            try {
-                await linkWithPopup(auth.currentUser, new GoogleAuthProvider());
-                setMsg(msgEl, "✅ 連携しました", "success");
-                await logActivity(user.uid, "method_change", "Google連携");
-                _renderProviders(auth.currentUser, auth, db);
-            } catch (e) {
-                const M = { "auth/credential-already-in-use": "このGoogleアカウントはすでに別のユーザーに連携されています" };
-                setMsg(msgEl, M[e.code] || e.message, "error");
-            }
-        };
-    }
-}
-
-function _renderEmailRow(ids, total, user, auth, db) {
-    const isLinked = ids.includes("password");
-    const statusEl = document.getElementById("status-email");
-    const btnEl    = document.getElementById("btn-email");
-    const emailCard = document.getElementById("email-setup-card");
-    if (emailCard) emailCard.style.display = user.email ? "none" : "block";
-    if (!statusEl || !btnEl) return;
-
-    statusEl.textContent = isLinked ? "設定済み ✓" : (user.email ? "未設定" : "先にメールアドレスを設定");
-    statusEl.className   = `provider-status ${isLinked ? "linked" : ""}`;
-    btnEl.disabled       = !user.email;
-
-    if (isLinked) {
-        btnEl.textContent = "解除する";
-        btnEl.className   = "provider-link-btn unlink-btn";
-        btnEl.disabled    = total <= 1;
-        btnEl.onclick     = async () => {
-            const msgEl = document.getElementById("provider-msg");
-            if (!confirm("メール/パスワードログインを解除しますか？")) return;
-            try {
-                await unlink(auth.currentUser, "password");
-                setMsg(msgEl, "✅ 解除しました", "success");
-                await logActivity(user.uid, "method_change", "メール解除");
-                _renderProviders(auth.currentUser, auth, db);
-            } catch (e) { setMsg(msgEl, e.message, "error"); }
-        };
-    } else {
-        btnEl.textContent = "パスワードを設定する";
-        btnEl.className   = "provider-link-btn link-btn";
-        btnEl.onclick     = () => { document.getElementById("email-pass-section")?.classList.remove("hidden"); };
-    }
-}
-
-// ─────────────────────────────────────────
-// 共通: ユーザー情報カード描画
-// ─────────────────────────────────────────
+// ============================================================
+// 共通: ユーザーカード描画
+// ============================================================
 function _renderUserCard(user) {
-    const avatarWrap = document.getElementById("settings-avatar-wrap");
-    if (avatarWrap) {
-        avatarWrap.innerHTML = user.photoURL
+    const avatarEl = document.getElementById("settings-avatar-wrap");
+    if (avatarEl) {
+        avatarEl.innerHTML = user.photoURL
             ? `<img src="${esc(user.photoURL)}" alt="avatar" class="user-info-avatar">`
             : `<div class="user-info-avatar-placeholder">👤</div>`;
     }
-    const nameEl  = document.getElementById("settings-user-name");
-    const emailEl = document.getElementById("settings-user-email");
-    const uuidEl  = document.getElementById("settings-user-uuid");
-    const signEl  = document.getElementById("settings-last-signin");
-    if (nameEl)  nameEl.textContent  = user.displayName || "名前未設定";
-    if (emailEl) emailEl.textContent = user.email || "（メールアドレス未設定）";
-    if (uuidEl)  uuidEl.textContent  = user.uid;
-    if (signEl && user.metadata?.lastSignInTime)
+    const els = {
+        "settings-user-name":  user.displayName || "名前未設定",
+        "settings-user-email": user.email || "（メールアドレス未設定）",
+        "settings-user-uuid":  user.uid,
+    };
+    for (const [id, val] of Object.entries(els)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+    // #1 最終ログイン
+    const signEl = document.getElementById("settings-last-signin");
+    if (signEl && user.metadata?.lastSignInTime) {
         signEl.textContent = new Date(user.metadata.lastSignInTime)
             .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-}
-
-function showFormError(id, msg) {
-    const el = document.getElementById(id);
-    if (el) { el.textContent = msg; el.style.display = "block"; }
-}
-
-// ============================================================
-// ヘッダー内ユーザーUI更新 (important.js と共存)
-// ============================================================
-export function updateHeaderUI(user) {
-    const loginLink  = document.getElementById("header-login-link");
-    const logoutLink = document.getElementById("header-logout-link");
-    const userArea   = document.getElementById("header-user-area");
-    const userName   = document.getElementById("header-user-name");
-    const userAvatar = document.getElementById("header-user-avatar");
-
-    if (user) {
-        if (loginLink)  loginLink.style.display  = "none";
-        if (logoutLink) logoutLink.style.display = "block";
-        if (userArea)   userArea.style.display   = "flex";
-        if (userName)   userName.textContent     = user.displayName || user.email || "ユーザー";
-        if (userAvatar && user.photoURL) userAvatar.src = user.photoURL;
-    } else {
-        if (loginLink)  loginLink.style.display  = "block";
-        if (logoutLink) logoutLink.style.display = "none";
-        if (userArea)   userArea.style.display   = "none";
     }
 }
 
 // ============================================================
-// メインエントリポイント
+// エントリポイント
 // ============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-    // EmailJS 初期化
     if (window.emailjs) window.emailjs.init("eG7KMS7F3Fh0PziYy");
 
-    // ページ別初期化
     switch (PAGE) {
-        case "signup":   await initSignup();    break;
-        case "login":    await initLogin();     break;
-        case "logout":   await initLogout();    break;
-        case "delete":   await initDelete();    break;
-        case "settings": await initSettings();  break;
-        case "profile":  await initProfile();   break;
-        case "privacy":  await initPrivacy();   break;
-        case "security": await initSecurity();  break;
-        case "activity": await initActivity();  break;
-        case "device":   await initDevice();    break;
-        case "pass":     await initPass();      break;
-        case "twofa":    await initTwoFA();     break;
+        case "signup":   await initSignup();     break;
+        case "login":    await initLogin();      break;
+        case "logout":   await initLogout();     break;
+        case "delete":   await initDelete();     break;
+        case "settings": await initSettings();   break;
+        case "profile":  await initProfile();    break;
+        case "privacy":  await initPrivacy();    break;
+        case "security": await initSecurity();   break;
+        case "activity": await initActivity();   break;
+        case "device":   await initDevice();     break;
+        case "pass":     await initPass();       break;
+        case "twofa":    await initTwoFA();      break;
         case "backup":   await initBackupCode(); break;
-        case "methods":  await initMethods();   break;
+        case "methods":  await initMethods();    break;
         default: break;
     }
 });

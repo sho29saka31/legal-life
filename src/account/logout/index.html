@@ -23,10 +23,21 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
-        <main>            <div id="logout-loading">ログアウト中...</div>
-            <div id="logout-success" style="display:none;">
-                ✅ ログアウトしました。3秒後にトップページへ移動します。
+    <body class="account-page">
+        <main>
+            <div class="account-container" style="text-align:center;">
+                <div id="logout-loading">
+                    <p style="font-size:1.1rem;font-weight:700;">ログアウト中...</p>
+                    <p style="color:#888;font-size:0.88rem;margin-top:8px;">しばらくお待ちください</p>
+                </div>
+                <div id="logout-success" style="display:none;">
+                    <p style="font-size:2rem;margin-bottom:12px;">✅</p>
+                    <p style="font-size:1.1rem;font-weight:700;">ログアウトしました</p>
+                    <p style="color:#888;font-size:0.88rem;margin-top:8px;">3秒後にトップページへ移動します...</p>
+                    <div class="link-group" style="margin-top:20px;">
+                        <a href="/" class="link-item">今すぐトップへ戻る</a>
+                    </div>
+                </div>
             </div>
         </main>
 

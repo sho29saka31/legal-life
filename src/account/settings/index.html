@@ -23,85 +23,63 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
-        <main>            <div class="account-container activity-wide">
-                <h1 class="home-title">設定</h1>
-                <p class="subtitle">legal&life Platform のアカウント設定を管理します</p>
-
-                <!-- 設定メニューリスト -->
-                <div class="settings-list">
-                    <!-- 削除申請中バナー -->
-                    <div id="deletion-pending-banner">
-                        <p>⚠️ アカウント削除が予約されています</p>
-                        <p>削除予定日: <strong id="deletion-scheduled-date"></strong></p>
-                        <button id="cancel-deletion-btn" class="btn-secondary">削除をキャンセル</button>
-                    </div>
-                    <!-- ユーザーカード -->
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <h1 class="account-title">アカウント設定</h1>
+            
+                <!-- 削除ペンディングバナー -->
+                <div id="deletion-pending-banner" class="banner banner-error" style="display:none;">
+                    <p class="banner-title">⚠️ アカウント削除が予約されています</p>
+                    <p>削除予定日: <strong id="deletion-scheduled-date"></strong></p>
+                    <button id="cancel-deletion-btn" class="btn-secondary" style="margin-top:8px;width:auto;padding:8px 20px;font-size:0.85rem;">
+                        削除をキャンセルする
+                    </button>
+                </div>
+            
+                <!-- ユーザーカード -->
+                <div class="user-card">
                     <div id="settings-avatar-wrap"></div>
-                    <p id="settings-user-name"></p>
-                    <p id="settings-user-email"></p>
-                    <p id="settings-user-uuid" style="font-size:11px;color:#aaa;"></p>
-                    <p>最終ログイン: <span id="settings-last-signin"></span></p>
-                    
-                    <!-- プロフィールへの遷移 -->
+                    <div class="user-card-info">
+                        <div class="user-card-name"  id="settings-user-name"></div>
+                        <div class="user-card-email" id="settings-user-email"></div>
+                        <div class="user-card-last-signin">最終ログイン: <span id="settings-last-signin">--</span></div>
+                    </div>
+                </div>
+            
+                <!-- 設定メニュー -->
+                <nav class="menu-list">
                     <a href="/account/settings/profile" class="menu-item-link">
-                        <div class="menu-icon-box">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#5f6368"/>
-                            </svg>
-                        </div>
+                        <span class="menu-icon">👤</span>
                         <div class="menu-content">
                             <span class="menu-item-text">プロフィール</span>
-                            <span class="menu-subtext">基本情報、学習進捗状況、アカウント削除</span>
+                            <span class="menu-item-sub">表示名・メール確認・アカウント削除</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- プライバシーへの遷移 -->
                     <a href="/account/settings/privacy" class="menu-item-link">
-                        <div class="menu-icon-box">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="#5f6368"/>
-                            </svg>
-                        </div>
+                        <span class="menu-icon">🔔</span>
                         <div class="menu-content">
-                            <span class="menu-item-text">プライバシー</span>
-                            <span class="menu-subtext">メール通知設定、ニュースレターの購読管理</span>
+                            <span class="menu-item-text">通知・プライバシー</span>
+                            <span class="menu-item-sub">メール通知・ニュースレター設定</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- セキュリティへの遷移 -->
                     <a href="/account/security" class="menu-item-link">
-                        <div class="menu-icon-box">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" fill="#5f6368"/>
-                            </svg>
-                        </div>
+                        <span class="menu-icon">🔒</span>
                         <div class="menu-content">
                             <span class="menu-item-text">セキュリティ</span>
-                            <span class="menu-subtext">パスワード、二段階認証、ログイン履歴</span>
+                            <span class="menu-item-sub">パスワード・二段階認証・デバイス管理</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- デバイスへの遷移 -->
-                    <a href="/account/security/device/" class="menu-item-link">
-                        <div class="menu-icon-box">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h24v-3h-2V6c0-1.1-.9-2-2-2zM2 19v-2h20v2H2z" fill="#5f6368"/>
-                            </svg>
-                        </div>
-                        <div class="menu-content">
-                            <span class="menu-item-text">デバイス</span>
-                            <span class="menu-subtext">現在ログイン中の端末管理、リモートログアウト</span>
-                        </div>
-                        <span class="menu-arrow">❯</span>
-                    </a>
-                </div>
-
-                <div class="link-group">
-                    <a href="/account/settings/" class="link-item">アカウント設定へ戻る</a>
+                </nav>
+            
+                <!-- #12 ログアウト -->
+                <button id="settings-logout-btn" class="settings-logout-btn">ログアウト</button>
+            
+                <div class="link-group" style="margin-top:16px;">
+                    <a href="/" class="link-item" style="color:#888;font-weight:400;">ホームへ戻る</a>
                 </div>
             </div>
         </main>

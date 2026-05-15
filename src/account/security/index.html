@@ -23,65 +23,63 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
-        <main>            <div class="account-container">
-                <h1 class="home-title">セキュリティ</h1>
-                <p class="subtitle">アカウントを保護するための設定と管理</p>
-
-                <div class="settings-list">
-                    <!-- ログインとパスワード -->
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <a href="/account/settings/" class="back-link">← アカウント設定に戻る</a>
+                <h1 class="account-title">セキュリティ</h1>
+                <p class="account-subtitle">最終ログイン: <span id="last-signin-date">--</span></p>
+            
+                <div class="section-divider">ログインとパスワード</div>
+                <nav class="menu-list">
                     <a href="/account/security/pass" class="menu-item-link">
+                        <span class="menu-icon">🔑</span>
                         <div class="menu-content">
                             <span class="menu-item-text">パスワード</span>
-                            <span id="password-status-badge"></span>
+                            <span id="password-status-badge" class="menu-item-sub"></span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- 二段階認証 -->
                     <a href="/account/security/2fa" class="menu-item-link">
+                        <span class="menu-icon">🛡️</span>
                         <div class="menu-content">
                             <span class="menu-item-text">二段階認証</span>
-                        <span id="2fa-status-badge" class="status-badge disabled">無効</span>
+                            <span id="2fa-status-badge" class="status-badge disabled">無効</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- ログイン方法 -->
-                    <a href="/account/security/methods/" class="menu-item-link">
+                    <a href="/account/security/methods" class="menu-item-link">
+                        <span class="menu-icon">🔗</span>
                         <div class="menu-content">
                             <span class="menu-item-text">ログイン方法</span>
-                            <span class="menu-subtext">メールアドレス, Googleアカウント</span>
+                            <span class="menu-item-sub">メール・Google連携の管理</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-                </div>
-
-                <div class="divider">アクティビティ</div>
-
-                <div class="settings-list">
-                    <!-- 最近のアクティビティ -->
+                </nav>
+            
+                <div class="section-divider">アクティビティ</div>
+                <nav class="menu-list">
                     <a href="/account/security/activity" class="menu-item-link">
+                        <span class="menu-icon">📋</span>
                         <div class="menu-content">
                             <span class="menu-item-text">最近のアクティビティ</span>
-                            <span class="menu-subtext">サインインや変更履歴の確認</span>
+                            <span class="menu-item-sub">ログイン・設定変更の履歴（最大1年）</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-
-                    <!-- デバイス管理 -->
-                    <a href="/account/security/device/" class="menu-item-link">
+                    <a href="/account/security/device" class="menu-item-link">
+                        <span class="menu-icon">💻</span>
                         <div class="menu-content">
                             <span class="menu-item-text">ログイン中のデバイス</span>
-                            <span class="menu-subtext">2台のデバイスでログイン中</span>
-                            最終ログイン: <span id="last-signin-date"></span>
+                            <span class="menu-item-sub">アクティブなセッションの管理</span>
                         </div>
-                        <span class="menu-arrow">❯</span>
+                        <span class="menu-arrow">›</span>
                     </a>
-                </div>
-
-                <div class="link-group">
-                    <a href="/account/settings" class="link-item">アカウント設定へ戻る</a>
+                </nav>
+            
+                <div class="link-group" style="margin-top:24px;">
+                    <a href="/account/settings/" class="link-item">アカウント設定に戻る</a>
                 </div>
             </div>
         </main>

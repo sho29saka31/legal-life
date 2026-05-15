@@ -17,7 +17,7 @@ import { initializeAppCheck, ReCaptchaV3Provider }
 // ========================================
 // ヘッダー・フッター キャッシュ付きfetch
 // ========================================
-const LAYOUT_VERSION = "260513-1250"; // ★ バージョン更新
+const LAYOUT_VERSION = "260512-2300"; // ★ バージョン更新
 
 function fetchWithCache(url) {
     const key = `cache:${url}:v${LAYOUT_VERSION}`;

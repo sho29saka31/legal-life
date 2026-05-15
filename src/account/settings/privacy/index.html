@@ -23,28 +23,22 @@
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
-    <body>
-        <main>        <div class="account-container activity-wide">
-            <h1 class="home-title">プライバシー設定</h1>
-            <p class="subtitle">メール通知や情報の取り扱いに関する設定</p>
-
-            <form action="/auth/update-privacy" method="POST">
-                <div class="settings-group">
-                    <h2 class="settings-group-title">メール通知設定</h2>
-                    
-                    <div id="notification-settings">
-                        <!-- JSが動的に生成 -->
-                    </div>
-
-                <div class="action-area">
-                    <button type="submit" class="btn-primary">設定を保存</button>
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <a href="/account/settings/" class="back-link">← アカウント設定に戻る</a>
+                <h1 class="account-title">通知・プライバシー設定</h1>
+                <p class="account-subtitle">メールアドレス確認済みの場合のみ通知が届きます</p>
+            
+                <div class="section-divider">メール通知設定</div>
+                <div id="notification-settings">
+                    <p class="loading-text">読み込み中...</p>
                 </div>
-            </form>
-
-            <div class="link-group">
-                <a href="/account/settings" class="link-item">アカウント設定へ戻る</a>
+            
+                <div class="link-group" style="margin-top:24px;">
+                    <a href="/account/settings/" class="link-item">アカウント設定に戻る</a>
+                </div>
             </div>
-        </div>
         </main>
 
         <script type="module" src="/assets/js/important.js"></script>
