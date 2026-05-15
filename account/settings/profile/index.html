@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>プロフィール|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "プロフィール|legal&life",
+            "url": "https://legal-life.pages.dev/account/settings/profile"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="プロフィール|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/share_logo.png?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <a href="/account/settings/" class="back-link">← アカウント設定に戻る</a>
+                <h1 class="account-title">プロフィール</h1>
+            
+                <!-- ユーザーカード -->
+                <div class="user-card">
+                    <div id="settings-avatar-wrap"></div>
+                    <div class="user-card-info">
+                        <div class="user-card-name" id="settings-user-name"></div>
+                        <div class="user-card-email" id="settings-user-email"></div>
+                        <!-- #4 UUID + コピーボタン -->
+                        <div class="user-card-uuid">
+                            <span id="settings-user-uuid"></span>
+                            <button id="copy-uuid-btn" class="copy-uuid-btn">コピー</button>
+                        </div>
+                        <div class="user-card-last-signin">最終ログイン: <span id="settings-last-signin">--</span></div>
+                    </div>
+                </div>
+            
+                <!-- #3 表示名変更ボタン -->
+                <div style="margin-bottom:20px;">
+                    <button id="edit-displayname-btn" class="btn-secondary">
+                        ✏️ 表示名を変更する
+                    </button>
+                </div>
+            
+                <!-- #2 メール確認バナー -->
+                <div id="email-verify-banner" class="banner banner-warn" style="display:none;">
+                    <p class="banner-title">📧 メールアドレスが未確認です</p>
+                    <p style="font-size:0.85rem;">一部のセキュリティ機能はメール確認後に利用できます。</p>
+                    <button id="send-verify-email-btn" class="btn-primary"
+                            style="margin-top:10px;padding:9px;font-size:0.88rem;">
+                        確認メールを再送する
+                    </button>
+                    <p id="verify-email-msg" class="settings-msg"></p>
+                </div>
+            
+                <!-- アカウント削除へのリンク -->
+                <div class="section-divider">危険な操作</div>
+                <a href="/account/delete" class="btn-danger" style="display:block;text-align:center;text-decoration:none;padding:11px;">
+                    アカウントを削除する
+                </a>
+            
+                <div class="link-group" style="margin-top:20px;">
+                    <a href="/account/settings/" class="link-item">アカウント設定に戻る</a>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>

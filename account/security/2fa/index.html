@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <title>二段階認証|legal&life</title>
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "二段階認証|legal&life",
+            "url": "https://legal-life.pages.dev/account/security/2fa"
+        }
+        </script>
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, maximum-scale=1.0, user-scalable=yes">
+        <meta property="og:title" content="二段階認証|legal&life">
+        <meta property="og:image" content="https://github.com/deskside31/legal-life/blob/main/src/assets/images/share_logo.png?raw=true">
+        <meta property="og:type" content="website">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <link rel="stylesheet" href="/assets/css/account-shared.css">
+        <link rel="stylesheet" href="/assets/css/account.css">
+        <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
+    </head>
+    <body class="account-page">
+        <main>
+            <div class="account-container">
+                <a href="/account/security" class="back-link">← セキュリティに戻る</a>
+                <h1 class="account-title">二段階認証</h1>
+                <p class="account-subtitle">アカウントのセキュリティをさらに強化</p>
+            
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--bg-light);border-radius:var(--radius);margin-bottom:20px;">
+                    <div>
+                        <div style="font-weight:700;font-size:0.95rem;">二段階認証</div>
+                        <span id="2fa-status-badge" class="status-badge disabled" style="margin-top:4px;">無効</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="two-factor-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div style="font-size:0.82rem;color:var(--text-sub);line-height:1.6;margin-bottom:20px;">
+                    有効にすると、ログイン時にメールアドレスへ送信される6桁のコードが必要になります。
+                    2FAが使えない場合はバックアップコードでログインできます。
+                </div>
+            
+                <p id="two-factor-msg" class="settings-msg"></p>
+                <div id="twofa-otp-container" style="display:none;"></div>
+            
+                <div class="section-divider">設定済みの方</div>
+                <nav class="menu-list">
+                    <a href="/account/security/2fa/backup-code" class="menu-item-link">
+                        <span class="menu-icon">🔐</span>
+                        <div class="menu-content">
+                            <span class="menu-item-text">バックアップコード</span>
+                            <span class="menu-item-sub">2FAが使えない場合の緊急用コード</span>
+                        </div>
+                        <span class="menu-arrow">›</span>
+                    </a>
+                </nav>
+            
+                <div class="link-group" style="margin-top:24px;">
+                    <a href="/account/security" class="link-item">セキュリティに戻る</a>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="/assets/js/important.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+        <script type="module" src="/assets/js/account.js"></script>
+        <script src="/assets/js/access-log.js"></script>
+    </body>
+</html>
