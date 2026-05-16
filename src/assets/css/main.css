@@ -10,13 +10,12 @@
 }
 
 body {
-    font-family: "BIZ-UDGothic",;
+    font-family: "BIZ-UDGothic";
     font-weight: 700;
     font-style: normal;
     background-color: #B9E2E8;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
-    
 }
 
 /* header */

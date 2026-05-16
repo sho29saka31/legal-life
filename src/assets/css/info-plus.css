@@ -213,6 +213,61 @@
     font-size: 0.95rem;
 }
 
+/* 有料プラン案内用の追加スタイル */
+.plan-comparison-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.plan-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    min-width: 600px;
+}
+
+.plan-table th, .plan-table td {
+    border: 1px solid #e0e4e8;
+    padding: 12px;
+    text-align: center;
+}
+
+.plan-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.plan-table .feature-name {
+    text-align: left;
+    background-color: #fdfdfd;
+    font-weight: bold;
+    width: 25%;
+}
+
+.plan-highlight-plus {
+    background-color: #fff9db;
+    font-weight: bold;
+    color: #f08c00;
+}
+
+.plan-highlight-pro {
+    background-color: #e7f5ff;
+    font-weight: bold;
+    color: #1c7ed6;
+}
+
+.status-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.plan-note {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.6;
+}
+
 /* スマホ対応 */
 @media (max-width: 600px) {
     .info-detail-container {
