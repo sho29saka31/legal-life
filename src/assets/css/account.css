@@ -25,6 +25,7 @@ body.account-page {
     display: flex;
     align-items: flex-start;
     justify-content: center;
+    align-items: center;
     padding: 40px 16px 80px;
     box-sizing: border-box;
     font-family: "BIZ UDGothic", sans-serif;
