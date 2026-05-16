@@ -19,7 +19,6 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
-        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
@@ -30,19 +29,20 @@
                 <h1 class="account-title">ログイン方法</h1>
                 <p class="account-subtitle">サインインに使用する方法を管理します</p>
             
-                <!-- #8 全メソッド表示 -->
                 <div class="method-list">
-                    <!-- パスワードログイン -->
+                    <!-- パスワード -->
                     <div class="method-item">
                         <div class="method-icon">🔑</div>
                         <div class="method-info">
-                            <span class="method-name">パスワードログイン</span>
+                            <span class="method-name">メール / パスワード</span>
                             <span id="status-password" class="method-status unlinked">確認中...</span>
+                            <!-- #7 連携済みメール表示 -->
+                            <span id="method-email-password" class="method-linked-email"></span>
                         </div>
-                        <button id="btn-password" class="provider-link-btn link-btn">確認中</button>
+                        <button id="btn-password" class="provider-link-btn link-btn" disabled>確認中</button>
                     </div>
             
-                    <!-- Googleログイン -->
+                    <!-- Google -->
                     <div class="method-item">
                         <div class="method-icon">
                             <svg width="20" height="20" viewBox="0 0 48 48">
@@ -53,25 +53,27 @@
                             </svg>
                         </div>
                         <div class="method-info">
-                            <span class="method-name">Googleログイン</span>
+                            <span class="method-name">Google</span>
                             <span id="status-google" class="method-status unlinked">確認中...</span>
+                            <!-- #7 連携済みGoogleメール表示 -->
+                            <span id="method-email-google" class="method-linked-email"></span>
                         </div>
-                        <button id="btn-google" class="provider-link-btn link-btn">確認中</button>
+                        <button id="btn-google" class="provider-link-btn link-btn" disabled>確認中</button>
                     </div>
                 </div>
             
-                <p id="provider-msg" class="settings-msg" style="margin-top:12px;"></p>
+                <p id="provider-msg" class="settings-msg" style="margin-top:10px;"></p>
             
-                <!-- メールアドレス未設定カード -->
-                <div id="email-setup-card" class="banner banner-info" style="margin-top:16px;display:none;">
+                <!-- メール未設定カード -->
+                <div id="email-setup-card" class="banner banner-info" style="margin-top:14px;display:none;">
                     <p class="banner-title">📧 メールアドレスを設定する</p>
-                    <p style="font-size:0.82rem;margin-bottom:10px;">パスワードログインにはメールアドレスが必要です。</p>
+                    <p style="font-size:0.8rem;margin-bottom:10px;">パスワードログインにはメールアドレスが必要です。</p>
                     <input id="set-email-input" type="email" class="form-input" placeholder="メールアドレス">
                     <p id="set-email-msg" class="settings-msg"></p>
-                    <button id="set-email-btn" class="btn-primary" style="margin-top:10px;padding:10px;">設定する</button>
+                    <button id="set-email-btn" class="btn-primary" style="margin-top:10px;padding:9px;">設定する</button>
                 </div>
             
-                <div class="link-group" style="margin-top:24px;">
+                <div class="link-group" style="margin-top:22px;">
                     <a href="/account/security" class="link-item">セキュリティに戻る</a>
                 </div>
             </div>

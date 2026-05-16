@@ -19,7 +19,6 @@
         <meta property="og:type" content="website">
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/assets/css/main.css">
-        <link rel="stylesheet" href="/assets/css/account-shared.css">
         <link rel="stylesheet" href="/assets/css/account.css">
         <meta name="google-site-verification" content="y9-tMPUhLn1mNcfJEvFTnHLSDs_QGNIKW30sms3Tkvs" />
     </head>
@@ -30,9 +29,11 @@
                 <h1 class="account-title">二段階認証</h1>
                 <p class="account-subtitle">アカウントのセキュリティをさらに強化</p>
             
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--bg-light);border-radius:var(--radius);margin-bottom:20px;">
+                <!-- トグル -->
+                <div style="display:flex;align-items:center;justify-content:space-between;
+                            padding:15px;background:var(--bg-light);border-radius:var(--radius);margin-bottom:16px;">
                     <div>
-                        <div style="font-weight:700;font-size:0.95rem;">二段階認証</div>
+                        <div style="font-weight:700;font-size:0.93rem;">二段階認証</div>
                         <span id="2fa-status-badge" class="status-badge disabled" style="margin-top:4px;">無効</span>
                     </div>
                     <label class="switch">
@@ -40,27 +41,32 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <div style="font-size:0.82rem;color:var(--text-sub);line-height:1.6;margin-bottom:20px;">
+            
+                <p style="font-size:0.8rem;color:var(--text-sub);line-height:1.6;margin-bottom:16px;">
                     有効にすると、ログイン時にメールアドレスへ送信される6桁のコードが必要になります。
                     2FAが使えない場合はバックアップコードでログインできます。
-                </div>
+                </p>
             
                 <p id="two-factor-msg" class="settings-msg"></p>
                 <div id="twofa-otp-container" style="display:none;"></div>
             
-                <div class="section-divider">設定済みの方</div>
+                <!-- #5 有効化後の推奨バナー (JSで注入) -->
+                <div id="twofa-recommend" style="display:none;"></div>
+            
+                <div class="section-divider">バックアップ</div>
                 <nav class="menu-list">
-                    <a href="/account/security/2fa/backup-code" class="menu-item-link">
+                    <!-- #6 backup-code-link: JSで活性/非活性を制御 -->
+                    <a id="backup-code-link" class="menu-item-link" style="opacity:0.4;pointer-events:none;">
                         <span class="menu-icon">🔐</span>
                         <div class="menu-content">
                             <span class="menu-item-text">バックアップコード</span>
-                            <span class="menu-item-sub">2FAが使えない場合の緊急用コード</span>
+                            <span class="menu-item-sub">2FAが使えない場合の緊急用コード（二段階認証を有効にすると使えます）</span>
                         </div>
                         <span class="menu-arrow">›</span>
                     </a>
                 </nav>
             
-                <div class="link-group" style="margin-top:24px;">
+                <div class="link-group" style="margin-top:22px;">
                     <a href="/account/security" class="link-item">セキュリティに戻る</a>
                 </div>
             </div>
