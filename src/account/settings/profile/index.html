@@ -35,7 +35,7 @@
                     </div>
                 </div>
             
-                <!-- #11 リスト形式の情報表示 -->
+                <!-- リスト形式の情報 -->
                 <ul class="profile-info-list">
                     <li class="profile-info-item">
                         <span class="profile-info-label">ユーザー名</span>
@@ -50,7 +50,8 @@
                     </li>
                     <li class="profile-info-item">
                         <span class="profile-info-label">UUID</span>
-                        <span class="profile-info-value" id="profile-uuid-value" style="font-family:monospace;font-size:0.82rem;">読み込み中...</span>
+                        <span class="profile-info-value" id="profile-uuid-value"
+                            style="font-family:monospace;font-size:.82rem;">読み込み中...</span>
                         <div class="profile-info-actions">
                             <button id="copy-uuid-btn" class="copy-uuid-btn">コピー</button>
                         </div>
@@ -61,20 +62,24 @@
                     </li>
                 </ul>
             
-                <!-- #2 メール確認バナー -->
+                <!-- メール確認バナー -->
                 <div id="email-verify-banner" class="banner banner-warn" style="display:none;">
                     <p class="banner-title">📧 メールアドレスが未確認です</p>
-                    <p style="font-size:0.83rem;">一部のセキュリティ機能はメール確認後に利用できます。</p>
+                    <p style="font-size:.83rem;">一部のセキュリティ機能はメール確認後に利用できます。</p>
                     <button id="send-verify-email-btn" class="btn-primary"
-                            style="margin-top:10px;padding:9px;font-size:0.85rem;">
+                            style="margin-top:10px;padding:9px;font-size:.85rem;">
                         確認メールを再送する
                     </button>
                     <p id="verify-email-msg" class="settings-msg"></p>
                 </div>
             
+                <!-- 危険な操作 -->
                 <div class="section-divider">危険な操作</div>
-                <a href="/account/delete" class="btn-danger"
-                style="display:block;text-align:center;text-decoration:none;padding:10px;">
+                <!-- 削除ボタン: width:100% で中央配置 -->
+                <a href="/account/delete"
+                style="display:block;width:100%;box-sizing:border-box;text-align:center;text-decoration:none;
+                        padding:11px;background:var(--danger);color:#fff;border-radius:var(--radius);
+                        font-weight:700;font-size:.93rem;">
                     アカウントを削除する
                 </a>
             

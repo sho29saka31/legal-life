@@ -31,25 +31,37 @@
                 <div id="deletion-pending-banner" class="banner banner-error" style="display:none;">
                     <p class="banner-title">⚠️ アカウント削除が予約されています</p>
                     <p>削除予定日: <strong id="deletion-scheduled-date"></strong></p>
-                    <button id="cancel-deletion-btn" class="btn-secondary" style="margin-top:8px;width:auto;padding:8px 20px;font-size:0.85rem;">
-                        削除をキャンセルする
-                    </button>
+                    <button id="cancel-deletion-btn" class="btn-secondary"
+                            style="margin-top:8px;width:auto;padding:8px 20px;font-size:.85rem;">削除をキャンセルする</button>
                 </div>
             
-                <!-- ユーザーカード -->
+                <!-- ユーザーカード: アイコン左 + 情報右 -->
                 <div class="user-card">
-                    <div id="settings-avatar-wrap"></div>
-                    <div class="user-card-info">
-                        <div class="user-card-name"  id="settings-user-name"></div>
-                        <div class="user-card-email" id="settings-user-email"></div>
-                        <div class="user-card-last-signin">最終ログイン: <span id="settings-last-signin">--</span></div>
+                    <div id="settings-avatar-wrap">
+                        <div class="user-info-avatar-placeholder">👤</div>
+                    </div>
+                    <div class="user-card-body">
+                        <div class="user-card-row">
+                            <span class="user-card-label">アカウント名</span>
+                            <span class="user-card-value" id="settings-user-name">読み込み中...</span>
+                        </div>
+                        <div class="user-card-row">
+                            <span class="user-card-label">メールアドレス</span>
+                            <span class="user-card-value" id="settings-user-email">読み込み中...</span>
+                        </div>
+                        <p class="user-card-last">最終ログイン: <span id="settings-last-signin">--</span></p>
                     </div>
                 </div>
             
-                <!-- 設定メニュー -->
+                <!-- 設定メニュー (SVGアイコン) -->
                 <nav class="menu-list">
                     <a href="/account/settings/profile" class="menu-item-link">
-                        <span class="menu-icon">👤</span>
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
                         <div class="menu-content">
                             <span class="menu-item-text">プロフィール</span>
                             <span class="menu-item-sub">表示名・メール確認・アカウント削除</span>
@@ -57,7 +69,15 @@
                         <span class="menu-arrow">›</span>
                     </a>
                     <a href="/account/settings/privacy" class="menu-item-link">
-                        <span class="menu-icon">🔔</span>
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                                <line x1="6" y1="1" x2="6" y2="4"/>
+                                <line x1="10" y1="1" x2="10" y2="4"/>
+                                <line x1="14" y1="1" x2="14" y2="4"/>
+                            </svg>
+                        </span>
                         <div class="menu-content">
                             <span class="menu-item-text">通知・プライバシー</span>
                             <span class="menu-item-sub">メール通知・ニュースレター設定</span>
@@ -65,7 +85,11 @@
                         <span class="menu-arrow">›</span>
                     </a>
                     <a href="/account/security" class="menu-item-link">
-                        <span class="menu-icon">🔒</span>
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </span>
                         <div class="menu-content">
                             <span class="menu-item-text">セキュリティ</span>
                             <span class="menu-item-sub">パスワード・二段階認証・デバイス管理</span>
@@ -74,9 +98,7 @@
                     </a>
                 </nav>
             
-                <!-- #12 ログアウト -->
                 <button id="settings-logout-btn" class="settings-logout-btn">ログアウト</button>
-            
                 <div class="link-group" style="margin-top:16px;">
                     <a href="/" class="link-item" style="color:#888;font-weight:400;">ホームへ戻る</a>
                 </div>

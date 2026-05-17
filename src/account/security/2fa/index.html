@@ -33,7 +33,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;
                             padding:15px;background:var(--bg-light);border-radius:var(--radius);margin-bottom:16px;">
                     <div>
-                        <div style="font-weight:700;font-size:0.93rem;">二段階認証</div>
+                        <div style="font-weight:700;font-size:.93rem;">二段階認証</div>
                         <span id="2fa-status-badge" class="status-badge disabled" style="margin-top:4px;">無効</span>
                     </div>
                     <label class="switch">
@@ -42,7 +42,7 @@
                     </label>
                 </div>
             
-                <p style="font-size:0.8rem;color:var(--text-sub);line-height:1.6;margin-bottom:16px;">
+                <p style="font-size:.8rem;color:var(--text-sub);line-height:1.6;margin-bottom:16px;">
                     有効にすると、ログイン時にメールアドレスへ送信される6桁のコードが必要になります。
                     2FAが使えない場合はバックアップコードでログインできます。
                 </p>
@@ -56,8 +56,14 @@
                 <div class="section-divider">バックアップ</div>
                 <nav class="menu-list">
                     <!-- #6 backup-code-link: JSで活性/非活性を制御 -->
-                    <a id="backup-code-link" class="menu-item-link" style="opacity:0.4;pointer-events:none;">
-                        <span class="menu-icon">🔐</span>
+                    <a id="backup-code-link" class="menu-item-link disabled-link"
+                    style="opacity:0.4;pointer-events:none;">
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </span>
                         <div class="menu-content">
                             <span class="menu-item-text">バックアップコード</span>
                             <span class="menu-item-sub">2FAが使えない場合の緊急用コード（二段階認証を有効にすると使えます）</span>

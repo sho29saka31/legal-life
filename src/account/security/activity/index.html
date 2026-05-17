@@ -33,11 +33,12 @@
                     <p class="loading-text">読み込み中...</p>
                 </div>
             
-                <div style="background:var(--bg-light);border-radius:var(--radius);padding:16px;margin-top:24px;font-size:0.85rem;color:var(--text-sub);line-height:1.6;">
+                <!-- 注意文 + パスワード変更ボタン(中央) -->
+                <div style="background:var(--bg-light);border-radius:var(--radius);padding:16px;margin-top:24px;font-size:.85rem;color:var(--text-sub);line-height:1.6;text-align:center;">
                     身に覚えのない操作がある場合は、すぐにパスワードを変更してください。
-                    <div style="margin-top:10px;">
-                        <a href="/account/security/pass" class="btn-primary"
-                        style="display:inline-block;width:auto;padding:9px 20px;text-decoration:none;font-size:0.88rem;">
+                    <div class="activity-change-btn-wrap">
+                        <a href="/account/security/pass" class="btn-primary rec-btn"
+                        style="display:inline-block;width:auto;padding:9px 28px;text-decoration:none;">
                             パスワードを変更する
                         </a>
                     </div>

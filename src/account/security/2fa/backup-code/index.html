@@ -31,16 +31,17 @@
             
                 <div class="banner banner-warn">
                     <p class="banner-title">⚠️ 安全な場所に保管してください</p>
-                    <p style="font-size:0.82rem;">各コードは1回のみ使用可能です。誰にも見せないでください。</p>
+                    <p style="font-size:.82rem;">各コードは1回のみ使用可能です。誰にも見せないでください。</p>
                 </div>
             
+                <!-- JSでアクセス制御 + コード表示 -->
                 <div id="backup-codes-grid" class="backup-codes-grid">
-                    <p class="loading-text">読み込み中...</p>
+                    <p class="loading-text" style="grid-column:1/-1;">読み込み中...</p>
                 </div>
             
                 <div style="display:flex;gap:10px;margin-top:4px;">
-                    <button id="copy-codes-btn"       class="btn-secondary" style="flex:1;">コードをコピー</button>
-                    <button id="regenerate-codes-btn" class="btn-secondary" style="flex:1;">再生成する</button>
+                    <button id="copy-codes-btn"       class="btn-secondary backup-action-btn">コードをコピー</button>
+                    <button id="regenerate-codes-btn" class="btn-secondary backup-action-btn">再生成する</button>
                 </div>
             
                 <div class="link-group" style="margin-top:20px;">
