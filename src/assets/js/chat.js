@@ -17,7 +17,7 @@ function escapeHtml(str) {
 const CONFIG = {
   GEMINI_API_KEY: "__GEMINI_API_KEY__",
   GEMINI_API_URL:
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
   STORAGE_KEY: "legalChatHistory",
   MAX_HISTORY: 50,
   MAX_INPUT_LEN: 1000,

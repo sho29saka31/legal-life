@@ -8,8 +8,7 @@ import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, getDoc, onSnapsh
 import { getDatabase, ref as rtdbRef, push as rtdbPush, set as rtdbSet, remove as rtdbRemove }
     from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 import {
-    getAuth, onAuthStateChanged, signOut, GoogleAuthProvider,
-    setPersistence, browserLocalPersistence
+    getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 import { initializeAppCheck, ReCaptchaV3Provider }
     from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app-check.js";
