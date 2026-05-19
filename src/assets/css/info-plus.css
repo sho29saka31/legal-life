@@ -193,6 +193,14 @@
     background: linear-gradient(transparent 70%, #ffcccc 70%);
 }
 
+.important-notice-box ul li {
+  margin-bottom: 15px;
+}
+
+.important-notice-box ul li:last-child {
+  margin-bottom: 0;
+}
+
 /* 設定手順などのアクションを促すボックス */
 .action-box {
     background-color: #f0fbfc;
