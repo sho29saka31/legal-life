@@ -24,6 +24,7 @@ body.account-page {
   justify-content: center;
   padding: 40px 16px 80px;
   box-sizing: border-box;
+  font-family: "BIZ UDGothic", sans-serif;
   color: var(--text);
 }
 
@@ -81,6 +82,7 @@ body.account-page {
     border-color 0.2s,
     box-shadow 0.2s,
     background 0.2s;
+  font-family: inherit;
 }
 .form-input:focus {
   border-color: var(--primary);
@@ -103,6 +105,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-dark);
@@ -123,6 +126,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
 }
 .btn-secondary:hover {
   background: var(--bg-light);
@@ -139,6 +143,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
 }
 .btn-danger:hover:not(:disabled) {
   background: var(--danger-dark);
@@ -158,6 +163,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
 }
 .btn-primary-sm:hover:not(:disabled) {
   background: var(--primary-dark);
@@ -177,6 +183,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
 }
 .btn-secondary-sm:hover {
   background: var(--bg-light);
@@ -190,6 +197,7 @@ body.account-page {
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
+  font-family: inherit;
 }
 .btn-text:hover {
   text-decoration: underline;
@@ -212,6 +220,7 @@ body.account-page {
   transition:
     background 0.2s,
     box-shadow 0.2s;
+  font-family: inherit;
   text-decoration: none;
 }
 .btn-google:hover {
@@ -567,6 +576,7 @@ input:checked + .slider:before {
   padding: 2px 6px;
   cursor: pointer;
   color: var(--text-sub);
+  font-family: inherit;
 }
 .copy-uuid-btn:hover {
   background: #f0f0f0;
@@ -579,6 +589,7 @@ input:checked + .slider:before {
   font-weight: 700;
   cursor: pointer;
   text-decoration: underline;
+  font-family: inherit;
   padding: 0;
 }
 
@@ -637,6 +648,7 @@ input:checked + .slider:before {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  font-family: inherit;
   border: none;
   white-space: nowrap;
 }
@@ -770,6 +782,7 @@ input:checked + .slider:before {
   padding: 5px 8px;
   border-radius: 6px;
   transition: background 0.15s;
+  font-family: inherit;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -792,6 +805,7 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: "Courier New", monospace;
   font-size: 0.88rem;
   font-weight: 700;
   padding: 8px 10px;
@@ -854,6 +868,7 @@ input:checked + .slider:before {
   font-size: 1.4rem;
   text-align: center;
   letter-spacing: 10px;
+  font-family: monospace;
   font-weight: 700;
   box-sizing: border-box;
   outline: none;
@@ -1021,6 +1036,7 @@ input:checked + .slider:before {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
   margin-top: 8px;
 }
 .settings-logout-btn:hover {
