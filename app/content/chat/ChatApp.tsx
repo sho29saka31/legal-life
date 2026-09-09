@@ -19,6 +19,14 @@ export default function ChatApp() {
   const [error, setError] = useState("");
   const areaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Guards against out-of-order completion of initForUser(): onAuthStateChange
+  // can fire again (e.g. sign-out followed quickly by sign-in as a different
+  // account, or a near-simultaneous TOKEN_REFRESHED event) before a previous
+  // call's awaits (migrateLocalToSupabase/loadFromSupabase) have resolved.
+  // Without this, the earlier call's setHistory could land *after* the later
+  // call's, showing a different account's chat history than the one `userId`
+  // (and any subsequent send) actually points to.
+  const authRequestIdRef = useRef(0);
 
   // ログイン中はSupabase(chat_history)に読み書きし、未ログイン時はブラウザのlocalStorageに保存する。
   // 未ログインで貯まった履歴は、ログインした瞬間にSupabaseへ移行してlocalStorageから消す。
@@ -37,12 +45,13 @@ export default function ChatApp() {
       }
     };
 
-    const loadFromSupabase = async (uid: string) => {
+    const loadFromSupabase = async (uid: string, requestId: number) => {
       const { data } = await supabase
         .from("chat_history")
         .select("id, question, answer, category")
         .eq("user_id", uid)
         .order("created_at", { ascending: true });
+      if (authRequestIdRef.current !== requestId) return; // superseded by a newer auth state change
       setHistory(data ?? []);
     };
 
@@ -75,10 +84,12 @@ export default function ChatApp() {
     };
 
     const initForUser = async (uid: string | null) => {
+      const requestId = ++authRequestIdRef.current;
       setUserId(uid);
       if (uid) {
         await migrateLocalToSupabase(uid);
-        await loadFromSupabase(uid);
+        if (authRequestIdRef.current !== requestId) return; // superseded while migrating
+        await loadFromSupabase(uid, requestId);
       } else {
         loadFromLocal();
       }
