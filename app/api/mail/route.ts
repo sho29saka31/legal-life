@@ -161,11 +161,11 @@ export async function POST(req: NextRequest) {
         device_info: deviceInfo,
       });
       if (insertError) {
+        // insertError.messageはSupabase/Postgresの内部エラー文言(カラム名・制約名・型情報等)を
+        // そのまま含み得る。この経路は未認証で誰でも到達できるため、詳細はサーバーログにのみ残し、
+        // クライアントへは汎用メッセージだけを返す(スキーマ情報の外部漏洩・偵察を防ぐ)。
         console.error("Failed to save contact inquiry to Supabase:", insertError);
-        return NextResponse.json(
-          { error: "Failed to save inquiry", detail: insertError.message },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: "Failed to save inquiry" }, { status: 500 });
       }
 
       const contactTo = process.env.CONTACT_TO_EMAIL;
@@ -222,10 +222,10 @@ export async function POST(req: NextRequest) {
     await sendMail({ to: to_email, subject: buildSubject("notice", purpose), html });
     return NextResponse.json({ ok: true });
   } catch (err) {
+    // err.messageはNodemailer/SMTP(Gmail)側の内部エラー文言(認証失敗の詳細、接続先ホスト情報等)を
+    // そのまま含み得る。クライアントへ返すと内部インフラの手がかりを与えてしまうため、詳細は
+    // サーバーログにのみ残し、クライアントへは汎用メッセージだけを返す。
     console.error("Mail delivery failed:", err);
-    return NextResponse.json(
-      { error: "Mail delivery failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Mail delivery failed" }, { status: 500 });
   }
 }
