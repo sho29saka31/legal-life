@@ -10,6 +10,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabas
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
 export const supabase = createClient<Database>(url, anonKey, {
+  db: { schema: "legal_life" },
   auth: {
     // パスキー(WebAuthn)関連API(signInWithPasskey/registerPasskey/passkey.*)を有効化する。
     // @supabase/supabase-js v2.105.0以降で提供されるExperimental機能。
