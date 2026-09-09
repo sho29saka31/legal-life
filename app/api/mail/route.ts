@@ -7,7 +7,7 @@ import {
   sendMail,
   type ContactMailParams,
 } from "@/lib/mail/gmail";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseServer as supabase } from "@/lib/supabase/serverClient";
 
 // お問い合わせフォームは未認証で誰でも呼べるため、各フィールドの長さに上限を
 // 設けないと、巨大なペイロードによるDB肥大化・巨大メール送信・スパムに対して
