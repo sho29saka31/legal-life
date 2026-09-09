@@ -28,7 +28,7 @@ export async function loadNotificationPrefs(uid: string): Promise<Partial<Record
 // 呼び出し元(通知設定ページ)はUIを楽観的更新した後この関数を待つため、ここでエラーを
 // 握りつぶすと保存に失敗していてもトグルが「オン」のまま表示され続けてしまう。
 export async function saveNotificationPref(uid: string, key: NotifKey, enabled: boolean) {
-  const payload = { user_id: uid, [key]: enabled } as Database["public"]["Tables"]["notification_settings"]["Insert"];
+  const payload = { user_id: uid, [key]: enabled } as Database["legal_life"]["Tables"]["notification_settings"]["Insert"];
   const { error } = await supabase.from("notification_settings").upsert(payload);
   if (error) throw error;
 }
