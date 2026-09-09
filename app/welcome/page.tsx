@@ -29,6 +29,18 @@ export default function WelcomePage() {
     })();
   }, []);
 
+  // ログアウト後にブラウザの「戻る」でこのページに戻ると、bfcache(back/forward cache)
+  // によってJSを再実行せずページがそのまま復元され、requireAuth()の再チェックが
+  // 走らないまま表示名等が画面に残り続けることがある。event.persistedを検知したら
+  // 強制的にリロードし、認証チェックを必ず再実行させる。
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   if (!checked) return null;
 
   return (

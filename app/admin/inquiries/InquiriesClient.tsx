@@ -54,6 +54,19 @@ export default function InquiriesClient() {
     })();
   }, []);
 
+  // 管理者権限の再チェック(requireAuth + role==="admin")はマウント時にしか
+  // 走らないため、ログアウト/権限剥奪後にブラウザの「戻る」でこのページに戻ると、
+  // bfcache(back/forward cache)によってJSを再実行せずお問い合わせ内容(氏名・
+  // メールアドレス・端末情報等の個人情報)がそのまま画面に残り続けることがある。
+  // event.persistedを検知したら強制的にリロードし、権限チェックを必ず再実行させる。
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   const updateStatus = async (id: string, status: string) => {
     const prevStatus = items?.find((i) => i.id === id)?.status;
     setStatusError("");
