@@ -25,7 +25,7 @@ export async function loadNotificationPrefs(uid: string): Promise<Partial<Record
 }
 
 export async function saveNotificationPref(uid: string, key: NotifKey, enabled: boolean) {
-  const payload = { user_id: uid, [key]: enabled } as Database["public"]["Tables"]["notification_settings"]["Insert"];
+  const payload = { user_id: uid, [key]: enabled } as Database["legal_life"]["Tables"]["notification_settings"]["Insert"];
   await supabase.from("notification_settings").upsert(payload);
 }
 
