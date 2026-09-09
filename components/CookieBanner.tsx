@@ -22,6 +22,32 @@ export default function CookieBanner() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!visible) return;
+    // Cookieはタブ間で即座に共有されるが、localStorageのstorageイベントと違って
+    // 変更を他タブへ通知する仕組みがない。そのため、同時に開いた別タブで既に
+    // 同意/拒否が行われていても、このタブのバナーは表示されたままになり、
+    // ここで反対のボタンを押すと直前の同意/拒否が上書きされてしまう
+    // (例: タブAで「同意する」→タブBのバナーがまだ出ていて「拒否する」を押すと、
+    // 直前の同意が拒否に上書きされ、GAのCookieも削除される)。
+    // タブがフォアグラウンドに戻ったタイミングでCookieを再確認し、既に他タブで
+    // 同意/拒否済みならこのタブのバナーも閉じて状態を合わせる。
+    const recheck = () => {
+      if (document.visibilityState !== "visible") return;
+      const consent = getCookie("cookie_consent");
+      if (!consent) return;
+      if (consent === "accepted") grantConsent();
+      else denyConsent();
+      setVisible(false);
+    };
+    document.addEventListener("visibilitychange", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      document.removeEventListener("visibilitychange", recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, [visible]);
+
   if (!visible) return null;
 
   return (
