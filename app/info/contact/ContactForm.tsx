@@ -131,6 +131,13 @@ export default function ContactForm() {
   };
 
   const handleSubmit = async () => {
+    // The submit button's disabled={submitting} attribute alone does not close
+    // the window between a double-click's two events: collectDeviceInfo() below
+    // is awaited before the button's disabled state is guaranteed to have
+    // committed, so a fast second click could re-enter this function and send a
+    // duplicate inquiry (with CAPTCHA disabled, nothing else stops that). Guard
+    // explicitly, mirroring SearchApp.tsx's `if (loading) return;` pattern.
+    if (submitting) return;
     if (!validate()) return;
     if (isCaptchaEnabled() && !captchaToken) {
       setSubmitError("認証(CAPTCHA)を完了してください");
