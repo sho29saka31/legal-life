@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { logAct } from "@/lib/auth/session";
-import { hasMFA, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
+import { listTotpFactors, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
 import { sendNoticeForUser } from "@/lib/auth/notifications";
 import { validatePassword } from "@/lib/auth/utils";
 import OtpPanel from "@/components/OtpPanel";
@@ -60,7 +60,26 @@ export default function PassPage() {
 
     setSubmitting(true);
     setMsg({ text: "", type: "" });
-    if (await hasMFA()) {
+    // 二段階認証の登録有無の確認はフェイルクローズにする(app/account/delete/page.tsxと同じ理由)。
+    // 以前使っていたhasMFA()はエラー時に「2FA未設定」としてfalseを返すフェイルオープン設計のため、
+    // listTotpFactors()の通信が何らかの理由(回線不調や、悪意ある拡張機能等によるリクエスト妨害)で
+    // 失敗しただけで、2FA登録済みアカウントでも本人確認(OTP)なしにパスワード変更が実行できてしまう。
+    // 確認できない場合は変更を進めず、エラーを表示して中断する。
+    let factorCount: number;
+    try {
+      factorCount = (await listTotpFactors()).length;
+    } catch (e) {
+      setSubmitting(false);
+      setMsg({
+        text:
+          e instanceof Error
+            ? `二段階認証の設定状況を確認できませんでした: ${e.message}`
+            : "二段階認証の設定状況を確認できませんでした。時間をおいて再試行してください",
+        type: "error",
+      });
+      return;
+    }
+    if (factorCount > 0) {
       setShowOtp(true);
       return;
     }
