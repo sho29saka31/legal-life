@@ -12,7 +12,7 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  public: {
+  legal_life: {
     Tables: {
       access_logs: {
         Row: {
@@ -401,7 +401,7 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "legal_life">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -517,7 +517,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  public: {
+  legal_life: {
     Enums: {},
   },
 } as const
