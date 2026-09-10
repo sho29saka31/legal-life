@@ -16,7 +16,7 @@ export default function Footer() {
           <li><Link href="https://service.saka2931.jp/cookie" className="text-gray-500 text-xs hover:underline">クッキーポリシー</Link></li>
           <li className="text-gray-300">|</li>
           <li><Link href="/info/map" className="text-gray-500 text-xs hover:underline">サイトマップ</Link></li>
-          <li><Link href="/info/contact" className="text-gray-500 text-xs hover:underline">お問い合わせ</Link></li>
+          <li><Link href="https://service.saka2931.jp/contact/legal-life" className="text-gray-500 text-xs hover:underline">お問い合わせ</Link></li>
         </ul>
       </div>
     </footer>
