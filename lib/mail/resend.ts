@@ -1,22 +1,14 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-let transporter: nodemailer.Transporter | undefined;
+let resendClient: Resend | undefined;
 
-// GmailのSMTPを直接使う(サードパーティESPはgmail.com等の共有ドメインを送信元として
-// 認証できないため使えない。自分自身のGmailアカウントとして送るこの方式のみが
-// 独自ドメインなしで実際にGmailアドレスから送信できる)。
-// GMAIL_USER: 送信元Gmailアドレス、GMAIL_APP_PASSWORD: Googleアカウントで発行したアプリパスワード
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-  }
-  return transporter;
+// Resend経由でメールを送信する。RESEND_FROM_EMAILはmail.saka2931.jp
+// (SPF/DKIM/DMARC設定済み、adacと共有のドメイン)上のアドレスを指定する。
+function getResendClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY が設定されていません。");
+  if (!resendClient) resendClient = new Resend(apiKey);
+  return resendClient;
 }
 
 export function esc(s: unknown): string {
@@ -183,10 +175,13 @@ export async function sendMail(params: {
   subject: string;
   html: string;
 }) {
-  await getTransporter().sendMail({
-    from: `legal&life <${process.env.GMAIL_USER}>`,
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!from) throw new Error("RESEND_FROM_EMAIL が設定されていません。");
+  const { error } = await getResendClient().emails.send({
+    from: `legal&life <${from}>`,
     to: params.to,
     subject: params.subject,
     html: params.html,
   });
+  if (error) throw new Error(`メール送信に失敗しました: ${error.message}`);
 }
