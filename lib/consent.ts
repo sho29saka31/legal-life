@@ -1,4 +1,11 @@
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-2JXNJ9QJ9S";
+// Google Analytics 4を直接埋め込む方式から、Google Tag Manager(GTM)経由の方式に移行。
+// GTMコンテナ自体は同意状況に関わらずロード可能だが、ここでは既存の設計を踏襲し、
+// ユーザーが同意するまでGTM自体を読み込まない(より厳格な)方式を維持する。
+// Search Console所有権確認は別途metaタグ方式で行っているため(app/layout.tsx参照)、
+// GTMを同意後まで遅延させても確認には影響しない。
+const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID;
+// GTM内で設定するGA4設定タグのMeasurement ID。Cookie削除(拒否時)のみに使用する。
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
 
 declare global {
   interface Window {
@@ -41,6 +48,7 @@ export function getCookie(name: string) {
 }
 
 function deleteGACookies() {
+  if (!GA_MEASUREMENT_ID) return;
   const names = ["_ga", "_gid", "_gat", `_ga_${GA_MEASUREMENT_ID.replace("G-", "")}`];
   names.forEach((name) => {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${location.hostname}`;
@@ -48,19 +56,16 @@ function deleteGACookies() {
   });
 }
 
-let gaLoaded = false;
-function loadGoogleAnalytics() {
-  if (gaLoaded) return;
-  gaLoaded = true;
+let gtmLoaded = false;
+function loadGTM() {
+  if (gtmLoaded || !GTM_CONTAINER_ID) return;
+  gtmLoaded = true;
+  // Googleの標準GTMスニペット(gtm.js)を動的に挿入する。
+  window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
   const script = document.createElement("script");
   script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`;
   document.head.appendChild(script);
-  window.gtag("js", new Date());
-  window.gtag("config", GA_MEASUREMENT_ID, {
-    anonymize_ip: true,
-    cookie_flags: "SameSite=Lax;Secure",
-  });
 }
 
 export function grantConsent() {
@@ -73,7 +78,7 @@ export function grantConsent() {
     functionality_storage: "granted",
     personalization_storage: "granted",
   });
-  loadGoogleAnalytics();
+  loadGTM();
 }
 
 export function denyConsent() {
@@ -84,7 +89,7 @@ export function denyConsent() {
     personalization_storage: "denied",
   });
   deleteGACookies();
-  window[`ga-disable-${GA_MEASUREMENT_ID}`] = true;
+  if (GA_MEASUREMENT_ID) window[`ga-disable-${GA_MEASUREMENT_ID}`] = true;
 }
 
 export function acceptCookies() {
