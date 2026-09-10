@@ -1,7 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { infoDetails } from "@/data/info-details";
+import { getAnnouncements, formatSimpleDate } from "@/lib/announcements";
 import PopupLink from "@/components/PopupLink";
+
+// adacの管理画面から追加されたお知らせを反映するため、ビルド時に固定せず
+// リクエスト時に取得する。
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "ホーム",
@@ -22,7 +26,9 @@ function BoxTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const announcements = (await getAnnouncements()).slice(0, 5);
+
   return (
     <>
       <div className="text-center px-5 py-8 sm:py-14">
@@ -79,15 +85,17 @@ export default function HomePage() {
               <span className="flex-1 pl-2">内容</span>
               <span className="w-24 shrink-0 text-center">リンク</span>
             </div>
-            {infoDetails.slice(0, 5).map((d) => (
+            {announcements.map((a) => (
               <div
-                key={d.slug}
+                key={a.slug}
                 className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0 py-3 sm:py-3 px-1 border-b border-[#7ddce8] text-sm"
               >
-                <span className="w-full sm:w-24 shrink-0 text-[#666] sm:text-inherit">{d.date}</span>
-                <span className="flex-1 sm:pl-2">{d.title}</span>
+                <span className="w-full sm:w-24 shrink-0 text-[#666] sm:text-inherit">
+                  {formatSimpleDate(a.publishedAt)}
+                </span>
+                <span className="flex-1 sm:pl-2">{a.title}</span>
                 <span className="w-full sm:w-24 shrink-0 text-right sm:text-center">
-                  <Link href={`/info/details/${d.slug}`} className="text-[#0076a3]">
+                  <Link href={`/info/details/${a.slug}`} className="text-[#0076a3]">
                     詳細
                   </Link>
                 </span>
