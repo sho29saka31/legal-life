@@ -8,7 +8,7 @@ export type LawDoc = {
 export const lawDocs: Record<"privacy" | "terms" | "disclaimer" | "cookie", LawDoc> = {
   privacy: {
     title: "プライバシーポリシー",
-    dateLabel: `最終更新日: 2026年9月4日`,
+    dateLabel: `最終更新日: 2026年9月10日`,
     bodyHtml: `<p>このプライバシーポリシーは、個人情報、Cookie、外部サービス利用、AI利用、セキュリティ対策、運営体制に関する包括的な情報開示文書です。</p>
 
                     <h2 id="section1">1. 基本方針</h2>
@@ -192,18 +192,18 @@ export const lawDocs: Record<"privacy" | "terms" | "disclaimer" | "cookie", LawD
                                 <p><strong>データ保持期間</strong>: 16ヶ月間</p>
                                 <p><strong>プライバシーポリシー</strong>: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a></p>
                                 <p><strong>オプトアウト</strong>: サイト運営者側のツールのため、ユーザー側での操作は不要</p>
-                        <h3>5-6. Gmail SMTP</h3>
+                        <h3>5-6. Resend</h3>
                             <h4>5-6-1. 基本情報</h4>
-                                <p><strong>サービス名</strong>: Gmail（SMTP経由でのメール送信）</p>
-                                <p><strong>提供者</strong>: Google LLC</p>
-                                <p><strong>利用目的</strong>: お問い合わせフォームの内容を運営者宛にメール送信</p>
+                                <p><strong>サービス名</strong>: Resend（メール配信API）</p>
+                                <p><strong>提供者</strong>: Resend, Inc.</p>
+                                <p><strong>利用目的</strong>: お問い合わせフォームの内容を運営者宛にメール送信、会員向け通知メール（ログイン通知、パスワード変更通知等）の送信</p>
                             <h4>5-6-2. その他の情報</h4>
-                                <p><strong>取得・送信される情報</strong>: フォーム入力内容（氏名、性別、年代、メールアドレス、問い合わせ内容）、デバイス診断情報、送信日時</p>
-                                <p><strong>データ処理地</strong>: 米国およびGoogleのグローバルインフラ</p>
-                                <p><strong>データ保持期間</strong>: 運営者のGmailメールボックスに保存（当方が対応完了を確認した上で手動削除）</p>
-                                <p><strong>セキュリティ対策</strong>: TLSによる通信の暗号化、Googleアカウントによるアクセス制限</p>
-                                <p><strong>プライバシーポリシー</strong>: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a></p>
-                                <p><strong>オプトアウト</strong>: お問い合わせフォームを利用しないことで回避可能</p>
+                                <p><strong>取得・送信される情報</strong>: フォーム入力内容（氏名、性別、年代、メールアドレス、問い合わせ内容）、デバイス診断情報、送信日時、会員向け通知メールの宛先・本文</p>
+                                <p><strong>データ処理地</strong>: 米国およびResendのグローバルインフラ</p>
+                                <p><strong>データ保持期間</strong>: 運営者のメールボックスに保存（当方が対応完了を確認した上で手動削除）</p>
+                                <p><strong>セキュリティ対策</strong>: TLSによる通信の暗号化、独自ドメイン（mail.saka2931.jp）でのSPF/DKIM/DMARC送信元認証</p>
+                                <p><strong>プライバシーポリシー</strong>: <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend Privacy Policy</a></p>
+                                <p><strong>オプトアウト</strong>: お問い合わせフォームを利用しないこと、通知設定ページで各通知をオフにすることで回避可能</p>
                     <h2 id="section6">6. AI利用に関する詳細情報開示</h2>
                         <h3>6-1. 使用しているAIシステムの詳細</h3>
                             <h4>AIモデルの基本情報</h4>
@@ -490,6 +490,7 @@ export const lawDocs: Record<"privacy" | "terms" | "disclaimer" | "cookie", LawD
                     <p><strong>2026年8月21日</strong>: データベース・認証基盤をFirebaseからSupabaseへ移行したことに伴い、関連する記述(取得・保存されるデータ、データ処理地、セキュリティ対策、AI利用時のデータ保存先等)を更新。実在しなくなったreCAPTCHA Enterprise(Firebase App Check)に関する記述を削除。</p>
                     <p><strong>2026年8月28日</strong>: チャット機能をログイン時のみSupabaseに保存する仕様に変更(保存期間は作成から6ヶ月)し、関連する記述を実装に合わせて更新。お問い合わせフォームの実装をGoogle Forms相当の記述からSupabase保存+Gmail SMTP送信の実態に合わせて修正。チャット履歴のセルフサービスエクスポート機能、法令分野カテゴリの統計利用に関する記述を追加。</p>
                     <p><strong>2026年9月4日</strong>: 二段階認証の方式を、メール送付によるワンタイムパスワード方式から、認証アプリ(Google Authenticator等)を用いたTOTP方式に変更したことに伴い、関連する記述を実装に合わせて更新。あわせて、二段階認証がログイン方法(Google/メール・パスワード)にかかわらず利用可能である旨を明記。</p>
+                    <p><strong>2026年9月10日</strong>: メール送信基盤をGmail SMTPからResendに変更したことに伴い、5-6の外部サービス開示を更新。</p>
                     <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
                     
                     <p><strong>運営者</strong>: LEGAL&LIFE運営チーム</p>

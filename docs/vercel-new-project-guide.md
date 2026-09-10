@@ -53,7 +53,7 @@
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | SupabaseプロジェクトのURL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabaseのpublishable(anon)キー |
-| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | メール送信(Gmail SMTP) |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | メール送信(Resend) |
 | `CONTACT_TO_EMAIL` | お問い合わせ受信先 |
 | `GEMINI_API_KEY` | AIチャット機能 |
 | `NEXT_PUBLIC_SITE_URL` | デプロイ先の実際のURL(OGP等に使用) |

@@ -33,7 +33,7 @@ export async function saveNotificationPref(uid: string, key: NotifKey, enabled: 
   if (error) throw error;
 }
 
-// notification_settingsのトグル(デフォルトtrue)を尊重した上で、Gmail SMTP経由(/api/mail)で
+// notification_settingsのトグル(デフォルトtrue)を尊重した上で、Resend経由(/api/mail)で
 // 会員向け通知メールを送る。宛先を明示的に渡す版(email_changeのようにuser.emailが
 // まだ確定していないケース用)と、ログイン中のUserからそのまま送る版の2つを用意する。
 // /api/mailのnotice種別は認証済みセッションを要求するため、現在のアクセストークンを
