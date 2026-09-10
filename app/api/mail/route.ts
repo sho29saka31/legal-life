@@ -6,7 +6,7 @@ import {
   DEVICE_INFO_KEYS,
   sendMail,
   type ContactMailParams,
-} from "@/lib/mail/gmail";
+} from "@/lib/mail/resend";
 import { supabaseServer as supabase } from "@/lib/supabase/serverClient";
 
 // お問い合わせフォームは未認証で誰でも呼べるため、各フィールドの長さに上限を
@@ -33,13 +33,12 @@ const NOTICE_MAX_LENGTHS: Record<string, number> = {
   purpose: 300,
 };
 
-// nodemailerのaddressparserは"a@x.com,b@y.com"のようなカンマ区切り文字列を
-// 複数の宛先として解釈する。to_emailは単一の宛先を想定した値であり、これを
-// そのままsendMail()の"to"へ渡すと、認証済みユーザーが1回のリクエストで
-// (長さ254文字の上限内で)カンマ区切りの複数アドレスを詰め込むことができ、
-// NOTICE_RATE_LIMIT_MAX_REQUESTSによるユーザー単位のレート制限を実質的に
-// バイパスして本サイトのGmailアカウントから多数の第三者へメールを送りつけ
-// られてしまう。単一のメールアドレス形式であることをここで検証する。
+// Resend SDKは"a@x.com,b@y.com"のようなカンマ区切り文字列を複数の宛先として
+// 解釈する。to_emailは単一の宛先を想定した値であり、これをそのままsendMail()の
+// "to"へ渡すと、認証済みユーザーが1回のリクエストで(長さ254文字の上限内で)
+// カンマ区切りの複数アドレスを詰め込むことができ、NOTICE_RATE_LIMIT_MAX_REQUESTS
+// によるユーザー単位のレート制限を実質的にバイパスして多数の第三者へメールを
+// 送りつけられてしまう。単一のメールアドレス形式であることをここで検証する。
 const SINGLE_EMAIL_RE = /^[^\s,<>]+@[^\s,<>]+\.[^\s,<>]+$/;
 
 // フィールドが文字列型でない場合(配列・オブジェクト等)、これまでは長さチェックを
@@ -81,8 +80,7 @@ function isNoticeRateLimited(uid: string): boolean {
 }
 
 // メール送信API。旧 legal-life-mailer (Cloudflare Workers) の api/index.js を統合したもの。
-// 送信はGmail SMTP(Nodemailer)経由。第三者ESP(Resend等)はgmail.com等の共有ドメインを
-// 送信元として認証できないため、独自ドメインなしでGmailアドレスから送るにはこの方式のみ。
+// 送信はResend経由(mail.saka2931.jpドメインで送信元アドレスを検証済み)。
 
 // Cloudflare Turnstileでの検証(TURNSTILE_SECRET_KEY未設定時は既存動作のまま何もしない=
 // 後方互換)。お問い合わせフォームは未認証で誰でも呼べるため、スパム・大量投稿対策として使う。
@@ -138,7 +136,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "CAPTCHA検証に失敗しました" }, { status: 400 });
       }
 
-      // お問い合わせの保存を主経路とする。メール送信(Gmail SMTP)は現状不安定なため、
+      // お問い合わせの保存を主経路とする。メール送信は失敗し得るため、
       // 送信に失敗してもSupabaseへの保存が成功していれば管理画面から確認できるようにする。
       const { from_name, gender, age_group, reply_email, inquiry_type, category, content } = params;
       // device_infoは未認証で誰でも送れる値のため、既知のキーのみを許可リストで
@@ -222,8 +220,8 @@ export async function POST(req: NextRequest) {
     await sendMail({ to: to_email, subject: buildSubject("notice", purpose), html });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    // err.messageはNodemailer/SMTP(Gmail)側の内部エラー文言(認証失敗の詳細、接続先ホスト情報等)を
-    // そのまま含み得る。クライアントへ返すと内部インフラの手がかりを与えてしまうため、詳細は
+    // err.messageはResend側の内部エラー文言(APIキー不正の詳細等)をそのまま含み得る。
+    // クライアントへ返すと内部インフラの手がかりを与えてしまうため、詳細は
     // サーバーログにのみ残し、クライアントへは汎用メッセージだけを返す。
     console.error("Mail delivery failed:", err);
     return NextResponse.json({ error: "Mail delivery failed" }, { status: 500 });
