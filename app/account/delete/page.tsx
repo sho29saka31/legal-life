@@ -38,7 +38,9 @@ export default function DeletePage() {
       if (profile?.deletion_pending) {
         setAlreadyPending(true);
         if (profile.scheduled_deletion) {
-          setScheduledDate(new Date(profile.scheduled_deletion).toLocaleString("ja-JP"));
+          setScheduledDate(
+            new Date(profile.scheduled_deletion).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+          );
         }
       }
     })();

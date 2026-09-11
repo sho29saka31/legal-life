@@ -42,7 +42,9 @@ export default function AccountPage() {
           <p className="text-m3-body-medium text-md-on-error-container mb-3">
             削除予定日:{" "}
             <strong>
-              {profile.scheduled_deletion ? new Date(profile.scheduled_deletion).toLocaleString("ja-JP") : "--"}
+              {profile.scheduled_deletion
+                ? new Date(profile.scheduled_deletion).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                : "--"}
             </strong>
           </p>
           <MdButton variant="outlined" onClick={cancelDeletion}>
