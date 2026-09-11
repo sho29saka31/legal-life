@@ -25,7 +25,7 @@ export function buildSubject(_type: MailType, purpose?: string): string {
 }
 
 function layout(bodyHtml: string): string {
-  const siteUrl = process.env.SITE_URL || "https://legal-life.vercel.app";
+  const siteUrl = process.env.SITE_URL || "https://legal-life.saka2931.jp";
   const siteLabel = siteUrl.replace(/^https?:\/\//, "");
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">

@@ -19,6 +19,7 @@ const TIMELINE = [
   { date: "2026年4月", title: "サイト引越し(Cloudflare Pages)", body: "GithubPagesからCloudflare Pagesへ移動!GithubPagesで課題であったサイトアドレスの長さを克服して短くなりました。", tech: "Github, GoogleAIStudio, e-gov法令API, Firebase, GoogleAnalytics, GoogleSearchConsole, GoogleForms, EmailJS" },
   { date: "2026年7月", title: "Next.js + Vercelへ全面リライト", body: "サイト全体をNext.js(TypeScript)+Tailwind CSSへ全面リライトし、ホスティングをCloudflare PagesからVercelへ移行。メール送信基盤(旧legal-life-mailer)もAPI Routesとして統合し、リポジトリを一本化しました。", tech: "Next.js, TypeScript, Tailwind CSS, Vercel, Resend, GoogleAIStudio, e-gov法令API, Firebase" },
   { date: "2026年8月", title: "Firebase → Supabaseへ全面移行", body: "認証・データベース基盤をFirebase(Authentication, Firestore, Realtime Database)からSupabase(PostgreSQL)へ全面移行。Row Level Securityによるアクセス制御を導入し、管理画面(CMS)構築の土台を整備しました。", tech: "Supabase, PostgreSQL, Next.js, TypeScript" },
+  { date: "2026年9月", title: "saka2931.jp共通基盤への統合", body: "独自ドメイン saka2931.jp へ移行し、Sporive等の姉妹サービスと基盤を統合。お問い合わせ窓口・プライバシーポリシー/利用規約をservice.saka2931.jpに一本化し、お知らせ・機能フラグの管理画面(adac)を新設しました。あわせてログイン・パスワード変更時のセキュリティ強化、エラーページの整備も行いました。", tech: "Supabase Auth, Vercel, saka2931.jp" },
 ];
 
 export default function HistoryPage() {

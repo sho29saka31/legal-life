@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.vercel.app";
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.saka2931.jp";
   // チャット・学習・ニュース・料金プラン・沿革は正式公開前の機能/ページであり
   // サイト内のナビゲーションから意図的にブロックされているため、検索エンジンにも公開しない。
   const pages: { path: string; priority: number }[] = [
