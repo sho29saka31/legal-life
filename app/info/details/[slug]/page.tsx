@@ -1,21 +1,29 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { infoDetails } from "@/data/info-details";
+import { getAnnouncementBySlug } from "@/lib/announcements";
 
-export function generateStaticParams() {
-  return infoDetails.map((d) => ({ slug: d.slug }));
-}
+// adacの管理画面から追加されたお知らせを反映するため、ビルド時に固定せず
+// リクエスト時に取得する(generateStaticParamsは廃止)。
+export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const detail = infoDetails.find((d) => d.slug === slug);
+  const detail = await getAnnouncementBySlug(slug);
   return { title: detail?.title || "お知らせ", robots: { index: false, follow: false } };
 }
 
-export default async function InfoDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function InfoDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const detail = infoDetails.find((d) => d.slug === slug);
+  const detail = await getAnnouncementBySlug(slug);
   if (!detail) notFound();
 
   return (

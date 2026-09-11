@@ -4,8 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import PopupLink from "./PopupLink";
+import type { Announcement } from "@/lib/announcements";
 
-export default function Header() {
+export default function Header({
+  importantAnnouncements,
+}: {
+  importantAnnouncements: Announcement[];
+}) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLUListElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -91,7 +96,7 @@ export default function Header() {
           </ul>
         </nav>
       </header>
-      <Announcements />
+      <Announcements items={importantAnnouncements} />
     </>
   );
 }
@@ -106,33 +111,31 @@ function ImportantIcon() {
   );
 }
 
-function MaintenanceIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#f39c12" stroke="#f39c12" />
-      <line x1="12" y1="9" x2="12" y2="13" stroke="white" strokeWidth={2.5} />
-      <line x1="12" y1="17" x2="12.01" y2="17" stroke="white" strokeWidth={2.5} />
-    </svg>
-  );
-}
 
-function Announcements() {
+function Announcements({ items }: { items: Announcement[] }) {
+  if (items.length === 0) return null;
+
   return (
     <div className="w-full box-border">
-      <div className="max-w-[1000px] mx-auto flex items-center gap-3 px-5 py-2.5 bg-[#fff5f5]">
-        <span className="w-[22px] h-[22px] shrink-0"><ImportantIcon /></span>
-        <p className="text-sm text-[#333] leading-snug m-0">
-          【重要】現在のサイトステータスと正式リリースについて 更新日: 2026/5/11
-          <Link href="/info/details/9999" className="text-[#0076a3] font-bold underline ml-2">確認する</Link>
-        </p>
-      </div>
-      <div className="max-w-[1000px] mx-auto flex items-center gap-3 px-5 py-2.5 bg-[#fff9e6] border-t border-dashed border-[#ffcccc]">
-        <span className="w-[22px] h-[22px] shrink-0"><MaintenanceIcon /></span>
-        <p className="text-sm text-[#333] leading-snug m-0">
-          【重要】アカウントシステム刷新の全貌と、リリース延期に伴う影響について 更新日: 2026/05/20
-          <Link href="/info/details/0013" className="text-[#0076a3] font-bold underline ml-2">確認する</Link>
-        </p>
-      </div>
+      {items.map((item, i) => (
+        <div
+          key={item.slug}
+          className={`max-w-[1000px] mx-auto flex items-center gap-3 px-5 py-2.5 bg-[#fff5f5] ${
+            i > 0 ? "border-t border-dashed border-[#ffcccc]" : ""
+          }`}
+        >
+          <span className="w-[22px] h-[22px] shrink-0"><ImportantIcon /></span>
+          <p className="text-sm text-[#333] leading-snug m-0">
+            {item.title} {item.dateLabel}
+            <Link
+              href={`/info/details/${item.slug}`}
+              className="text-[#0076a3] font-bold underline ml-2"
+            >
+              確認する
+            </Link>
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

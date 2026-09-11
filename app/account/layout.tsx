@@ -1,25 +1,27 @@
-"use client";
+import { getFeatureFlag } from "@/lib/feature-flags";
+import AccountLayoutClient from "./AccountLayoutClient";
 
-import { useEffect } from "react";
+/**
+ * ログイン・新規登録・プロフィール編集・セキュリティ設定・端末管理・アカウント削除等、
+ * account配下の全ページを対象にした「アカウント機能」フラグ(adacの管理画面で切替)。
+ * 無効時は各ページの認証チェックより先にここで一律に利用不可を案内する。
+ */
+export default async function AccountLayout({ children }: { children: React.ReactNode }) {
+  const accountFeaturesEnabled = await getFeatureFlag("account_features");
 
-export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    // ログアウト後にブラウザの「戻る」でaccount配下のページに戻ると、bfcache
-    // (back/forward cache)によってJSを再実行せずページがそのまま復元されることがある。
-    // このとき各ページのuseEffect(requireAuth()等の認証チェック)は再実行されないため、
-    // ログアウト前に取得済みだった氏名・メールアドレス・アクティビティ履歴・端末一覧等の
-    // 機密情報がそのまま画面に表示され続けてしまう。event.persisted(bfcacheからの復元)を
-    // 検知した場合は強制的にリロードし、各ページの認証チェックを必ず再実行させる。
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) window.location.reload();
-    };
-    window.addEventListener("pageshow", handlePageShow);
-    return () => window.removeEventListener("pageshow", handlePageShow);
-  }, []);
+  if (!accountFeaturesEnabled) {
+    return (
+      <div className="min-h-[calc(100vh-200px)] bg-md-surface flex items-center justify-center px-4 py-10 sm:py-16">
+        <div className="max-w-sm text-center">
+          <p className="text-sm text-[#555] leading-relaxed">
+            現在、アカウント機能(ログイン・新規登録・設定変更等)は一時的にご利用いただけません。
+            <br />
+            時間をおいて再度お試しください。
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <div className="min-h-[calc(100vh-200px)] bg-md-surface flex items-center justify-center px-4 py-10 sm:py-16">
-      {children}
-    </div>
-  );
+  return <AccountLayoutClient>{children}</AccountLayoutClient>;
 }

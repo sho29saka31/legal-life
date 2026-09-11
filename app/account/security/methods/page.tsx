@@ -7,6 +7,7 @@ import { logAct } from "@/lib/auth/session";
 import { sendNotice } from "@/lib/auth/notifications";
 import { listPasskeys, registerPasskey, deletePasskey, type PasskeyItem } from "@/lib/auth/passkey";
 import { validatePassword } from "@/lib/auth/utils";
+import OtpPanel, { type OtpVerifyResult } from "@/components/OtpPanel";
 import { IconMail, IconGoogleLogo, IconLock, IconTrash } from "@/components/icons";
 import MdAccountCard from "@/components/material/MdAccountCard";
 import MdButton from "@/components/material/MdButton";
@@ -26,6 +27,8 @@ export default function MethodsPage() {
   const [pw1, setPw1] = useState("");
   const [pw2, setPw2] = useState("");
   const [pwMsg, setPwMsg] = useState("");
+  const [showPwReauthOtp, setShowPwReauthOtp] = useState(false);
+  const [showEmailReauthOtp, setShowEmailReauthOtp] = useState(false);
   const [passkeys, setPasskeys] = useState<PasskeyItem[] | null>(null);
   const [passkeyMsg, setPasskeyMsg] = useState("");
   const [passkeySubmitting, setPasskeySubmitting] = useState(false);
@@ -108,47 +111,123 @@ export default function MethodsPage() {
     }
   };
 
-  const setPassword = async () => {
-    if (!pw1) return setPwMsg("パスワードを入力してください");
-    const pwError = validatePassword(pw1);
-    if (pwError) return setPwMsg(pwError);
-    if (pw1 !== pw2) return setPwMsg("一致しません");
-    const { error } = await supabase.auth.updateUser({ password: pw1 });
+  /**
+   * パスワード設定を1回試みる。Supabase側の「安全なパスワード変更」設定により
+   * セッションが最近のログイン(24時間以内)とみなされない場合、
+   * reauthentication_neededが返る(nonce未指定時のみ)。
+   */
+  const attemptSetPassword = async (nonce?: string): Promise<{ needsReauth: boolean }> => {
+    const { error } = await supabase.auth.updateUser(
+      nonce ? { password: pw1, nonce } : { password: pw1 },
+    );
     if (error) {
-      setPwMsg(error.message);
-      return;
+      if (error.code === "reauthentication_needed") return { needsReauth: true };
+      throw error;
     }
-    await logAct(user.id, "method_change", "パスワード設定");
+    return { needsReauth: false };
+  };
+
+  const finishSetPassword = async () => {
+    await logAct(user!.id, "method_change", "パスワード設定");
     setShowPasswordForm(false);
+    setShowPwReauthOtp(false);
     setPw1("");
     setPw2("");
     setMsg("パスワードを設定しました");
     await refresh();
   };
 
-  const setEmail = async () => {
-    if (!emailInput || !emailInput.includes("@")) return setEmailMsg("正しいメールアドレスを入力してください");
-    setEmailSubmitting(true);
+  const setPasswordSubmit = async () => {
+    if (!pw1) return setPwMsg("パスワードを入力してください");
+    const pwError = validatePassword(pw1);
+    if (pwError) return setPwMsg(pwError);
+    if (pw1 !== pw2) return setPwMsg("一致しません");
+    try {
+      const { needsReauth } = await attemptSetPassword();
+      if (needsReauth) {
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) throw sendError;
+        setShowPwReauthOtp(true);
+        return;
+      }
+      await finishSetPassword();
+    } catch (e) {
+      setPwMsg(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const handlePwReauthOtpVerify = async (input: string): Promise<OtpVerifyResult> => {
+    try {
+      const { needsReauth } = await attemptSetPassword(input);
+      if (needsReauth) {
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) return { ok: false, reason: "確認コードの再送信に失敗しました" };
+        return { ok: false, reason: "コードが正しくないか期限切れです。新しいコードを送信しました" };
+      }
+      await finishSetPassword();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+    }
+  };
+
+  const attemptSetEmail = async (nonce?: string): Promise<{ needsReauth: boolean }> => {
     const { error } = await supabase.auth.updateUser(
-      { email: emailInput },
+      { email: emailInput, ...(nonce ? { nonce } : {}) },
       { emailRedirectTo: `${location.origin}/account/profile` },
     );
     if (error) {
-      const M: Record<string, string> = {
-        email_exists: "すでに使用済み",
-      };
-      setEmailMsg((error.code && M[error.code]) || error.message);
-      setEmailSubmitting(false);
-      return;
+      if (error.code === "reauthentication_needed") return { needsReauth: true };
+      throw error;
     }
+    return { needsReauth: false };
+  };
+
+  const finishSetEmail = async () => {
     setEmailMsg("確認メールを送信しました。リンクから設定を完了してください");
-    await logAct(user.id, "email_change", "");
-    sendNotice(user.id, "email_change", "アカウントのメールアドレス設定・変更をリクエストされました", {
+    setShowEmailReauthOtp(false);
+    await logAct(user!.id, "email_change", "");
+    sendNotice(user!.id, "email_change", "アカウントのメールアドレス設定・変更をリクエストされました", {
       email: emailInput,
-      name: user.user_metadata?.full_name,
+      name: user!.user_metadata?.full_name,
     });
-    setEmailSubmitting(false);
     await refresh();
+  };
+
+  const setEmail = async () => {
+    if (!emailInput || !emailInput.includes("@")) return setEmailMsg("正しいメールアドレスを入力してください");
+    setEmailSubmitting(true);
+    try {
+      const { needsReauth } = await attemptSetEmail();
+      if (needsReauth) {
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) throw sendError;
+        setShowEmailReauthOtp(true);
+        return;
+      }
+      await finishSetEmail();
+    } catch (e) {
+      const code = (e as { code?: string })?.code;
+      const M: Record<string, string> = { email_exists: "すでに使用済み" };
+      setEmailMsg((code && M[code]) || (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setEmailSubmitting(false);
+    }
+  };
+
+  const handleEmailReauthOtpVerify = async (input: string): Promise<OtpVerifyResult> => {
+    try {
+      const { needsReauth } = await attemptSetEmail(input);
+      if (needsReauth) {
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) return { ok: false, reason: "確認コードの再送信に失敗しました" };
+        return { ok: false, reason: "コードが正しくないか期限切れです。新しいコードを送信しました" };
+      }
+      await finishSetEmail();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+    }
   };
 
   return (
@@ -243,7 +322,7 @@ export default function MethodsPage() {
 
       {msg && <p className="text-m3-body-medium text-md-on-surface mt-3">{msg}</p>}
 
-      {showPasswordForm && (
+      {showPasswordForm && !showPwReauthOtp && (
         <div className="rounded-m3-md bg-md-surface-container p-4 mt-4">
           <p className="font-bold text-m3-body-medium text-md-on-surface mb-3">パスワードを設定する</p>
           <MdTextField
@@ -257,12 +336,22 @@ export default function MethodsPage() {
           {pwMsg && <p className="text-m3-body-small text-md-error mb-2">{pwMsg}</p>}
           <div className="flex gap-2 justify-end mt-2">
             <MdButton variant="text" onClick={() => setShowPasswordForm(false)}>キャンセル</MdButton>
-            <MdButton variant="filled" onClick={setPassword}>設定する</MdButton>
+            <MdButton variant="filled" onClick={setPasswordSubmit}>設定する</MdButton>
           </div>
         </div>
       )}
 
-      {!user.email && (
+      {showPwReauthOtp && (
+        <OtpPanel
+          title="本人確認"
+          desc="現在のメールアドレスに送信した確認コードを入力してください"
+          length={8}
+          onVerify={handlePwReauthOtpVerify}
+          onCancel={() => setShowPwReauthOtp(false)}
+        />
+      )}
+
+      {!user.email && !showEmailReauthOtp && (
         <div className="rounded-m3-md bg-md-primary-container p-4 mt-4">
           <p className="font-bold text-m3-body-medium text-md-on-primary-container mb-2">メールアドレスを設定する</p>
           <p className="text-m3-body-small text-md-on-primary-container mb-3">パスワードログインにはメールアドレスが必要です。</p>
@@ -272,6 +361,16 @@ export default function MethodsPage() {
             設定する
           </MdButton>
         </div>
+      )}
+
+      {showEmailReauthOtp && (
+        <OtpPanel
+          title="本人確認"
+          desc="現在のメールアドレスに送信した確認コードを入力してください"
+          length={8}
+          onVerify={handleEmailReauthOtpVerify}
+          onCancel={() => setShowEmailReauthOtp(false)}
+        />
       )}
 
       <div className="text-center mt-6">

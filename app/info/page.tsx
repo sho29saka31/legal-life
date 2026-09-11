@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { infoDetails, parseInfoDate } from "@/data/info-details";
+import { getAnnouncements, formatSimpleDate } from "@/lib/announcements";
 
 export const metadata: Metadata = {
   title: "お知らせ",
@@ -8,8 +8,12 @@ export const metadata: Metadata = {
     "このページはlegal&lifeのお知らせページです。当ページでは最新のお知らせ(機能追加、改善、メンテナンス情報など)をお知らせします。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
 };
 
-export default function InfoPage() {
-  const sortedDetails = [...infoDetails].sort((a, b) => parseInfoDate(b.date) - parseInfoDate(a.date));
+// adacの管理画面から追加されたお知らせを反映するため、ビルド時に固定せず
+// リクエスト時に取得する。
+export const dynamic = "force-dynamic";
+
+export default async function InfoPage() {
+  const announcements = await getAnnouncements();
 
   return (
     <div className="px-4 py-8">
@@ -20,15 +24,17 @@ export default function InfoPage() {
           <span className="flex-1 pr-5">内容</span>
           <span className="w-24 shrink-0 text-center">リンク</span>
         </div>
-        {sortedDetails.map((d) => (
+        {announcements.map((a) => (
           <div
-            key={d.slug}
+            key={a.slug}
             className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-0 px-2.5 py-4 border-b border-[#e0f7f9] transition-colors hover:bg-[#f5fdfe]"
           >
-            <span className="w-full sm:w-[130px] shrink-0 font-bold text-[#666] text-sm">{d.date}</span>
-            <span className="flex-1 sm:pr-5 text-[#333]">{d.title}</span>
+            <span className="w-full sm:w-[130px] shrink-0 font-bold text-[#666] text-sm">
+              {formatSimpleDate(a.publishedAt)}
+            </span>
+            <span className="flex-1 sm:pr-5 text-[#333]">{a.title}</span>
             <Link
-              href={`/info/details/${d.slug}`}
+              href={`/info/details/${a.slug}`}
               className="w-full sm:w-24 shrink-0 text-left sm:text-right font-bold text-sm text-[#0076a3] hover:underline"
             >
               内容を見る

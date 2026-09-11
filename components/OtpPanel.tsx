@@ -8,11 +8,18 @@ export type OtpVerifyResult = { ok: boolean; reason?: string };
 export default function OtpPanel({
   title = "認証コードを入力",
   desc = "",
+  length = 6,
   onVerify,
   onCancel,
 }: {
   title?: string;
   desc?: string;
+  /**
+   * コードの桁数。認証アプリ(TOTP)は規格上常に6桁だが、Supabaseの
+   * メールOTP(reauthenticate()等で送信されるコード)はプロジェクト設定
+   * (メールOTPの長さ)に従うため、呼び出し元で桁数を指定できるようにする。
+   */
+  length?: number;
   onVerify: (input: string) => Promise<OtpVerifyResult>;
   onCancel?: () => void;
 }) {
@@ -110,8 +117,8 @@ export default function OtpPanel({
           ref={inputRef}
           type="text"
           inputMode="numeric"
-          maxLength={6}
-          placeholder="000000"
+          maxLength={length}
+          placeholder={"0".repeat(length)}
           autoComplete="one-time-code"
           aria-label={title}
           aria-invalid={!!error}

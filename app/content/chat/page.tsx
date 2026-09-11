@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ChatApp from "./ChatApp";
+import { getFeatureFlag } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "チャット",
@@ -9,6 +10,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function ChatPage() {
+export default async function ChatPage() {
+  const aiChatEnabled = await getFeatureFlag("ai_chat");
+
+  if (!aiChatEnabled) {
+    return (
+      <div className="max-w-[600px] mx-auto px-5 py-20 text-center">
+        <p className="text-sm text-[#555] leading-relaxed">
+          現在、AIチャット機能は一時的にご利用いただけません。
+          <br />
+          時間をおいて再度お試しください。
+        </p>
+      </div>
+    );
+  }
+
   return <ChatApp />;
 }

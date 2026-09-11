@@ -11,6 +11,7 @@ import ScrollTopButton from "@/components/ScrollTopButton";
 import MaintenancePopup from "@/components/MaintenancePopup";
 import CookieBanner from "@/components/CookieBanner";
 import SiteChrome from "@/components/SiteChrome";
+import { getImportantAnnouncements } from "@/lib/announcements";
 import "./globals.css";
 
 // 元リポジトリの BIZUDGothic-Bold.woff2 は拡張子のみwoff2で実体が壊れたフォントデータのため
@@ -20,6 +21,10 @@ const bizUDGothic = localFont({
   variable: "--font-biz-ud-gothic",
   display: "swap",
 });
+
+// ヘッダー直下の重要なお知らせ(adacの管理画面から追加)を反映するため、
+// レイアウト全体を毎回動的にせず、60秒ごとに再検証する(ISR)。
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.vercel.app"),
@@ -38,12 +43,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const importantAnnouncements = await getImportantAnnouncements(2);
+
   return (
     <html lang="ja" className={bizUDGothic.variable}>
       <body className="font-sans">
         <SiteChrome>
-          <div id="header"><Header /></div>
+          <div id="header"><Header importantAnnouncements={importantAnnouncements} /></div>
         </SiteChrome>
         <main>{children}</main>
         <SiteChrome>
