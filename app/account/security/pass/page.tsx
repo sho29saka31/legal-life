@@ -7,7 +7,7 @@ import { logAct } from "@/lib/auth/session";
 import { listTotpFactors, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
 import { sendNoticeForUser } from "@/lib/auth/notifications";
 import { validatePassword } from "@/lib/auth/utils";
-import OtpPanel from "@/components/OtpPanel";
+import OtpPanel, { type OtpVerifyResult } from "@/components/OtpPanel";
 import MdAccountCard from "@/components/material/MdAccountCard";
 import MdButton from "@/components/material/MdButton";
 import MdTextField from "@/components/material/MdTextField";
@@ -22,32 +22,80 @@ export default function PassPage() {
   const [msg, setMsg] = useState<{ text: string; type: string }>({ text: "", type: "" });
   const [submitting, setSubmitting] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
+  const [showReauthOtp, setShowReauthOtp] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     setHasPassword((user.identities ?? []).some((i) => i.provider === "email"));
   }, [user]);
 
-  const execChange = async () => {
+  const finishPasswordChange = async () => {
+    setCurrent("");
+    setNewPass("");
+    setConfirm("");
+    setMsg({ text: "変更しました", type: "success" });
+    await logAct(user!.id, "password_change", "");
+    sendNoticeForUser(user!, "password_change", "パスワードが変更されました");
+    setHasPassword(true);
+  };
+
+  /**
+   * パスワード更新を1回試みる。Supabase側の「安全なパスワード変更」設定により
+   * セッションが最近のログイン(24時間以内)とみなされない場合、
+   * reauthentication_neededが返る(nonce未指定時のみ)。この場合は呼び出し元で
+   * reauthenticate()により確認コードを送信し、ユーザーに入力させる必要がある。
+   */
+  const attemptPasswordUpdate = async (nonce?: string): Promise<{ needsReauth: boolean }> => {
+    if (!nonce && hasPassword) {
+      const { error: reauthError } = await supabase.auth.signInWithPassword({ email: user!.email!, password: current });
+      if (reauthError) throw new Error("現在のパスワードが間違っています");
+    }
+    const { error } = await supabase.auth.updateUser(
+      nonce ? { password: newPass, nonce } : { password: newPass },
+    );
+    if (error) {
+      if (error.code === "reauthentication_needed") return { needsReauth: true };
+      throw error;
+    }
+    return { needsReauth: false };
+  };
+
+  /** 戻り値: 追加の確認コード入力待ち(reauthenticate)に遷移した場合はtrue */
+  const execChange = async (): Promise<boolean> => {
     if (!user?.email) throw new Error("メールアドレスが設定されていません");
     try {
-      if (hasPassword) {
-        const { error: reauthError } = await supabase.auth.signInWithPassword({ email: user.email, password: current });
-        if (reauthError) throw new Error("現在のパスワードが間違っています");
+      const { needsReauth } = await attemptPasswordUpdate();
+      if (needsReauth) {
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) throw sendError;
+        setShowReauthOtp(true);
+        return true;
       }
-      const { error } = await supabase.auth.updateUser({ password: newPass });
-      if (error) throw error;
-      setCurrent("");
-      setNewPass("");
-      setConfirm("");
-      setMsg({ text: "変更しました", type: "success" });
-      await logAct(user.id, "password_change", "");
-      sendNoticeForUser(user, "password_change", "パスワードが変更されました");
-      setHasPassword(true);
+      await finishPasswordChange();
+      return false;
     } catch (e: unknown) {
       setMsg({ text: e instanceof Error ? e.message : String(e), type: "error" });
+      return false;
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleReauthOtpVerify = async (input: string): Promise<OtpVerifyResult> => {
+    try {
+      const { needsReauth } = await attemptPasswordUpdate(input);
+      if (needsReauth) {
+        // コードが誤っている・期限切れの場合、Supabaseは同じreauthentication_neededを
+        // 返す。ユーザーが再入力できるよう新しいコードを送り直す。
+        const { error: sendError } = await supabase.auth.reauthenticate();
+        if (sendError) return { ok: false, reason: "確認コードの再送信に失敗しました" };
+        return { ok: false, reason: "コードが正しくないか期限切れです。新しいコードを送信しました" };
+      }
+      await finishPasswordChange();
+      setShowReauthOtp(false);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: e instanceof Error ? e.message : String(e) };
     }
   };
 
@@ -92,7 +140,11 @@ export default function PassPage() {
       setSubmitting(false);
       return res;
     }
+    // 追加の確認コード(reauthenticate)待ちに遷移した場合は、そちらのパネルへ
+    // 差し替えるためこのTOTPパネルを閉じる。完了した場合もメイン画面(結果メッセージ)
+    // に戻すため、いずれの場合もshowOtpは閉じてよい。
     await execChange();
+    setShowOtp(false);
     return { ok: true };
   };
 
@@ -107,7 +159,7 @@ export default function PassPage() {
       title={hasPassword ? "パスワードを変更する" : "パスワードを設定する"}
       subtitle="安全なパスワードでアカウントを保護しましょう"
     >
-      {!showOtp && (
+      {!showOtp && !showReauthOtp && (
         <div>
           {hasPassword && (
             <MdTextField
@@ -155,6 +207,19 @@ export default function PassPage() {
           onVerify={handleOtpVerify}
           onCancel={() => {
             setShowOtp(false);
+            setSubmitting(false);
+          }}
+        />
+      )}
+
+      {showReauthOtp && (
+        <OtpPanel
+          title="本人確認"
+          desc="現在のメールアドレスに送信した確認コードを入力してください"
+          length={8}
+          onVerify={handleReauthOtpVerify}
+          onCancel={() => {
+            setShowReauthOtp(false);
             setSubmitting(false);
           }}
         />
