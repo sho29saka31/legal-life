@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { getProfile, setDeletionPending, type Profile } from "@/lib/auth/profile";
-import { IconPerson, IconBell, IconShield, IconLaptop, IconClipboard, IconFolder } from "@/components/icons";
+import { IconPerson, IconBell, IconShield, IconLaptop, IconClipboard } from "@/components/icons";
 import MdAccountCard from "@/components/material/MdAccountCard";
 import MdButton from "@/components/material/MdButton";
 
@@ -79,9 +79,6 @@ export default function AccountPage() {
           { href: "/account/security", icon: IconShield, label: "セキュリティ", sub: "パスワード・二段階認証・ログイン方法" },
           { href: "/account/device", icon: IconLaptop, label: "ログイン中のデバイス", sub: "アクティブなセッションの管理" },
           { href: "/account/activity", icon: IconClipboard, label: "アクティビティ", sub: "ログイン・設定変更の履歴(最大1年)" },
-          ...(profile?.role === "admin"
-            ? [{ href: "/admin/inquiries", icon: IconFolder, label: "お問い合わせ管理", sub: "管理者専用ページ" }]
-            : []),
         ].map((m) => (
           <Link
             key={m.href}

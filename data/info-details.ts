@@ -191,7 +191,7 @@ const infoDetailsSource: InfoDetail[] = [
                 <p>
                     <strong>ご利用方法：</strong><br>
                     上部メニューの「お問い合わせ」をクリック、または以下のリンクよりフォームへアクセスいただけます。<br>
-                    <a href="/info/contact/"><strong>&rarr; お問い合わせページへ移動する</strong></a>
+                    <a href="https://service.saka2931.jp/contact/legal-life"><strong>&rarr; お問い合わせページへ移動する</strong></a>
                 </p>
                 </section>
 
@@ -207,7 +207,7 @@ const infoDetailsSource: InfoDetail[] = [
                     </tr>
                     <tr>
                     <th>対象ページ</th>
-                    <td><a href="/info/contact/">お問い合わせ専用ページ</a></td>
+                    <td><a href="https://service.saka2931.jp/contact/legal-life">お問い合わせ専用ページ</a></td>
                     </tr>
                 </table>
                 </div>
@@ -505,7 +505,7 @@ const infoDetailsSource: InfoDetail[] = [
                     </tr>
                     <tr>
                     <th>データ申請窓口</th>
-                    <td><a href="/info/contact/">お問い合わせフォーム</a></td>
+                    <td><a href="https://service.saka2931.jp/contact/legal-life">お問い合わせフォーム</a></td>
                     </tr>
                 </table>
                 </div>
@@ -678,7 +678,7 @@ const infoDetailsSource: InfoDetail[] = [
                 </tr>
                 <tr>
                     <th>対象ページ</th>
-                    <td><a href="/info/contact/">お問い合わせページ</a></td>
+                    <td><a href="https://service.saka2931.jp/contact/legal-life">お問い合わせページ</a></td>
                 </tr>
                 </table>
                 </div>
@@ -800,7 +800,7 @@ const infoDetailsSource: InfoDetail[] = [
             <p>
               <strong>お急ぎのご用件がある場合：</strong><br />
               メンテナンスおよびシステム移行の影響により、お問い合わせのご返信にお時間をいただく場合や、一時的な送信エラーが発生する場合がございます。お手数をおかけしますが、ご不明な点やお急ぎのご相談は、以下の窓口よりお寄せください。<br />
-              <a href="/info/contact/"><strong>&rarr; お問い合わせフォームはこちら</strong></a>
+              <a href="https://service.saka2931.jp/contact/legal-life"><strong>&rarr; お問い合わせフォームはこちら</strong></a>
             </p>
           </section>
 
@@ -1038,7 +1038,7 @@ const infoDetailsSource: InfoDetail[] = [
                 <section class="action-box">
                     <p>
                         <strong>皆様のご意見をお聞かせください：</strong><br>
-                        「このような機能があれば課金を検討したい」「この制限は緩和してほしい」といったご意見やご要望は、今後の正式なプラン決定に際して非常に重要な参考となります。ぜひ<a href="/info/contact/">お問い合わせフォーム</a>よりお声をお寄せください。
+                        「このような機能があれば課金を検討したい」「この制限は緩和してほしい」といったご意見やご要望は、今後の正式なプラン決定に際して非常に重要な参考となります。ぜひ<a href="https://service.saka2931.jp/contact/legal-life">お問い合わせフォーム</a>よりお声をお寄せください。
                     </p>
                 </section>
 

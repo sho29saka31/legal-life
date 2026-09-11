@@ -1,12 +1,8 @@
-import type { Metadata } from "next";
-import LegalDoc from "@/components/LegalDoc";
-import { lawDocs } from "@/data/law";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "免責事項",
-  robots: { index: false, follow: true },
-};
-
+// 免責事項はsaka2931.jp共通の窓口(service.saka2931.jp)に統合したため、
+// このパスへの既存のリンク・ブックマーク・検索エンジンのインデックスを
+// 生かす形で新しいページへリダイレクトする。
 export default function DisclaimerPage() {
-  return <LegalDoc doc={lawDocs.disclaimer} />;
+  redirect("https://service.saka2931.jp/disclaimer");
 }

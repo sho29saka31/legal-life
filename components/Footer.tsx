@@ -10,13 +10,13 @@ export default function Footer() {
           </Link>
         </p>
         <ul className="flex flex-wrap justify-center gap-5 list-none p-0 m-0">
-          <li><Link href="/law/privacy" className="text-gray-500 text-xs hover:underline">プライバシーポリシー</Link></li>
-          <li><Link href="/law/terms" className="text-gray-500 text-xs hover:underline">利用規約</Link></li>
-          <li><Link href="/law/disclaimer" className="text-gray-500 text-xs hover:underline">免責事項</Link></li>
-          <li><Link href="/law/cookie" className="text-gray-500 text-xs hover:underline">クッキーポリシー</Link></li>
+          <li><Link href="https://service.saka2931.jp/privacy" className="text-gray-500 text-xs hover:underline">プライバシーポリシー</Link></li>
+          <li><Link href="https://service.saka2931.jp/terms" className="text-gray-500 text-xs hover:underline">利用規約</Link></li>
+          <li><Link href="https://service.saka2931.jp/disclaimer" className="text-gray-500 text-xs hover:underline">免責事項</Link></li>
+          <li><Link href="https://service.saka2931.jp/cookie" className="text-gray-500 text-xs hover:underline">クッキーポリシー</Link></li>
           <li className="text-gray-300">|</li>
           <li><Link href="/info/map" className="text-gray-500 text-xs hover:underline">サイトマップ</Link></li>
-          <li><Link href="/info/contact" className="text-gray-500 text-xs hover:underline">お問い合わせ</Link></li>
+          <li><Link href="https://service.saka2931.jp/contact/legal-life" className="text-gray-500 text-xs hover:underline">お問い合わせ</Link></li>
         </ul>
       </div>
     </footer>

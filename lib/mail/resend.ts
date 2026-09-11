@@ -18,10 +18,9 @@ export function esc(s: unknown): string {
   );
 }
 
-export type MailType = "notice" | "contact";
+export type MailType = "notice";
 
-export function buildSubject(type: MailType, purpose?: string): string {
-  if (type === "contact") return `【legal&life】お問い合わせ (${purpose || "お問い合わせ"})`;
+export function buildSubject(_type: MailType, purpose?: string): string {
   return `【legal&life】${purpose || "重要なお知らせ"}`;
 }
 
@@ -55,119 +54,6 @@ export function buildNoticeHTML({ to_name, purpose }: { to_name?: string; purpos
 <p style="margin:0;color:#475569;font-size:15px;line-height:1.8;">
   ${esc(purpose || "")}
 </p>`);
-}
-
-export type ContactMailParams = {
-  from_name: string;
-  reply_email?: string;
-  gender?: string;
-  age_group?: string;
-  inquiry_type: string;
-  category?: string;
-  content: string;
-  // 端末診断情報(lib/deviceInfo.tsのcollectDeviceInfo()がフラットなdevice_*キーとして送信する)
-  device_browser?: string;
-  device_os?: string;
-  device_type?: string;
-  device_ua?: string;
-  device_screen?: string;
-  device_viewport?: string;
-  device_theme?: string;
-  device_language?: string;
-  device_timezone?: string;
-  device_network?: string;
-  device_country?: string;
-  device_region?: string;
-  device_city?: string;
-  device_ip?: string;
-  device_storage?: string;
-  device_memory?: string;
-  page_url?: string;
-  page_referrer?: string;
-  sent_at?: string;
-};
-
-// お問い合わせAPI(/api/mail)が受け取るdevice_infoの許可キー一覧。
-// このリストに無いキーは(悪意あるリクエストが任意のキーを送ってきても)
-// device_infoへ保存・メール本文へ埋め込みしない。
-export const DEVICE_INFO_KEYS = [
-  "device_browser",
-  "device_os",
-  "device_type",
-  "device_ua",
-  "device_screen",
-  "device_viewport",
-  "device_theme",
-  "device_language",
-  "device_timezone",
-  "device_network",
-  "device_country",
-  "device_region",
-  "device_city",
-  "device_ip",
-  "device_storage",
-  "device_memory",
-  "page_url",
-  "page_referrer",
-  "sent_at",
-] as const satisfies readonly (keyof ContactMailParams)[];
-
-const DEVICE_INFO_LABELS: [keyof ContactMailParams, string][] = [
-  ["device_browser", "ブラウザ"],
-  ["device_os", "OS"],
-  ["device_type", "端末種別"],
-  ["device_screen", "画面サイズ"],
-  ["device_viewport", "表示領域"],
-  ["device_theme", "テーマ"],
-  ["device_language", "言語"],
-  ["device_timezone", "タイムゾーン"],
-  ["device_network", "ネットワーク"],
-  ["device_country", "国"],
-  ["device_region", "地域"],
-  ["device_city", "市区町村"],
-  ["device_ip", "IPアドレス"],
-  ["device_storage", "localStorage使用量"],
-  ["device_memory", "メモリ使用量"],
-  ["page_url", "送信元URL"],
-  ["page_referrer", "リファラー"],
-  ["sent_at", "送信日時"],
-  ["device_ua", "User-Agent"],
-];
-
-export function buildContactHTML(params: ContactMailParams): string {
-  const rows: [string, string | undefined][] = [
-    ["お名前", params.from_name],
-    ["性別", params.gender],
-    ["年代", params.age_group],
-    ["返信先メール", params.reply_email],
-    ["お問い合わせ種類", params.inquiry_type],
-    ["分野", params.category],
-  ];
-  const rowsHtml = rows
-    .map(
-      ([label, value]) =>
-        `<tr><td style="padding:4px 8px;color:#64748b;font-size:13px;">${esc(label)}</td><td style="padding:4px 8px;font-size:13px;">${esc(value || "（なし）")}</td></tr>`,
-    )
-    .join("");
-
-  const deviceRowsHtml = DEVICE_INFO_LABELS.filter(([key]) => params[key])
-    .map(
-      ([key, label]) =>
-        `<tr><td style="padding:3px 8px;color:#94a3b8;font-size:12px;white-space:nowrap;">${esc(label)}</td><td style="padding:3px 8px;font-size:12px;word-break:break-all;">${esc(params[key])}</td></tr>`,
-    )
-    .join("");
-
-  return layout(`
-<p style="margin:0 0 16px;color:#334155;font-size:15px;font-weight:700;">新しいお問い合わせ</p>
-<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rowsHtml}</table>
-<p style="margin:0 0 8px;color:#334155;font-size:13px;font-weight:700;">内容</p>
-<p style="white-space:pre-wrap;color:#334155;font-size:14px;line-height:1.7;margin:0 0 16px;">${esc(params.content)}</p>
-${
-  deviceRowsHtml
-    ? `<p style="margin:0 0 8px;color:#94a3b8;font-size:12px;font-weight:700;">端末情報</p>
-<table style="width:100%;border-collapse:collapse;">${deviceRowsHtml}</table>`
-    : ""
-}`);
 }
 
 export async function sendMail(params: {
