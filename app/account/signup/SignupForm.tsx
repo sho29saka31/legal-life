@@ -215,8 +215,8 @@ export default function SignupForm() {
           onKeyDown={(e) => e.key === "Enter" && doSubmit()}
         />
         <p className="text-m3-body-small text-md-on-surface-variant mb-3 leading-relaxed">
-          登録することで <Link href="/law/terms" className="text-md-primary">利用規約</Link> および{" "}
-          <Link href="/law/privacy" className="text-md-primary">プライバシーポリシー</Link> に同意したものとみなされます。
+          登録することで <a href="https://service.saka2931.jp/terms" className="text-md-primary">利用規約</a> および{" "}
+          <a href="https://service.saka2931.jp/privacy" className="text-md-primary">プライバシーポリシー</a> に同意したものとみなされます。
         </p>
         <Captcha ref={captchaRef} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
         {msg.text && (

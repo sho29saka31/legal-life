@@ -74,7 +74,7 @@ lrgal&lifeというサイトを作成しています。
 | `GEMINI_API_KEY` | Gemini API(サーバー専用、`/api/chat`のみで参照) |
 | `RESEND_API_KEY` | Resendのシークレットキー |
 | `RESEND_FROM_EMAIL` | `mail.saka2931.jp`上の送信元アドレス(例: `legal-life@mail.saka2931.jp`) |
-| `CONTACT_TO_EMAIL` | お問い合わせフォームの送信先メールアドレス |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare TurnstileのSite Key(未設定時はCAPTCHAウィジェット自体を非表示にする)。Supabaseダッシュボード側でもAuthentication → Bot and Abuse Protectionの有効化とSecret Keyの登録が必要 |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4の測定ID(`G-`から始まる)。未設定時は既存IDにフォールバック |
+| `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GTM内で設定するGA4設定タグの測定ID(`G-`から始まる)。Cookie拒否時の既存GA Cookie削除にのみ使用 |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用。`.apps.googleusercontent.com`で終わる)。未設定時は既存IDにフォールバック。Supabaseダッシュボード側のAuthentication → Providers → GoogleにもクライアントID/シークレットの登録が別途必要 |

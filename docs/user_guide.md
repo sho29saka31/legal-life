@@ -27,10 +27,22 @@
 
 ### 1-3. Vercel: 環境変数の設定
 
-Google Cloud・Google Analyticsを再設定された場合、新しい値をVercelの環境変数に設定してください(下部の「環境変数一覧」を参照)。特に以下は今回のPRでハードコードから環境変数化しました:
+Google Cloud・Google Analyticsを再設定された場合、新しい値をVercelの環境変数に設定してください(下部の「環境変数一覧」を参照)。
 
-- `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+- `NEXT_PUBLIC_GTM_CONTAINER_ID`(Google Tag ManagerのコンテナID。GA4はGTM経由での計測に移行済み)
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID`(GTM内で設定するGA4設定タグの測定IDと同じ値。Cookie拒否時のGA Cookie削除にのみ使用)
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`(Google One Tap用。1-2のOAuthクライアントIDと同じ値)
+
+### 1-3-1. Google Tag Manager: GA4タグの設定
+
+以前のGA4直接埋め込み方式が正常に計測できていなかったため、GTM経由の方式に移行しました。コード側の対応(Consent Mode v2、Cookie同意連動)は完了しています。GTM管理画面側で以下の設定をお願いします。
+
+1. [Google Tag Manager](https://tagmanager.google.com/)で新規コンテナを作成(プラットフォーム: ウェブ)し、コンテナID(`GTM-XXXXXXX`)を`NEXT_PUBLIC_GTM_CONTAINER_ID`としてVercelに設定
+2. GTM内で「タグ」→ 新規作成 → タグの種類「Google アナリティクス: GA4 設定」を選択し、測定ID(`G-...`)を入力
+3. トリガーは「All Pages」を選択
+4. 「詳細設定」→「同意設定」で、「追加の同意事項を確認する」を有効化し、`analytics_storage`を要求するタグとして設定(これによりConsent Mode経由でユーザーが同意するまでこのタグは発火しません)
+5. 公開(Submit)して、GTMのプレビューモードでタグが発火することを確認
+6. GA4側の測定IDを`NEXT_PUBLIC_GA_MEASUREMENT_ID`としてもVercelに設定(Cookie拒否時の削除ロジックで使用)
 
 ### 1-4. Supabase: Custom SMTP(Resend)の設定
 
@@ -101,9 +113,9 @@ Vercelダッシュボードの Project Settings → Environment Variables で設
 | `GEMINI_API_KEY` | Gemini API(サーバー専用、`/api/chat`のみで参照) | ○ |
 | `RESEND_API_KEY` | Resendのシークレットキー。Supabase Custom SMTP(1-4)のPasswordにも同じ値を設定 | ○ |
 | `RESEND_FROM_EMAIL` | `mail.saka2931.jp`上の送信元アドレス(例: `legal-life@mail.saka2931.jp`) | ○ |
-| `CONTACT_TO_EMAIL` | お問い合わせフォームの送信先メールアドレス | ○ |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare TurnstileのSite Key。未設定時はCAPTCHAウィジェット非表示 | 任意(2-1参照) |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4の測定ID(`G-`から始まる)。未設定時は既存IDにフォールバック | ○(再設定時は要更新) |
+| `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない | ○(1-3-1参照) |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GTM内で設定するGA4設定タグの測定ID(`G-`から始まる)。Cookie拒否時の既存GA Cookie削除にのみ使用 | ○(再設定時は要更新) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用、`.apps.googleusercontent.com`で終わる)。未設定時は既存IDにフォールバック。Supabase側のGoogle Provider設定にも同じ値の登録が必要(1-2参照) | ○(再設定時は要更新) |
 
 ○ = 現状必須 / △ = 機能が動作していないため優先度低め / 任意 = なくても動作する追加機能

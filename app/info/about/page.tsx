@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { IconCheck } from "@/components/icons";
 
@@ -102,7 +101,7 @@ export default function AboutPage() {
             本サイトで提供する情報は、参考目的のみで提供されています。法律に関する具体的な相談や問題解決については、弁護士などの専門家にご相談ください。本サイトの情報に基づいて取った行動により生じた損害については、当サイトおよび運営団体は一切の責任を負いません。
           </p>
           <p className="font-semibold mt-2">
-            詳細は<Link href="/law/disclaimer" className="text-primary-dark underline">こちら</Link>のページをご確認ください。
+            詳細は<a href="https://service.saka2931.jp/disclaimer" className="text-primary-dark underline">こちら</a>のページをご確認ください。
           </p>
         </div>
       </section>
