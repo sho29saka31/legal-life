@@ -27,7 +27,7 @@ const bizUDGothic = localFont({
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.saka2931.jp"),
   title: { default: "legal&life", template: "%s | legal&life" },
   description: "法令の学習・相談・検索ができる legal&life です。",
   verification: {
