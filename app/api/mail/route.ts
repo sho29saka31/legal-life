@@ -8,6 +8,7 @@ import {
   type ContactMailParams,
 } from "@/lib/mail/resend";
 import { supabaseServer as supabase } from "@/lib/supabase/serverClient";
+import { getFeatureFlag } from "@/lib/feature-flags";
 
 // お問い合わせフォームは未認証で誰でも呼べるため、各フィールドの長さに上限を
 // 設けないと、巨大なペイロードによるDB肥大化・巨大メール送信・スパムに対して
@@ -102,6 +103,15 @@ async function verifyCaptcha(token: string | undefined): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  // adacの管理画面で「メール送信機能」を停止している間は、お問い合わせ・会員向け
+  // 通知のいずれも送信せず、その旨を呼び出し元(フォーム等)へ明示的に伝える。
+  if (!(await getFeatureFlag("mail_sending"))) {
+    return NextResponse.json(
+      { error: "現在メール送信機能を停止しているため、メールを送信できません。時間をおいて再度お試しください。" },
+      { status: 503 },
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();

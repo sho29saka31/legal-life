@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getFeatureFlag } from "@/lib/feature-flags";
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
@@ -125,6 +126,13 @@ CATEGORY: <法分野名。例: 民法/刑法/商法/会社法/労働法/行政�
 // Gemini API呼び出し。旧chat.jsはクライアント側でAPIキーを直接埋め込んで呼んでいたため、
 // サーバー側Route経由に変更しキーをブラウザに一切渡さないようにする。
 export async function POST(req: NextRequest) {
+  if (!(await getFeatureFlag("ai_chat"))) {
+    return NextResponse.json(
+      { error: "現在AIチャット機能は一時的にご利用いただけません。時間をおいて再度お試しください。" },
+      { status: 503 },
+    );
+  }
+
   if (isRateLimited(getClientIp(req))) {
     return NextResponse.json(
       { error: "リクエストが多すぎます。しばらく待ってから再度お試しください。" },
