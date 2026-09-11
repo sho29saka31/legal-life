@@ -78,3 +78,5 @@ lrgal&lifeというサイトを作成しています。
 | `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GTM内で設定するGA4設定タグの測定ID(`G-`から始まる)。Cookie拒否時の既存GA Cookie削除にのみ使用 |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用。`.apps.googleusercontent.com`で終わる)。未設定時は既存IDにフォールバック。Supabaseダッシュボード側のAuthentication → Providers → GoogleにもクライアントID/シークレットの登録が別途必要 |
+| `NEXT_PUBLIC_INFRA_SUPABASE_URL` | `saka2931-infra`(adacと共有)プロジェクトのURL。お知らせ機能(`/info`)の取得に使用 |
+| `NEXT_PUBLIC_INFRA_SUPABASE_ANON_KEY` | 同上のanonキー(お知らせの読み取り専用) |

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildNoticeHTML, buildSubject, sendMail } from "@/lib/mail/resend";
 import { supabaseServer as supabase } from "@/lib/supabase/serverClient";
+import { getFeatureFlag } from "@/lib/feature-flags";
 
 // notice(会員向け通知)側は認証済みユーザーであれば
 // 誰でも呼べてしまうため、巨大なpurpose/to_name等を送りつけて肥大化したメールを大量生成
@@ -64,6 +65,15 @@ function isNoticeRateLimited(uid: string): boolean {
 // このAPIはnotice(会員向け通知)専用。
 
 export async function POST(req: NextRequest) {
+  // adacの管理画面で「メール送信機能」を停止している間は、お問い合わせ・会員向け
+  // 通知のいずれも送信せず、その旨を呼び出し元(フォーム等)へ明示的に伝える。
+  if (!(await getFeatureFlag("mail_sending"))) {
+    return NextResponse.json(
+      { error: "現在メール送信機能を停止しているため、メールを送信できません。時間をおいて再度お試しください。" },
+      { status: 503 },
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();

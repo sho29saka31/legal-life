@@ -1,6 +1,17 @@
 import Link from "next/link";
 
-export default function ErrorPage({ code, title, desc }: { code: string; title: string; desc: string }) {
+export default function ErrorPage({
+  code,
+  title,
+  desc,
+  onRetry,
+}: {
+  code: string;
+  title: string;
+  desc: string;
+  /** 指定時、「再読み込みする」ボタンを追加表示する(error.tsx等の実行時エラー用) */
+  onRetry?: () => void;
+}) {
   return (
     <div className="text-center px-5 py-12 sm:py-20 text-[#333]">
       <div className="max-w-3xl min-h-[250px] mx-auto bg-white px-6 sm:px-8 py-8 sm:py-10 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.08)] border-t-[5px] border-[#cc0000]">
@@ -19,6 +30,15 @@ export default function ErrorPage({ code, title, desc }: { code: string; title: 
           >
             ホームページに戻る
           </Link>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="inline-block m-1 bg-white text-primary font-bold rounded-full px-8 py-4 border-2 border-primary transition-all duration-300 hover:bg-primary/5 hover:-translate-y-0.5"
+            >
+              再読み込みする
+            </button>
+          )}
         </div>
       </div>
     </div>
