@@ -98,7 +98,7 @@ export default function FaqApp() {
             担当者が詳しくお答えいたします。
           </p>
           <Link
-            href="/info/contact"
+            href="https://service.saka2931.jp/contact/legal-life"
             className="inline-block bg-[#333] text-white font-bold rounded-full px-10 py-3.5 transition-all duration-300 hover:bg-[#555] hover:-translate-y-0.5"
           >
             お問い合わせフォームへ

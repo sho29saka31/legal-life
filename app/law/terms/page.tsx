@@ -1,14 +1,8 @@
-import type { Metadata } from "next";
-import LegalDoc from "@/components/LegalDoc";
-import { lawDocs } from "@/data/law";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "利用規約",
-  description:
-    "このページはlegal&lifeの利用規約ページです。当ページではサイトご利用にあたっての規則と条件をご確認できます。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  robots: { index: false, follow: true },
-};
-
-export default function TermsPage() {
-  return <LegalDoc doc={lawDocs.terms} />;
+// 利用規約はsaka2931.jp共通の窓口(service.saka2931.jp)に統合したため、
+// このパスへの既存のリンク・ブックマーク・検索エンジンのインデックスを
+// 生かす形で新しいページへリダイレクトする。
+export default function TermsOfServicePage() {
+  redirect("https://service.saka2931.jp/terms");
 }
