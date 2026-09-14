@@ -4,6 +4,12 @@
 
 サイト概要は [`/info/about`](https://legal-life.saka2931.jp/info/about) を参照してください。
 
+## ライセンスについて
+
+本リポジトリはソースコードを公開しておりますが、再利用・複製・改変・再配布は許可していません。閲覧のみでの利用に限ります。
+
+This repository provides the source code, but reuse, copying, modification, and redistribution are not permitted. Use is limited to viewing only.
+
 ## 主な機能
 
 - **法令学習** — 法令をわかりやすく学べるコンテンツページ（`/content/study`）
