@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { requireAuth } from "@/lib/auth/requireAuth";
-import { listTotpFactors, getAAL, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
+import { listTotpFactors, getAAL, challengeAndVerifyTotp } from "@/lib/auth/mfa";
 import OtpPanel from "@/components/OtpPanel";
 import MdAccountCard from "@/components/material/MdAccountCard";
 
@@ -41,7 +41,7 @@ export function useSecurityGate() {
 
 export function SecurityGateScreen({ title }: { title: string }) {
   const handleOtpVerify = async (input: string) => {
-    const res = await challengeAndVerifyFirstFactor(input);
+    const res = await challengeAndVerifyTotp(input);
     if (!res.ok) return res;
     window.location.reload();
     return { ok: true };

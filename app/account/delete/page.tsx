@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { delSession, logAct } from "@/lib/auth/session";
 import { getProfile, setDeletionPending } from "@/lib/auth/profile";
-import { listTotpFactors, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
+import { listTotpFactors, challengeAndVerifyTotp } from "@/lib/auth/mfa";
 import { sendNoticeForUser } from "@/lib/auth/notifications";
 import OtpPanel from "@/components/OtpPanel";
 import MdButton from "@/components/material/MdButton";
@@ -99,7 +99,7 @@ export default function DeletePage() {
 
   const handleOtpVerify = async (input: string) => {
     if (!user) return { ok: false, reason: "ユーザー情報がありません" };
-    const res = await challengeAndVerifyFirstFactor(input);
+    const res = await challengeAndVerifyTotp(input);
     if (!res.ok) {
       setSubmitting(false);
       return res;
