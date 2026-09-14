@@ -1,82 +1,59 @@
-# legal&lifeの README
+# legal&life
 
-## 私たちについて
-私たちは、学校の授業の一環でコードによるサイト作成をしているものです。  
-まだ未熟なコーディネータなので、暫定コードが入っているかと思われます。  
-その点を皆様にご指摘していただきたいと考えております。ご協力をよろしくお願いいたします。
+`legal-life.saka2931.jp` — 法令の学習・相談を身近にすることを目指す、法令学習・検索・AIチャットサイト。
 
-## 私たちが作成しているサイトについて
-lrgal&lifeというサイトを作成しています。  
-このサイトには法令の学習機能・相談機能・検索機能を導入したいと思います。  
-このサイトによって法令に関して困る人を無くすことを目指しております。
-詳細は<a href="https://legal-life.pages.dev/info/about" target="_blank" rel="noopener, noreferrer">サイト概要ページ</a>にも掲載しております。
+サイト概要は [`/info/about`](https://legal-life.saka2931.jp/info/about) を参照してください。
 
-## サイトのデモ利用について
-動作確認をする際は、<a href="https://legal-life.pages.dev/" target="_blank" rel="noopener, noreferrer">こちら</a>のページで動作確認が可能になっております。
+## 主な機能
 
-## それぞれの機能について
-- 学習機能
->[!NOTE]
->法令をわかりやすく学習できるページを作成します。
+- **法令学習** — 法令をわかりやすく学べるコンテンツページ（`/content/study`）
+- **法令検索** — e-Gov法令APIを利用した法令検索（`/content/search`）
+- **AIチャット** — Gemini APIを利用した法令に関する対話機能（`/content/chat`。APIキーはサーバー側`/api/chat`経由のみで使用）
+- **ニュース** — 法令関連ニュースの掲載（`/content/news`）
+- **アカウント機能** — メール＋パスワード・Google OAuth・パスキー(WebAuthn)によるログイン、TOTPによる2段階認証、ログイン中デバイスの一覧・強制ログアウト、アクティビティ履歴、アカウント削除
+- **お知らせ** — adacの管理画面から配信されるお知らせをヘッダーバナー・お知らせ一覧（`/info`）に表示
 
->[!CAUTION]
->とにかくすべての法令を追加したいがコンテンツ作成に様々な課題がある。  
->リリースが実現できない可能性
+## saka2931.jpドメインとの連携
 
-- <a href="https://legal-life.pages.dev/content/caht" target="_blank" rel="noopener, noreferrer">チャット機能</a>
-> [!NOTE]
->今現在はGemini-3.5-flashを利用して法令のチャットができるようにしております。
+sporive・service等、saka2931.jp配下の他サービスと以下を共有しています。
 
-> [!CAUTION]
->サイト利用者が増加し大量のリクエストが発生した際には課金しないといけない。
+- **Supabase認証セッションの共有(SSO)** — Cookieドメインを`.saka2931.jp`に設定し、sporiveとログイン状態を共有(`lib/supabase/client.ts`)。認証データベース自体もsporiveと同一のSupabaseプロジェクト(`saka2931-service`、スキーマは`legal_life`で分離)を共有
+- **お知らせ・機能フラグ** — `saka2931-infra`(adac/statusと共有)の`service_announcements`・`feature_flags`テーブルから取得。作成・切替はadacの管理画面から行う
+- **お問い合わせ** — サイト上のお問い合わせは`service.saka2931.jp/contact/legal-life`へ集約
+- **プライバシーポリシー・利用規約** — `service.saka2931.jp`のページに集約
+- **稼働状況** — `status.saka2931.jp`で公開監視
 
-- <a href="https://legal-life.pages.dev/content/search" target="_blank" rel="noopener, noreferrer">検索機能</a>
-> [!NOTE]
-> e-gov法令APIを利用して法令を検索できるようにしています。
+## 技術スタック
 
-> [!CAUTION]
->大量にリクエストが発生しても大丈夫なのか。
-
-- <a href="https://legal-life.pages.dev/content/news" target="_blank" rel="noopener, noreferrer">ニュース機能</a>
-> [!NOTE]
->法令関連のニュースを掲載します。  
->ニュースの下部には該当する学習機能のページへの推移を促進
-
-> [!CAUTION]
-> ニュースを個人的に読み解くのが非常に難しい
-
-その他お知らせは、<a href="https://legal-life.pages.dev/info" target="_blank" rel="noopener, noreferrer">お知らせページ</a>をご確認ください。
-
-## 既知の問題
-- Webアクセシビリティ  
-ハンガーメニュー表示時並びに、アカウントログイン画面表示時に後ろ側もTabキーが反応してしまう問題  
-それ以外のページにおいてもボタンに2回もTabキーが反応してしまう問題
->改善するために、様々なページにて検証を重ねております。
-
-## 技術スタック(Next.jsへの全面リライト後)
 本サイトはCloudflare Pages上の静的HTML/CSS/vanilla-JSサイトから、Next.js(App Router)+ TypeScript + Tailwind CSSへ全面リライトし、Vercelへ移行しました。
 
 - **フレームワーク**: Next.js 15 (App Router) + TypeScript
-- **スタイル**: Tailwind CSS(`next/font/local`でBIZUDGothicフォントを自己ホスト化。旧woff2ファイルは実体が壊れたフォントデータだったため削除・修正済み)
-- **認証**: Supabase Auth(Google / メール・パスワード、2FA、セッション管理)
-- **データベース**: Supabase(PostgreSQL)
-- **メール送信**: Resendに一本化。旧legal-life-mailerリポジトリのCloudflare Workers実装を`/api/mail`としてこのリポジトリに統合(legal-life-mailerリポジトリはアーカイブ予定)。送信元は独自ドメイン`mail.saka2931.jp`(SPF/DKIM/DMARC設定済み、adac/serviceと共有)上のアドレス。Supabase Auth自体のメール(サインアップ確認・パスワードリセット等)もSupabaseダッシュボード側のCustom SMTP設定でResendのSMTPリレー(`smtp.resend.com`)を使用
-- **AIチャット**: Gemini API(APIキーはサーバー側`/api/chat`経由のみで使用し、クライアントに露出しない構成)
+- **スタイル**: Tailwind CSS(`next/font/local`でBIZUDGothicフォントを自己ホスト化)
+- **認証**: Supabase Auth(メール・パスワード、Google OAuth、パスキー、TOTPによる2段階認証、セッション管理)。sporiveとSSO連携
+- **データベース**: Supabase(PostgreSQL、`saka2931-service`プロジェクトの`legal_life`スキーマ)
+- **メール送信**: Resend(送信元は独自ドメイン`mail.saka2931.jp`。Supabase Auth自体のメールもSupabaseダッシュボード側のCustom SMTP設定でResendのSMTPリレーを使用)
+- **AIチャット**: Gemini API(サーバー側`/api/chat`経由のみで使用)
 - **法令検索**: e-Gov法令API
+- **CAPTCHA**: Cloudflare Turnstile(未設定時はウィジェット非表示)
+- **アクセス解析**: Google Tag Manager経由のGoogle Analytics(GA4)、Consent Mode v2対応
 - **ホスティング**: Vercel
 
-### 必要な環境変数
-| 変数名 | 用途 |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | SupabaseプロジェクトのURL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabaseのpublishable(anon)キー |
-| `NEXT_PUBLIC_SITE_URL` | サイトの本番URL(メタデータ・サイトマップ生成に使用) |
-| `GEMINI_API_KEY` | Gemini API(サーバー専用、`/api/chat`のみで参照) |
-| `RESEND_API_KEY` | Resendのシークレットキー |
-| `RESEND_FROM_EMAIL` | `mail.saka2931.jp`上の送信元アドレス(例: `legal-life@mail.saka2931.jp`) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare TurnstileのSite Key(未設定時はCAPTCHAウィジェット自体を非表示にする)。Supabaseダッシュボード側でもAuthentication → Bot and Abuse Protectionの有効化とSecret Keyの登録が必要 |
-| `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GTM内で設定するGA4設定タグの測定ID(`G-`から始まる)。Cookie拒否時の既存GA Cookie削除にのみ使用 |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用。`.apps.googleusercontent.com`で終わる)。未設定時は既存IDにフォールバック。Supabaseダッシュボード側のAuthentication → Providers → GoogleにもクライアントID/シークレットの登録が別途必要 |
-| `NEXT_PUBLIC_INFRA_SUPABASE_URL` | `saka2931-infra`(adacと共有)プロジェクトのURL。お知らせ機能(`/info`)の取得に使用 |
-| `NEXT_PUBLIC_INFRA_SUPABASE_ANON_KEY` | 同上のanonキー(お知らせの読み取り専用) |
+## ドキュメント
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/user_guide.md](docs/user_guide.md) | ダッシュボード設定等、ユーザー自身の操作が必要な項目 |
+
+## セットアップ
+
+```bash
+npm install
+cp .env.local.example .env.local   # 値の設定はdocs/user_guide.md参照
+npm run dev
+```
+
+必要な環境変数は [docs/user_guide.md](docs/user_guide.md) の環境変数一覧を参照してください。
+
+## 既知の問題
+
+- Webアクセシビリティ: ハンバーガーメニュー表示時・アカウントログイン画面表示時に、背後の要素にTabキーが反応してしまう問題を調査中
