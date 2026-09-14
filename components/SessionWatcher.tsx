@@ -57,7 +57,7 @@ export default function SessionWatcher() {
         .channel(`session-watch-${sid}`)
         .on(
           "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sid}` },
+          { event: "UPDATE", schema: "legal_life", table: "sessions", filter: `id=eq.${sid}` },
           (payload) => {
             if (payload.new.should_logout === true) forceLogout(sid);
           },
