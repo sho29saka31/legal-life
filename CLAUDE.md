@@ -18,4 +18,4 @@
 
 Next.js 15 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。認証・データベースはSupabase(Auth, PostgreSQL, Realtime)を使用。sporiveと`saka2931-service`プロジェクトを共有し、Cookieドメイン`.saka2931.jp`でログインセッションを共有(SSO)している。
 
-ダッシュボード設定等、ユーザー自身の操作が必要な項目は `docs/user_guide.md` を参照。
+ダッシュボード設定等、ユーザー自身の操作が必要な項目は [Wiki: User Guide](https://github.com/sho29saka31/legal-life/wiki/User-Guide) を参照。
