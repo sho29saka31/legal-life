@@ -44,7 +44,7 @@ export default function ActivityPage() {
       backHref="/account"
       backLabel="アカウント設定に戻る"
       title="最近のアクティビティ"
-      subtitle="過去1年間のアカウント操作ログ(最大50件)"
+      subtitle="アカウント操作ログ(最新50件)"
       maxWidthClassName="max-w-[640px]"
     >
       {error && <p className="text-m3-body-medium text-md-error">読み込みに失敗しました: {error}</p>}
