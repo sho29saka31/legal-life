@@ -80,7 +80,7 @@ export default function AccountPage() {
           { href: "/account/privacy", icon: IconBell, label: "通知・プライバシー", sub: "メール通知・ニュースレター設定" },
           { href: "/account/security", icon: IconShield, label: "セキュリティ", sub: "パスワード・二段階認証・ログイン方法" },
           { href: "/account/device", icon: IconLaptop, label: "ログイン中のデバイス", sub: "アクティブなセッションの管理" },
-          { href: "/account/activity", icon: IconClipboard, label: "アクティビティ", sub: "ログイン・設定変更の履歴(最大1年)" },
+          { href: "/account/activity", icon: IconClipboard, label: "アクティビティ", sub: "ログイン・設定変更の履歴(最新50件)" },
         ].map((m) => (
           <Link
             key={m.href}
