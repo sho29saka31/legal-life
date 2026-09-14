@@ -27,19 +27,45 @@ export async function regSession(user: Pick<User, "id">) {
     // (以前はtryの外にあり、ここで投げるとログイン後のリダイレクトごと失敗しかねなかった)。
     const sid = getSid();
     const ua = parseUA();
-    const { data: existing } = await supabase.from("sessions").select("id").eq("id", sid).maybeSingle();
-    if (!existing) {
-      const loc = await fetchLocation();
+    // 以前は id=sid のみで既存行を検索しており、共有端末で別ユーザーがログイン
+    // すると、そのsidの行はRLS(sessions_select_own)により見えず常にnull(existing)
+    // になっていた。その結果INSERTを試み、主キー(id)衝突で例外(捕捉され無視)が
+    // 発生し、後から使ったユーザーのセッションがDBに一切登録されない不具合があった
+    // (コード監査で発見)。user_idも条件に含めて自分の行かどうかを判定する。
+    const { data: existing } = await supabase
+      .from("sessions")
+      .select("id")
+      .eq("id", sid)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (existing) {
+      await supabase.from("sessions").update({ last_active: new Date().toISOString() }).eq("id", sid);
+      return;
+    }
+
+    const loc = await fetchLocation();
+    const { error } = await supabase.from("sessions").insert({
+      id: sid,
+      user_id: user.id,
+      browser: ua.browser,
+      os: ua.os,
+      device: ua.device,
+      location: loc.country,
+    });
+
+    if (error?.code === "23505") {
+      // sidが別ユーザー所有(RLSにより見えないだけ)で一意制約違反になった場合、
+      // 共有端末での取り違えを避けるため新しいsidを発行してやり直す
+      const newSid = crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, newSid);
       await supabase.from("sessions").insert({
-        id: sid,
+        id: newSid,
         user_id: user.id,
         browser: ua.browser,
         os: ua.os,
         device: ua.device,
         location: loc.country,
       });
-    } else {
-      await supabase.from("sessions").update({ last_active: new Date().toISOString() }).eq("id", sid);
     }
   } catch {
     /* ignore */

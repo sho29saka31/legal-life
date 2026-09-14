@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { decR, generateNonce } from "@/lib/auth/utils";
-import { needsMfaChallenge, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
+import { needsMfaChallenge, challengeAndVerifyTotp } from "@/lib/auth/mfa";
 import { logAct, regSession } from "@/lib/auth/session";
 import { sendNoticeForUser } from "@/lib/auth/notifications";
 import { signInWithPasskey } from "@/lib/auth/passkey";
@@ -198,7 +198,7 @@ export default function LoginForm() {
 
   const handle2faVerify = async (input: string) => {
     if (!pending) return { ok: false, reason: "セッションが失われました" };
-    const res = await challengeAndVerifyFirstFactor(input);
+    const res = await challengeAndVerifyTotp(input);
     if (!res.ok) return res;
     const { user, method } = pending;
     setPending(null);
