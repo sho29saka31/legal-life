@@ -2,40 +2,15 @@
 
 このドキュメントは、コード側の対応だけでは完結せず、**ユーザー様ご自身の操作が必要な項目**をまとめたものです。Supabase・Vercel・Cloudflare・Google関連のダッシュボード設定など、AIエージェントからは実行できない(または実行すべきでない)作業が対象です。
 
-最終更新: 2026年9月10日
+最終更新: 2026年9月14日
 
 ---
 
-## 1. 今すぐ対応が必要なこと(優先度高)
+## 1. 対応状況の確認が必要なこと
 
-### 1-1. Supabase: Site URLの確認
+### 1-1. Google Tag Manager: GA4タグの設定
 
-- 場所: Supabaseダッシュボード → Authentication → URL Configuration
-- 内容: **Site URL** が `https://legal-life.vercel.app`(正式な本番ドメイン)になっていること
-- 背景: 以前 Site URL が `legal-life-saka2931.vercel.app`(Vercelの自動生成ドメイン)を向いていたため、確認メールのリンクが誤ったドメインにリダイレクトされていました。既に修正いただいた旨ご報告いただいていますが、念のため最終確認をお願いします
-- あわせて Redirect URLs に `https://legal-life.vercel.app/**` が登録されているかもご確認ください
-
-### 1-2. Supabase: Googleログインの有効化
-
-- 場所: Supabaseダッシュボード → Authentication → Providers → Google
-- 内容: トグルを有効化し、以下を登録
-  - Google Cloud Console で発行した OAuth クライアント ID
-  - 対応するクライアントシークレット
-- Google Cloud Console 側で必要な設定:
-  - 承認済みのリダイレクト URI に `https://hsghtqqfhrxutpogqpys.supabase.co/auth/v1/callback` を追加
-- これが未設定の間は、Googleログインで「Provider (issuer "https://accounts.google.com") is not enabled」エラーが発生し続けます
-
-### 1-3. Vercel: 環境変数の設定
-
-Google Cloud・Google Analyticsを再設定された場合、新しい値をVercelの環境変数に設定してください(下部の「環境変数一覧」を参照)。
-
-- `NEXT_PUBLIC_GTM_CONTAINER_ID`(Google Tag ManagerのコンテナID。GA4はGTM経由での計測に移行済み)
-- `NEXT_PUBLIC_GA_MEASUREMENT_ID`(GTM内で設定するGA4設定タグの測定IDと同じ値。Cookie拒否時のGA Cookie削除にのみ使用)
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`(Google One Tap用。1-2のOAuthクライアントIDと同じ値)
-
-### 1-3-1. Google Tag Manager: GA4タグの設定
-
-以前のGA4直接埋め込み方式が正常に計測できていなかったため、GTM経由の方式に移行しました。コード側の対応(Consent Mode v2、Cookie同意連動)は完了しています。GTM管理画面側で以下の設定をお願いします。
+GTM経由でGA4を計測する方式を採用しています。コード側の対応(Consent Mode v2、Cookie同意連動)は完了していますが、GTM管理画面側の設定状況は未確認です。
 
 1. [Google Tag Manager](https://tagmanager.google.com/)で新規コンテナを作成(プラットフォーム: ウェブ)し、コンテナID(`GTM-XXXXXXX`)を`NEXT_PUBLIC_GTM_CONTAINER_ID`としてVercelに設定
 2. GTM内で「タグ」→ 新規作成 → タグの種類「Google アナリティクス: GA4 設定」を選択し、測定ID(`G-...`)を入力
@@ -44,9 +19,9 @@ Google Cloud・Google Analyticsを再設定された場合、新しい値をVerc
 5. 公開(Submit)して、GTMのプレビューモードでタグが発火することを確認
 6. GA4側の測定IDを`NEXT_PUBLIC_GA_MEASUREMENT_ID`としてもVercelに設定(Cookie拒否時の削除ロジックで使用)
 
-### 1-4. Supabase: Custom SMTP(Resend)の設定
+### 1-2. Supabase: Custom SMTP(Resend)の設定
 
-メール送信をResendに一本化しました。このアプリ自身が送るメール(お問い合わせ通知・会員向け通知メール)は`RESEND_API_KEY`/`RESEND_FROM_EMAIL`経由で既にResendを使っていますが、**Supabase Auth自体が送るメール**(サインアップ確認・パスワードリセット・メールアドレス変更確認など)は別設定が必要です。sporive/legal-lifeは同一のSupabaseプロジェクト(saka2931-service)を共有しているため、この設定は両サービスの認証メールに共通で適用されます。
+メール送信をResendに一本化しました。このアプリ自身が送るメール(お問い合わせ通知・会員向け通知メール)は`RESEND_API_KEY`/`RESEND_FROM_EMAIL`経由で既にResendを使っていますが、**Supabase Auth自体が送るメール**(サインアップ確認・パスワードリセット・メールアドレス変更確認など)は別設定が必要です。sporive/legal-lifeは同一のSupabaseプロジェクト(`saka2931-service`)を共有しているため、この設定は両サービスの認証メールに共通で適用されます。
 
 - 場所: Supabaseダッシュボード → Authentication → Emails → SMTP Settings
 - 「Enable Custom SMTP」を有効化し、以下を入力:
@@ -107,15 +82,17 @@ Vercelダッシュボードの Project Settings → Environment Variables で設
 
 | 変数名 | 用途 | 必須 |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | SupabaseプロジェクトのURL | ○ |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabaseプロジェクト(`saka2931-service`)のURL | ○ |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabaseのpublishable(anon)キー | ○ |
-| `NEXT_PUBLIC_SITE_URL` | サイトの本番URL(メタデータ・サイトマップ生成に使用)。`https://legal-life.vercel.app` | ○ |
+| `NEXT_PUBLIC_SITE_URL` | サイトの本番URL(メタデータ・サイトマップ生成に使用)。`https://legal-life.saka2931.jp` | ○ |
 | `GEMINI_API_KEY` | Gemini API(サーバー専用、`/api/chat`のみで参照) | ○ |
-| `RESEND_API_KEY` | Resendのシークレットキー。Supabase Custom SMTP(1-4)のPasswordにも同じ値を設定 | ○ |
+| `RESEND_API_KEY` | Resendのシークレットキー。Supabase Custom SMTP(1-2)のPasswordにも同じ値を設定 | ○ |
 | `RESEND_FROM_EMAIL` | `mail.saka2931.jp`上の送信元アドレス(例: `legal-life@mail.saka2931.jp`) | ○ |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare TurnstileのSite Key。未設定時はCAPTCHAウィジェット非表示 | 任意(2-1参照) |
-| `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない | ○(1-3-1参照) |
+| `NEXT_PUBLIC_GTM_CONTAINER_ID` | Google Tag ManagerのコンテナID(`GTM-`から始まる)。未設定時はGTM自体を読み込まない | ○(1-1参照) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GTM内で設定するGA4設定タグの測定ID(`G-`から始まる)。Cookie拒否時の既存GA Cookie削除にのみ使用 | ○(再設定時は要更新) |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用、`.apps.googleusercontent.com`で終わる)。未設定時は既存IDにフォールバック。Supabase側のGoogle Provider設定にも同じ値の登録が必要(1-2参照) | ○(再設定時は要更新) |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0クライアントID(Google One Tap用、`.apps.googleusercontent.com`で終わる)。Supabase側のGoogle Provider設定にも同じ値の登録が必要 | ○(再設定時は要更新) |
+| `NEXT_PUBLIC_INFRA_SUPABASE_URL` | `saka2931-infra`(adacと共有)プロジェクトのURL。お知らせ・機能フラグの取得に使用 | ○ |
+| `NEXT_PUBLIC_INFRA_SUPABASE_ANON_KEY` | 同上のanonキー(読み取り専用) | ○ |
 
-○ = 現状必須 / △ = 機能が動作していないため優先度低め / 任意 = なくても動作する追加機能
+○ = 現状必須 / 任意 = なくても動作する追加機能

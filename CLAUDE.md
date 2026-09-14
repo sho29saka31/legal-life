@@ -16,6 +16,6 @@
 
 ## プロジェクト概要
 
-Next.js 15 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。認証・データベースはSupabase(Auth, PostgreSQL, Realtime)を使用。
+Next.js 15 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。認証・データベースはSupabase(Auth, PostgreSQL, Realtime)を使用。sporiveと`saka2931-service`プロジェクトを共有し、Cookieドメイン`.saka2931.jp`でログインセッションを共有(SSO)している。
 
-詳細な背景・作業履歴は `docs/session-handoff.md` を参照。
+ダッシュボード設定等、ユーザー自身の操作が必要な項目は `docs/user_guide.md` を参照。
