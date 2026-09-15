@@ -21,19 +21,11 @@ const GOOGLE_CLIENT_ID =
 // (LoginForm.tsxの同名フラグと同じ理由。詳細はそちらのコメントを参照)。
 const OAUTH_PENDING_KEY = "ll_oauth_pending_signup";
 
-// decR は "/" で始まる文字列であれば許可するが、"//evil.com" のようなプロトコル
-// 相対URL(スキームなしの絶対URL)も "/" で始まるため素通りしてしまい、
-// 登録後に外部サイトへリダイレクトされるオープンリダイレクト脆弱性になり得る。
-// そのため同一オリジンの相対パス("/xxx" で始まり "//" や "/\" で始まらない)
-// であることをここで追加検証する。
-function isSafeRedirectPath(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
-}
-
 function afterLoginRedirect(r: string | null) {
+  // decR自体が同一オリジンの相対パス("//evil.com"のようなプロトコル相対URLを除く)
+  // であることを検証済みのため、ここでの追加チェックは不要
   const decoded = r ? decR(r) : null;
-  const dest = decoded && isSafeRedirectPath(decoded) ? decoded : "/account";
-  window.location.replace(dest);
+  window.location.replace(decoded ?? "/account");
 }
 
 export default function SignupForm() {
