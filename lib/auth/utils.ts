@@ -6,10 +6,17 @@ export function encR(url: string): string {
   }
 }
 
+// "//evil.com"のようなプロトコル相対URLは"/"から始まるためstartsWith("/")だけでは
+// 弾けず、オープンリダイレクトに悪用され得る(コード監査で発見)。呼び出し元での
+// 重複実装に依存せず、この関数自体で安全なパスのみを返すようにする。
+function isSafeRedirectPath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
+}
+
 export function decR(enc: string): string | null {
   try {
     const d = decodeURIComponent(escape(atob(enc)));
-    return d.startsWith("/") ? d : null;
+    return isSafeRedirectPath(d) ? d : null;
   } catch {
     return null;
   }
