@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { logAct } from "@/lib/auth/session";
-import { listTotpFactors, challengeAndVerifyFirstFactor } from "@/lib/auth/mfa";
+import { listTotpFactors, challengeAndVerifyTotp } from "@/lib/auth/mfa";
 import { sendNoticeForUser } from "@/lib/auth/notifications";
 import { validatePassword } from "@/lib/auth/utils";
 import OtpPanel, { type OtpVerifyResult } from "@/components/OtpPanel";
@@ -135,7 +135,7 @@ export default function PassPage() {
   };
 
   const handleOtpVerify = async (input: string) => {
-    const res = await challengeAndVerifyFirstFactor(input);
+    const res = await challengeAndVerifyTotp(input);
     if (!res.ok) {
       setSubmitting(false);
       return res;

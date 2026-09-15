@@ -83,7 +83,11 @@ export default function MethodsPage() {
   if (!user) return null;
 
   const identities = user.identities ?? [];
-  const total = identities.length;
+  // パスキーもログイン方法の1つだが、identities(email/google)には含まれない。
+  // これを数えずに「最後の手段」判定すると、パスキーで引き続きログインできる
+  // にもかかわらずパスワード/Google解除ボタンが誤って無効化されてしまう
+  // (コード監査で発見)。
+  const total = identities.length + (passkeys?.length ?? 0);
   const passIdentity = identities.find((i) => i.provider === "email");
   const passLinked = !!passIdentity;
   const googleIdentity = identities.find((i) => i.provider === "google");
