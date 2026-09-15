@@ -28,36 +28,11 @@ export type LocationInfo = { country: string; region: string; city: string; ip: 
 
 const UNKNOWN_LOCATION: LocationInfo = { country: "不明", region: "不明", city: "不明", ip: "不明" };
 
+// 以前はipapi.co（失敗時はCloudflareのtraceエンドポイント）へブラウザから直接
+// IPアドレスを送信し、ログイン地域・アクセス地域を取得していたが、この外部送信は
+// プライバシーポリシーへの開示漏れが監査で発覚し、利用を停止することになった。
+// 呼び出し元（AccessLogger.tsx・lib/auth/session.ts）の変更を避けるため、
+// 関数自体は残しつつ、常に「不明」を返すだけにする。
 export async function fetchLocation(): Promise<LocationInfo> {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetch("https://ipapi.co/json", { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (res.ok) {
-      const d = await res.json();
-      if (d?.country_name) {
-        return { country: d.country_name || "不明", region: d.region || "不明", city: d.city || "不明", ip: d.ip || "不明" };
-      }
-    }
-  } catch {
-    /* ignore, fall through to secondary source */
-  }
-
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 2000);
-    const res = await fetch("https://cloudflare.com/cdn-cgi/trace", { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (res.ok) {
-      const text = await res.text();
-      const loc = text.match(/loc=([A-Z]{2})/)?.[1];
-      const ip = text.match(/ip=([^\n]+)/)?.[1];
-      if (loc) return { country: loc, region: "不明", city: "不明", ip: ip || "不明" };
-    }
-  } catch {
-    /* both failed */
-  }
-
   return UNKNOWN_LOCATION;
 }
