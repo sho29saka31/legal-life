@@ -1,0 +1,11 @@
+-- SessionWatcher.tsx（フロントエンド）は sessions テーブルの UPDATE を
+-- Supabase Realtime（postgres_changes）で監視し、should_logout=true を
+-- 検知して強制ログアウトを即時反映する設計（ADR-006参照）。
+--
+-- しかし本番テーブルは saka2931-service 統合時に legal_life スキーマへ
+-- 移行済みであるのに対し、supabase_realtime publication には
+-- legal_life.sessions が一切追加されていなかった（当時は public.sessions を
+-- 追加していたが、スキーマ移行時にpublication側の追従が漏れていた）。
+-- そのため Realtime イベントは常に届かず、60秒間隔のポーリングだけが
+-- 実質的な強制ログアウト経路になっていた。
+alter publication supabase_realtime add table legal_life.sessions;
