@@ -17,8 +17,13 @@ const requestTimestamps = new Map<string, number[]>();
 let cleanupCounter = 0;
 
 function getClientIp(req: NextRequest): string {
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+  // x-vercel-forwarded-forはVercelのエッジ層がクライアント接続元IPを基に
+  // 設定する値で、リクエスト送信元からは上書きできない。一方x-forwarded-for
+  // の先頭要素はクライアントが自由な値を付与できるため、これをキーに
+  // レート制限するとリクエストごとにランダムなIPを送るだけで上限が
+  // 無効化できてしまっていた(コード監査で発見)。
+  const vercelForwardedFor = req.headers.get("x-vercel-forwarded-for");
+  if (vercelForwardedFor) return vercelForwardedFor.split(",")[0].trim();
   return req.headers.get("x-real-ip") || "unknown";
 }
 
@@ -188,7 +193,12 @@ export async function POST(req: NextRequest) {
       "個別の法的判断が必要な場合は、必ず弁護士等の専門家にご相談ください。";
 
     return NextResponse.json({ answer: fullAnswer, category });
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  } catch {
+    // 例外メッセージをそのまま返すと内部実装の詳細が漏洩し得るため、
+    // 汎用メッセージのみ返す(コード監査で発見)。
+    return NextResponse.json(
+      { error: "回答の生成に失敗しました。時間をおいて再度お試しください。" },
+      { status: 500 },
+    );
   }
 }
