@@ -5,10 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { requireAuth } from "@/lib/auth/requireAuth";
-import { getProfile, setDeletionPending, type Profile } from "@/lib/auth/profile";
+import { getProfile, type Profile } from "@/lib/auth/profile";
 import { IconPerson, IconBell, IconShield, IconLaptop, IconClipboard } from "@/components/icons";
 import MdAccountCard from "@/components/material/MdAccountCard";
-import MdButton from "@/components/material/MdButton";
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -22,12 +21,6 @@ export default function AccountPage() {
     })();
   }, []);
 
-  const cancelDeletion = async () => {
-    if (!user || !confirm("キャンセルしますか?")) return;
-    await setDeletionPending(user.id, false);
-    setProfile((p) => (p ? { ...p, deletion_pending: false, scheduled_deletion: null } : p));
-  };
-
   if (!user) return null;
 
   const lastSignIn = user.last_sign_in_at
@@ -36,23 +29,6 @@ export default function AccountPage() {
 
   return (
     <MdAccountCard title="アカウント設定">
-      {profile?.deletion_pending && (
-        <div className="rounded-m3-md bg-md-error-container p-5 mb-6">
-          <p className="text-md-on-error-container font-bold text-m3-body-medium mb-2">アカウント削除が予約されています</p>
-          <p className="text-m3-body-medium text-md-on-error-container mb-3">
-            削除予定日:{" "}
-            <strong>
-              {profile.scheduled_deletion
-                ? new Date(profile.scheduled_deletion).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                : "--"}
-            </strong>
-          </p>
-          <MdButton variant="outlined" onClick={cancelDeletion}>
-            削除をキャンセルする
-          </MdButton>
-        </div>
-      )}
-
       <div className="flex items-start gap-4 rounded-m3-md bg-md-surface-container p-4 mb-6">
         {profile?.photo_url ? (
           <Image src={profile.photo_url} alt="avatar" width={64} height={64} className="rounded-full object-cover border-2 border-md-primary shrink-0" />
@@ -80,7 +56,7 @@ export default function AccountPage() {
           { href: "/account/privacy", icon: IconBell, label: "通知・プライバシー", sub: "メール通知・ニュースレター設定" },
           { href: "/account/security", icon: IconShield, label: "セキュリティ", sub: "パスワード・二段階認証・ログイン方法" },
           { href: "/account/device", icon: IconLaptop, label: "ログイン中のデバイス", sub: "アクティブなセッションの管理" },
-          { href: "/account/activity", icon: IconClipboard, label: "アクティビティ", sub: "ログイン・設定変更の履歴(最新50件)" },
+          { href: "/account/activity", icon: IconClipboard, label: "アクティビティ", sub: "ログイン・設定変更の履歴(最大1年)" },
         ].map((m) => (
           <Link
             key={m.href}

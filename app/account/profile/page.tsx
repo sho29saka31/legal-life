@@ -160,12 +160,12 @@ export default function ProfilePage() {
       )}
 
       <p className="text-m3-label-small text-md-on-surface-variant mb-2 uppercase tracking-wide">危険な操作</p>
-      <Link
-        href="/account/delete"
+      <a
+        href="https://auth.saka2931.jp/account/delete"
         className="flex items-center justify-center w-full h-10 rounded-full bg-md-error text-md-on-error text-m3-label-large font-medium hover:shadow-m3-1 transition-shadow"
       >
         アカウントを削除する
-      </Link>
+      </a>
 
       <div className="text-center mt-5">
         <Link href="/account" className="text-m3-body-medium text-md-primary font-medium">アカウント設定に戻る</Link>
