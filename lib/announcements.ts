@@ -1,4 +1,5 @@
 import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
+import { sanitizeAnnouncementHtml } from "@/lib/sanitizeHtml";
 
 export type Announcement = {
   slug: string;
@@ -51,7 +52,7 @@ export async function getAnnouncements(): Promise<Announcement[]> {
     title: a.title,
     dateLabel: a.date_label || formatDateLabel(a.published_at),
     publishedAt: a.published_at,
-    bodyHtml: a.body,
+    bodyHtml: sanitizeAnnouncementHtml(a.body),
     level: a.level as Announcement["level"],
     showInBar: a.show_in_bar,
   }));
@@ -79,7 +80,7 @@ export async function getAnnouncementBySlug(
     title: data.title,
     dateLabel: data.date_label || formatDateLabel(data.published_at),
     publishedAt: data.published_at,
-    bodyHtml: data.body,
+    bodyHtml: sanitizeAnnouncementHtml(data.body),
     level: data.level as Announcement["level"],
     showInBar: data.show_in_bar,
   };
