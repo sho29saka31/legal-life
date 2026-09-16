@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AccessLogger from "@/components/AccessLogger";
-import SessionWatcher from "@/components/SessionWatcher";
+import AuthSessionWatcher from "@/components/AuthSessionWatcher";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import MaintenancePopup from "@/components/MaintenancePopup";
 import CookieBanner from "@/components/CookieBanner";
@@ -56,9 +55,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteChrome>
           <div id="footer"><Footer /></div>
         </SiteChrome>
-        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <AccessLogger />
-        <SessionWatcher />
+        <AuthSessionWatcher />
         <ScrollTopButton />
         <MaintenancePopup />
         <SiteChrome>
