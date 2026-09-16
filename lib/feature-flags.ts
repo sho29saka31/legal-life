@@ -7,7 +7,6 @@ import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
 export const FEATURE_FLAG_KEYS = [
   "emergency_maintenance",
   "account_features",
-  "mail_sending",
   "ai_chat",
 ] as const;
 
