@@ -11,17 +11,12 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-k
 
 // セッションをlocalStorageではなくCookie（domain=.saka2931.jp）で保持することで、
 // sporive.saka2931.jpとのログイン状態共有（SSO）を可能にする。
-export const supabase = createBrowserClient<Database>(url, anonKey, {
+export const supabase = createBrowserClient<Database, "legal_life">(url, anonKey, {
   db: { schema: "legal_life" },
   cookieOptions: {
     domain: ".saka2931.jp",
     path: "/",
     sameSite: "lax",
     secure: true,
-  },
-  auth: {
-    // パスキー(WebAuthn)関連API(signInWithPasskey/registerPasskey/passkey.*)を有効化する。
-    // @supabase/supabase-js v2.105.0以降で提供されるExperimental機能。
-    experimental: { passkey: true },
   },
 });

@@ -10,7 +10,7 @@ import type { Database } from "./types";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
-export const supabaseServer = createClient<Database>(url, anonKey, {
+export const supabaseServer = createClient<Database, "legal_life">(url, anonKey, {
   db: { schema: "legal_life" },
   auth: {
     autoRefreshToken: false,

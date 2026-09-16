@@ -81,18 +81,18 @@ export default function ActivityPage() {
           不審なアクセスを発見した場合は、すぐにパスワードを変更し、二段階認証を有効にしてください。
         </p>
         <div className="flex gap-2">
-          <Link
-            href="/account/security/pass"
+          <a
+            href="https://auth.saka2931.jp/account/password"
             className="flex-1 flex items-center justify-center h-10 rounded-full bg-md-primary text-md-on-primary text-m3-label-large font-medium"
           >
             パスワードを変更
-          </Link>
-          <Link
-            href="/account/security/totp"
+          </a>
+          <a
+            href="https://auth.saka2931.jp/account/mfa"
             className="flex-1 flex items-center justify-center h-10 rounded-full border border-md-outline text-md-primary text-m3-label-large font-medium"
           >
             二段階認証を確認
-          </Link>
+          </a>
         </div>
       </div>
 

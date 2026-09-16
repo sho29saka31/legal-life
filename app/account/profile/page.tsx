@@ -34,18 +34,19 @@ export default function ProfilePage() {
   const needsVerify = !!user?.email && !user.email_confirmed_at;
 
   const saveName = async () => {
-    if (!nameInput.trim()) {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
       setNameMsg("名前を入力してください");
       return;
     }
-    try {
-      await updateDisplayName(user!.id, nameInput.trim());
-      await logAct(user!.id, "profile_update", "表示名変更");
-      setProfile((p) => (p ? { ...p, display_name: nameInput.trim() } : p));
-      setEditingName(false);
-    } catch (e) {
-      setNameMsg(e instanceof Error ? e.message : String(e));
+    const ok = await updateDisplayName(trimmed);
+    if (!ok) {
+      setNameMsg("更新に失敗しました");
+      return;
     }
+    await logAct(user!.id, "profile_update", "表示名変更");
+    setProfile((p) => (p ? { ...p, display_name: trimmed } : p));
+    setEditingName(false);
   };
 
   const copyUuid = async () => {

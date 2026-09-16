@@ -1,6 +1,10 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
-import { encR } from "./utils";
+
+// ログイン・サインアップ・パスワードリセット・MFA等はすべて auth.saka2931.jp
+// に一元化されているため、未ログインを検知したらそちらへ return_to 付きで
+// リダイレクトする。
+const AUTH_APP_URL = "https://auth.saka2931.jp";
 
 export function requireAuth(): Promise<User> {
   return new Promise((resolve) => {
@@ -10,11 +14,8 @@ export function requireAuth(): Promise<User> {
       subscription.unsubscribe();
       const user = session?.user;
       if (!user) {
-        if (location.pathname.startsWith("/account/login")) return;
-        // encR()はBase64文字列を返すため "+" "/" "=" を含み得る。クエリ文字列に
-        // そのまま埋め込むと、特に "+" が空白として再解釈されLoginForm/SignupFormの
-        // decR()で壊れた値を受け取ってしまうため、encodeURIComponentで再エンコードする。
-        window.location.replace(`/account/login?r=${encodeURIComponent(encR(location.pathname + location.search))}`);
+        const returnTo = `${location.origin}${location.pathname}${location.search}`;
+        window.location.replace(`${AUTH_APP_URL}/login?return_to=${encodeURIComponent(returnTo)}`);
       } else {
         resolve(user);
       }
