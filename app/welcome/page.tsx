@@ -90,9 +90,9 @@ export default function WelcomePage() {
           サイトを利用する
         </Link>
         <div className="mt-4">
-          <Link href="/account" className="text-sm text-primary-dark font-semibold">
+          <a href="https://auth.saka2931.jp/account" className="text-sm text-primary-dark font-semibold">
             アカウント設定を確認する
-          </Link>
+          </a>
         </div>
       </div>
     </div>

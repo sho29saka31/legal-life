@@ -1,13 +1,6 @@
-"use client";
-
-import { usePathname } from "next/navigation";
-
-// /account/** 配下(ログイン・サインアップ・アカウント設定関連の全画面)では
-// ヘッダー・フッター・Cookie同意バナーを表示しない。
-const HIDDEN_CHROME_PREFIX = "/account";
-
+// ログイン・サインアップ・アカウント設定はauth.saka2931.jpに一元化され、
+// legal-life自身は/account配下のページを持たなくなったため、
+// パスに応じてヘッダー・フッター等を隠す分岐は不要になった。
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  if (pathname === HIDDEN_CHROME_PREFIX || pathname.startsWith(`${HIDDEN_CHROME_PREFIX}/`)) return null;
   return <>{children}</>;
 }

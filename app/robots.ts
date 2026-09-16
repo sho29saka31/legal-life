@@ -19,7 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         "/content/study",
         "/plan",
         "/info/history",
-        "/account",
         "/api",
         "/welcome",
         "/error",
