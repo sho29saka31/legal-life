@@ -25,7 +25,7 @@ const PLANS = [
     price: "無料",
     priceSub: "(会員登録が必須)",
     features: ["チャット利用: 5回/日", "履歴保存: 最大10件", "学習: 一部利用可能", "ニュース: 6時間後公開"],
-    href: "/account/signup",
+    href: "https://auth.saka2931.jp/signup?return_to=https%3A%2F%2Flegal-life.saka2931.jp%2Faccount",
     label: "ベーシック会員になる",
   },
   {
