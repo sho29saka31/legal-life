@@ -21,7 +21,7 @@ export default function robots(): MetadataRoute.Robots {
         "/info/history",
         "/api",
         "/welcome",
-        "/error",
+        "/maintenance",
       ],
     },
     host: base,

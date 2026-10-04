@@ -44,6 +44,11 @@ export default function GlobalError({
               再読み込みする
             </button>
           </div>
+          <p className="mt-6 text-sm">
+            <a href="https://status.saka2931.jp" className="text-[#666] underline hover:text-primary-dark">
+              サービスの稼働状況を確認する
+            </a>
+          </p>
         </div>
       </body>
     </html>
