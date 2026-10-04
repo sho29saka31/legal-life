@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { getAnnouncements, formatSimpleDate } from "@/lib/announcements";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "お知らせ",
+  path: "/info",
   description:
-    "このページはlegal&lifeのお知らせページです。当ページでは最新のお知らせ(機能追加、改善、メンテナンス情報など)をお知らせします。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-};
+    "legal&lifeからのお知らせ一覧です。機能追加・改善、メンテナンス情報、重要なご案内などの最新情報を、公開・更新日とあわせて確認できます。",
+});
 
 // adacの管理画面から追加されたお知らせを反映するため、ビルド時に固定せず
 // リクエスト時に取得する。

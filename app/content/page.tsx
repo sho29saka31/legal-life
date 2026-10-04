@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import PopupLink from "@/components/PopupLink";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "コンテンツ",
+  path: "/content",
   description:
-    "このページはlegal&lifeのコンテンツページです。当ページでは国民が日本の法令について学べ、法律問題について相談できるオンラインプラットフォームです。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-};
+    "legal&lifeのコンテンツ一覧です。e-Gov法令APIを使った法令検索のほか、AIチャット相談・法令学習・法令ニュース(いずれも公開準備中)の4つの機能を紹介しています。調べたい内容や目的に合わせて機能をお選びください。",
+});
 
 const CARDS = [
   {

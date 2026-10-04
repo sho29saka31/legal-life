@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "日本国憲法",
+  path: "/content/study/constitution-of-japan",
   description:
-    "このページはlegal&lifeの日本国憲法学習ページです。当ページは日本国憲法の条文、意義、解釈をわかりやすく学習することが出来ます。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  robots: { index: false, follow: true },
-};
+    "日本国憲法の条文ごとの意義や解釈を、法律の初学者にもわかりやすく解説する学習ページです(正式公開前・制作中)。",
+  index: false,
+});
 
 export default function ConstitutionOfJapanPage() {
   return (
