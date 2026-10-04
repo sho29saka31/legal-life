@@ -46,21 +46,19 @@ sporive・service等、saka2931.jp配下の他サービスと以下を共有し�
 
 ## ドキュメント
 
-詳細ドキュメントは [GitHub Wiki](https://github.com/sho29saka31/legal-life/wiki) に移行しました。
-
 | ドキュメント | 内容 |
 |---|---|
-| [User Guide](https://github.com/sho29saka31/legal-life/wiki/User-Guide) | ダッシュボード設定等、ユーザー自身の操作が必要な項目 |
+| [docs/user_guide.md](docs/user_guide.md) | ダッシュボード設定等、ユーザー自身の操作が必要な項目・環境変数一覧 |
 
 ## セットアップ
 
 ```bash
 npm install
-cp .env.local.example .env.local   # 値の設定はWiki: User Guide参照
+cp .env.local.example .env.local   # 値の設定はdocs/user_guide.md参照
 npm run dev
 ```
 
-必要な環境変数は [Wiki: User Guide](https://github.com/sho29saka31/legal-life/wiki/User-Guide) の環境変数一覧を参照してください。
+必要な環境変数は [docs/user_guide.md](docs/user_guide.md) の環境変数一覧を参照してください。
 
 ## 既知の問題
 

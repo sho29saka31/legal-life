@@ -18,7 +18,7 @@
 
 Next.js 15 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。認証・データベースはSupabase(Auth, PostgreSQL, Realtime)を使用。sporiveと`saka2931-service`プロジェクトを共有し、Cookieドメイン`.saka2931.jp`でログインセッションを共有(SSO)している。
 
-ダッシュボード設定等、ユーザー自身の操作が必要な項目は [Wiki: User Guide](https://github.com/sho29saka31/legal-life/wiki/User-Guide) を参照。
+リポジトリは非公開のため、ドキュメントはGitHub Wikiではなく**リポジトリ内の `docs/`** で管理する。ダッシュボード設定等、ユーザー自身の操作が必要な項目は `docs/user_guide.md` を参照(冒頭の注記のとおり、2026-09-14以降の変更の一部は本文に未反映)。
 
 ## Ponytail: 怠け者のシニア開発者モード
 
