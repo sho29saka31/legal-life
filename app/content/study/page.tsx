@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "学習",
+export const metadata: Metadata = pageMetadata({
+  title: "法令学習",
+  path: "/content/study",
   description:
-    "このページはlegal&lifeの学習ページです。当ページでは法令文の条文の意義や解釈をわかりやすく詳しく学習できるコンテンツを制作しています。ぜひご利用ください。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  // 正式公開前の機能のためサイト内ナビゲーションからは意図的にブロックしており、検索エンジンにも公開しない。
-  robots: { index: false, follow: true },
-};
+    "日本国憲法をはじめとする法令の条文について、意義や解釈をわかりやすく学べる学習コンテンツのページです(正式公開前・制作中)。基礎から応用まで、段階的に理解を深められる内容を準備しています。",
+  index: false,
+});
 
 export default function StudyPage() {
   return (

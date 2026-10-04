@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import ErrorPage from "@/components/ErrorPage";
 
-export const metadata: Metadata = { title: "503", robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "503",
+  description: "サーバーの過負荷またはメンテナンスにより、一時的にサービスを利用できません。しばらくしてから再度アクセスしてください。",
+  robots: { index: false, follow: false },
+};
 
 export default function Error503Page() {
   return (

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { IconSearch } from "@/components/icons";
 
-export const metadata: Metadata = {
-  title: "ニュース",
+export const metadata: Metadata = pageMetadata({
+  title: "法令ニュース",
+  path: "/content/news",
   description:
-    "このページはlegal&lifeの法令ニュースページです。当ページでは最新の法令ニュースを分かりやすく詳しく読むことが出来ます。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  // 正式公開前の機能のためサイト内ナビゲーションからは意図的にブロックしており、検索エンジンにも公開しない。
-  robots: { index: false, follow: true },
-};
+    "法令の制定・改正に関する最新ニュースを、暮らしや仕事への影響とあわせてわかりやすく解説する予定のページです(正式公開前)。新しい法律や改正内容を効率よく把握できるようにします。",
+  index: false,
+});
 
 // 元サイトの news.js は空実装で機能未提供のため、見た目のみを移植している(検索・データ取得ロジックは別途対応予定)。
 export default function NewsPage() {
