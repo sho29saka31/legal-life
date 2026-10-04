@@ -5,12 +5,15 @@ export default function ErrorPage({
   title,
   desc,
   onRetry,
+  showStatusLink = false,
 }: {
   code: string;
   title: string;
   desc: string;
   /** 指定時、「再読み込みする」ボタンを追加表示する(error.tsx等の実行時エラー用) */
   onRetry?: () => void;
+  /** サーバー側の障害(500系・メンテナンス)の時だけ、稼働状況ページへの導線を出す */
+  showStatusLink?: boolean;
 }) {
   return (
     <div className="text-center px-5 py-12 sm:py-20 text-[#333]">
@@ -40,6 +43,13 @@ export default function ErrorPage({
             </button>
           )}
         </div>
+        {showStatusLink && (
+          <p className="mt-6 text-sm">
+            <a href="https://status.saka2931.jp" className="text-[#666] underline hover:text-primary-dark">
+              サービスの稼働状況を確認する
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );
