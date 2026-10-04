@@ -16,9 +16,16 @@
 
 ## プロジェクト概要
 
-Next.js 15 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。認証・データベースはSupabase(Auth, PostgreSQL, Realtime)を使用。sporiveと`saka2931-service`プロジェクトを共有し、Cookieドメイン`.saka2931.jp`でログインセッションを共有(SSO)している。
+Next.js 16 (App Router) + TypeScript + Tailwind CSS で構築された法令学習・相談サイト。データベースはSupabase(PostgreSQL)を使用。sporive・authと`saka2931-service`プロジェクトを共有し、Cookieドメイン`.saka2931.jp`でログインセッションを共有(SSO)している。**ログイン・アカウント機能は`auth.saka2931.jp`(authリポジトリ)に一元化されており、このリポジトリには認証画面・アカウント画面がない**(未ログインは`requireAuth()`が`return_to`付きで転送する)。
 
-ダッシュボード設定等、ユーザー自身の操作が必要な項目は [Wiki: User Guide](https://github.com/sho29saka31/legal-life/wiki/User-Guide) を参照。
+リポジトリは非公開のため、ドキュメントはGitHub Wikiではなく**リポジトリ内の `docs/`** で管理する(目次: `docs/Home.md`)。
+
+- `docs/ARCHITECTURE.md` — 現在のシステム構成・設計判断。`docs/ADR.md` — 設計判断の記録
+- `docs/CHANGELOG.md` — 変更履歴(**仕様・構成を変えたら必ず追記する**)
+- `docs/ENVIRONMENT.md` — 環境変数。`docs/RUNBOOK.md` — 障害対応。`docs/DEPLOYMENT.md` — デプロイ・マイグレーション
+- `docs/User-Guide.md` — ダッシュボード設定等、ユーザー自身の操作が必要な項目。認証関連の設定はauthリポジトリの`docs/Setup.md`が正
+
+新しいテーブルを追加するときは、`anon`/`authenticated`/`service_role`へのGRANTと、緊急メンテナンス用のRLSポリシー`maintenance_lockdown`を必ず付ける。
 
 ## Ponytail: 怠け者のシニア開発者モード
 
