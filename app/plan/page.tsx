@@ -1,16 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import type { ReactNode } from "react";
 import { IconCross, IconCheck } from "@/components/icons";
 import PopupLink from "@/components/PopupLink";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "料金プラン",
+  path: "/plan",
   description:
-    "このページはlegal&lifeの料金プランページです。当ページでは料金プランの比較などを記載しています。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  // 正式公開前の機能のためサイト内ナビゲーションからは意図的にブロックしており、検索エンジンにも公開しない。
-  robots: { index: false, follow: true },
-};
+    "legal&lifeの料金プラン(ゲスト・ベーシック・プラス・プロ)を、チャット利用回数・履歴保存件数・学習コンテンツ・ニュース閲覧の違いで比較できるページです(正式公開前)。",
+  index: false,
+});
 
 const PLANS = [
   {

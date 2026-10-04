@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import ChatApp from "./ChatApp";
 import { getFeatureFlag } from "@/lib/feature-flags";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "チャット",
+  path: "/content/chat",
   description:
-    "このページはlegal&lifeのチャットページです。当ページでは法令や法律問題についてAIにチャットで質問できます。あなたの疑問にリアルタイムで回答します。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  // 正式公開前の機能のためサイト内ナビゲーションからは意図的にブロックしており、検索エンジンにも公開しない。
-  robots: { index: false, follow: true },
-};
+    "法令や法律に関する疑問をAIに質問できるチャット機能のページです(正式公開前)。日本国憲法や主要な法令について気軽に相談できます。回答は参考情報であり、具体的な法律問題は弁護士などの専門家へご相談ください。",
+  index: false,
+});
 
 export default async function ChatPage() {
   const aiChatEnabled = await getFeatureFlag("ai_chat");

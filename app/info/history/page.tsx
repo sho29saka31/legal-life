@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "沿革",
+  path: "/info/history",
   description:
-    "このページはlegal&lifeの沿革ページです。当ページではサイトの開発経緯と成長の歴史をご紹介します。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  // CSS・内容がまだ完全ではないため正式公開前として扱い、サイト内ナビゲーションから
-  // 意図的にブロックしており、検索エンジンにも公開しない。
-  robots: { index: false, follow: true },
-};
+    "2025年4月のサイト企画開始から、Wixでの制作、GitHub PagesやCloudflare Pagesでの公開、Next.js・Vercelへの全面リライト、Supabaseへの移行、saka2931.jp共通基盤への統合までの、legal&lifeの開発経緯をまとめた沿革ページです。",
+  index: false,
+});
 
 const TIMELINE = [
   { date: "2025年4月", title: "サイト企画開始", body: "Wixを用いたサイトデザイン制作を開始しました。法律学習プラットフォームの構想を明確化しました。", tech: "Wix" },

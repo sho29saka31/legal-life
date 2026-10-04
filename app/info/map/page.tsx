@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import PopupLink from "@/components/PopupLink";
 import {
   IconHome,
@@ -19,12 +20,13 @@ import {
 } from "@/components/icons";
 import type { ComponentType, SVGProps } from "react";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "サイトマップ",
+  path: "/info/map",
   description:
-    "このページはlegal&lifeのサイトマップページです。当ページではサイトの全ページ構成をご確認いただけます。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  robots: { index: false, follow: true },
-};
+    "legal&lifeの全ページ構成を、主要ページ・サイト情報ページなどカテゴリ別に一覧できるサイトマップです。目的のページへすばやく移動できます。",
+  index: false,
+});
 
 type SitemapLink = { href: string | null; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> };
 
