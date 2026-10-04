@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { IconCheck } from "@/components/icons";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "サイト概要",
+  path: "/info/about",
   description:
-    "このページはlegal&lifeのサイト概要ページです。当ページではサイトがどのようなことを目指しているかなどを提示しています。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-};
+    "legal&lifeの目的・対象ユーザー・主な機能(法令検索・AIチャット・法令学習・ニュース)・使い方・免責事項をまとめたサイト概要ページです。法令知識の普及と、法知識不足による不利益をなくすという当サイトの考え方をご紹介します。",
+});
 
 function Badge() {
   return (

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import ErrorPage from "@/components/ErrorPage";
 
-export const metadata: Metadata = { title: "401", robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "401",
+  description: "認証が必要なページです。アカウントにログインしてから、もう一度アクセスしてください。",
+  robots: { index: false, follow: false },
+};
 
 export default function Error401Page() {
   return (

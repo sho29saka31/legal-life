@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { getAnnouncements, formatSimpleDate } from "@/lib/announcements";
 import PopupLink from "@/components/PopupLink";
 
@@ -7,12 +8,12 @@ import PopupLink from "@/components/PopupLink";
 // リクエスト時に取得する。
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "ホーム",
+  path: "/",
   description:
-    "このページはlegal&lifeのホームページです。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-  openGraph: { title: "ホーム|法令の学習・相談サイト legal&life" },
-};
+    "legal&lifeは、日本の法令をだれでも調べて学べる法令学習・検索サイトです。e-Gov法令APIを使った法令検索を中心に、AIチャットでの相談や学習コンテンツ(公開準備中)を通じて、法知識の不足による不利益を防ぐことを目指しています。",
+});
 
 // contentセクションの4つの導線ボタン(学習/チャット/検索/ニュース)で共通のスタイル(重複排除)
 const CONTENT_BUTTON_CLASS =

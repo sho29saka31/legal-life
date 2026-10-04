@@ -27,19 +27,29 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.saka2931.jp"),
-  title: { default: "legal&life", template: "%s | legal&life" },
-  description: "法令の学習・相談・検索ができる legal&life です。",
+  title: { default: "legal&life | 法令の学習・検索・相談サイト", template: "%s | legal&life" },
+  description:
+    "legal&lifeは、日本の法令をだれでも調べて学べる法令学習・検索サイトです。e-Gov法令APIによる法令検索、AIチャットでの相談、法令学習コンテンツを通じて、法知識の不足による不利益を防ぐことを目指しています。",
+  applicationName: "legal&life",
+  keywords: ["法令検索", "法律", "法令学習", "日本国憲法", "e-Gov法令API", "AIチャット", "法律相談", "legal&life"],
   verification: {
     // Vercelドメイン移行に伴うSearch Console再確認用の値のみを使用する。
     google: "Cd5Qt9qv8B4IZtsMqdvPt8tDfUoGh0ueLpghxhEsTSE",
   },
   icons: {
     icon: "/assets/images/favicon.png",
+    apple: "/assets/images/favicon.png",
   },
+  // 各ページはlib/seo.tsのpageMetadata()でopenGraph/twitterを丸ごと上書きするため、
+  // ここはmetadataを持たないページ(アカウント系など)向けの既定値。
   openGraph: {
-    // share.png はSNS等でシェアされた際のプレビュー画像用アセット
-    images: ["/assets/images/share.png"],
+    siteName: "legal&life",
+    locale: "ja_JP",
+    type: "website",
+    // share.png はSNS等でシェアされた際のプレビュー画像用アセット(325x300)
+    images: [{ url: "/assets/images/share.png", width: 325, height: 300, alt: "legal&life ロゴ" }],
   },
+  twitter: { card: "summary", images: ["/assets/images/share.png"] },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

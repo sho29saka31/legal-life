@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import SearchApp from "./SearchApp";
 
-export const metadata: Metadata = {
-  title: "検索",
+export const metadata: Metadata = pageMetadata({
+  title: "法令検索",
+  path: "/content/search",
   description:
-    "このページはlegal&lifeの法令検索ページです。当ページではe-Gov法令APIを利用して最新の日本の法律・政令・規則をリアルタイムで検索できます。当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。",
-};
+    "政府が提供するe-Gov法令APIを利用して、日本の法律・政令・規則などの法令をキーワードで検索し、条文を確認できます。信頼できる公開情報をもとにしているため、最新の法令を調べたいときにご利用いただけます。",
+});
 
 export default function SearchPage() {
   return <SearchApp />;
