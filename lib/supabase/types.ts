@@ -316,7 +316,6 @@ export type Database = {
           created_at: string
           deletion_pending: boolean
           deletion_request_at: string | null
-          display_name: string | null
           id: string
           photo_url: string | null
           role: string
@@ -327,7 +326,6 @@ export type Database = {
           created_at?: string
           deletion_pending?: boolean
           deletion_request_at?: string | null
-          display_name?: string | null
           id: string
           photo_url?: string | null
           role?: string
@@ -338,7 +336,6 @@ export type Database = {
           created_at?: string
           deletion_pending?: boolean
           deletion_request_at?: string | null
-          display_name?: string | null
           id?: string
           photo_url?: string | null
           role?: string
@@ -399,7 +396,7 @@ export type Database = {
   }
   // authアプリ（saka2931-serviceプロジェクト共有）が所有するスキーマ。
   // AuthSessionWatcherがこの端末のセッション行を登録・監視するためだけに参照する
-  // （display_name等の他テーブルへは直接アクセスしない。GET/PATCH /api/profile経由）。
+  // （表示名は GET/PATCH /api/profile 経由。他テーブルへは直接アクセスしない）。
   auth_app: {
     Tables: {
       sessions: {
