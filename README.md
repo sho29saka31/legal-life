@@ -80,7 +80,7 @@ legal-life/
 
 ```bash
 npm install
-cp .env.local.example .env.local   # 値は docs/ENVIRONMENT.md を参照
+touch .env.local   # 値は docs/ENVIRONMENT.md を参照（サンプルファイルはGitHubに置かない方針）
 npm run dev                        # http://localhost:3000
 ```
 
