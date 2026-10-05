@@ -25,4 +25,5 @@ end;
 $$;
 
 -- 2. 列を削除する(データ移行後に実行)
--- alter table legal_life.profiles drop column display_name;
+-- 2026-10-05 に本番(saka2931-service)へ適用済み(移行はSporive側のmigration 0035で実施)。
+alter table legal_life.profiles drop column display_name;
