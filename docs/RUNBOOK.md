@@ -47,7 +47,8 @@ where pubname = 'supabase_realtime' and tablename = 'sessions';
 
 - Supabase **Authentication → Emails → SMTP Settings** のCustom SMTP（Resend）設定を確認（[User Guide Pending Actions](User-Guide-Pending-Actions.md) §1-2参照）。認証メール（パスワード再設定等）の送信元・テンプレートは auth の設定で、authリポジトリの `docs/RUNBOOK.md` も参照
 - `mail.saka2931.jp`のSPF/DKIM/DMARCがResend側で検証済みか確認
-- 未設定の間はSupabaseデフォルト送信元（低いレート制限）にフォールバックする
+- Custom SMTP（Resend）は設定済み。送信が429で失敗する場合は、Supabaseの Authentication → Rate Limits の「メール送信」上限（未調整の可能性）と、Resend側の送信上限を確認する
+- 送信者名（Sender name）は `auth` に統一している。違う名前で届く場合はSMTP Settingsを確認する
 
 ## 機能フラグで一時停止したい
 

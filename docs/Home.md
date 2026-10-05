@@ -32,7 +32,7 @@
 | [Environment](ENVIRONMENT.md) | 環境変数・関連外部サービス |
 
 ### ユーザーガイド（[User Guide](User-Guide.md)）
-[Pending Actions](User-Guide-Pending-Actions.md)（GTM・Custom SMTP） / [Security Recommendations](User-Guide-Security-Recommendations.md) / [Known Issues](User-Guide-Known-Issues.md) / [Vercel](User-Guide-Vercel.md) / [Google Cloud Console](User-Guide-Google-Cloud-Console.md)（履歴） / [Google AI Studio](User-Guide-Google-AI-Studio.md) / [Search Console](User-Guide-Search-Console.md)
+[Pending Actions](User-Guide-Pending-Actions.md)（GTM・Custom SMTP設定済み） / [Security Recommendations](User-Guide-Security-Recommendations.md) / [Known Issues](User-Guide-Known-Issues.md) / [Vercel](User-Guide-Vercel.md) / [Google Cloud Console](User-Guide-Google-Cloud-Console.md)（履歴） / [Google AI Studio](User-Guide-Google-AI-Studio.md) / [Search Console](User-Guide-Search-Console.md)
 
 ## 更新の作法
 
