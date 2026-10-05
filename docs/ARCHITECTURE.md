@@ -11,7 +11,7 @@
     │
     ▼
 Next.js (Vercel, App Router)
-    │  middleware.ts … 緊急メンテナンス時のみ全ページを /maintenance へリダイレクト
+    │  middleware.ts … 緊急メンテナンス時のみ全ページを /maintenance の内容で返す（rewrite・HTTP 503）
     │
     ├── /                  トップ(ホーム)
     ├── /content/search    e-Gov法令API連携の法令検索 (公開)
@@ -49,7 +49,7 @@ Next.js (Vercel, App Router)
 - **認証はauthアプリに委譲**：legal-lifeが持つのは「未ログインなら auth へ `return_to` 付きで転送」（`lib/auth/requireAuth.ts`）と、アプリ固有データ（`profiles.photo_url` / `role`）だけ。表示名は `lib/auth/profile.ts` が auth の `/api/profile` を `credentials: "include"` で呼んで読み書きする（[ADR](ADR.md) ADR-010）
 - **SSO**：CookieドメインはSporive・authと同一の`.saka2931.jp`。同一Supabaseプロジェクトの認証セッションを共有する
 - **認証状態の判定はブラウザ側**：`@supabase/ssr` のブラウザクライアントで完結し、middlewareではセッションを扱わない（Sporiveとの実装上の違い）。ログイン必須ページは現在 `/welcome` のみで、`requireAuth()` が未ログインを auth へ転送する
-- **middlewareは緊急メンテナンスの判定のみ**：adacで有効化されると、静的アセット・`/api`・`/admin`・`/maintenance`・`robots.txt`・`sitemap.xml` 以外の全ページを `/maintenance` へリダイレクトする。判定に失敗した場合は「止めない」側に倒れる（フェイルオープン）
+- **middlewareは緊急メンテナンスの判定のみ**：adacで有効化されると、静的アセット・`/api`・`/admin`・`/maintenance`・`robots.txt`・`sitemap.xml` 以外の全ページについて、URLを変えずに `/maintenance` の内容をHTTP 503（`Retry-After: 600`）で返す（200のままだと外形監視が正常と判定するため）。稼働状況ページ（status）にはadac側のトリガーで「legal-lifeの緊急メンテナンス」が自動で出入りする。判定に失敗した場合は「止めない」側に倒れる（フェイルオープン）
 - **緊急メンテナンスの二重化**：ページ転送に加え、`saka2931-service` のRLS（`maintenance_lockdown`）が anon/authenticated の直接アクセスを拒否する。管理者（`legal_life.is_admin()`）とservice_roleは対象外（[ADR](ADR.md) ADR-011）
 - **端末管理**：`AuthSessionWatcher` が `auth_app.sessions` にこの端末を登録・監視し、authの「ログイン中のデバイス」から強制ログアウトされるとサインアウトして auth のログイン画面へ送る（旧 `SessionWatcher` の後継）
 - **お問い合わせ・プライバシーポリシー・利用規約の集約**：`service.saka2931.jp`に一本化し、`/law/*`・`/info/contact` は互換リダイレクトのみ
