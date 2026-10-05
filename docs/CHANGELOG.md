@@ -3,6 +3,7 @@
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
 ## 2026-10-04
+- ドキュメント更新：Supabase AuthのCustom SMTP（Resend）は設定済み（Sender nameは `auth` に統一）、漏洩パスワード保護は有料プラン向けのため利用不可、メール送信のレート制限は未調整の可能性があり要確認、と反映
 - ドキュメント一式をWikiから `docs/` へ取り込み、現行仕様に合わせて更新（ADR-012）。旧 `docs/user_guide.md` は `User-Guide*.md` に置き換え
 - 全ページのmetadata説明文を書き換え、OGP・Twitterカード・canonicalを整備（`lib/seo.ts`）
 - エラーページを標準の配置（`not-found.tsx` / `error.tsx` / `global-error.tsx` / `maintenance/page.tsx`）へ整理し、緊急メンテナンス時は `/maintenance` へのリダイレクトに統一（以前は `/error/503` へのrewrite。ADR-011）
