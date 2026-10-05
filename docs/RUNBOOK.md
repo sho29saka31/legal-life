@@ -58,7 +58,7 @@ where pubname = 'supabase_realtime' and tablename = 'sessions';
 ## 緊急にサイト全体を止めたい（緊急メンテナンス）
 
 - adac の `/admin/features` で legal-life の `emergency_maintenance` をONにする。コード変更・デプロイ不要
-- 効果：①`middleware.ts` が全ページ（静的アセット・`/api`・`/admin`・`/maintenance`・`robots.txt`・`sitemap.xml` を除く）を `/maintenance` へリダイレクト ②`saka2931-service` のRLS（`maintenance_lockdown`）が `legal_life` の全テーブルで anon/authenticated を拒否（管理者とservice_roleは対象外）
+- 効果：①`middleware.ts` が全ページ（静的アセット・`/api`・`/admin`・`/maintenance`・`robots.txt`・`sitemap.xml` を除く）について `/maintenance` の画面をURLを変えずに **HTTP 503（`Retry-After: 600`）** で返す（rewrite） ②`saka2931-service` のRLS（`maintenance_lockdown`）が `legal_life` の全テーブルで anon/authenticated を拒否（管理者とservice_roleは対象外）
 - 同期：adac → infra の `feature_flags` → トリガー+pg_net → `auth_app.maintenance_state`（`service='legal_life'`）。失敗しても5分ごとの再同期cronで収束する。解除後に画面は戻ったのにデータが拒否される場合は、`select * from auth_app.maintenance_state;` で `active` を確認（最大5分）
 - 取得失敗時は「止めない」側（フェイルオープン）。新しいテーブルを追加したときは `maintenance_lockdown` ポリシーを付ける（付け忘れるとそのテーブルだけロック対象外）
 

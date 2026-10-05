@@ -77,7 +77,7 @@
 - **状況**：adacの緊急メンテナンスがmiddlewareの転送だけで、認証済みの利用者がブラウザからSupabaseへ直接アクセスするのを止められなかった
 - **決定**：`saka2931-service` に `maintenance_state` を置き、infraの`feature_flags`からトリガー+pg_netで同期（5分ごとの再同期cronで収束）。`legal_life` の全テーブルにRESTRICTIVEポリシー `maintenance_lockdown` を付け、anon/authenticatedを拒否する。管理者（`legal_life.is_admin()`）とservice_roleは復旧作業のため対象外
 - **フェイルオープン**：state行が無い・同期できない場合はロックしない（誤って全サービスを止めるほうが危険と判断。ユーザー確認済み）。解除の反映が最大5分遅れうる
-- **転送先の統一**：以前の `/error/503` へのrewriteをやめ、`/maintenance` へのリダイレクトに統一（他アプリと同じ表示）。エラーページも標準配置（`not-found.tsx` / `error.tsx` / `global-error.tsx` / `maintenance/page.tsx`）に整理した
+- **転送先の統一**：以前の `/error/503` へのrewriteをやめ、`/maintenance` の表示に統一（他アプリと同じ表示）。2026-10-05に、リダイレクト（最終的に200）をURLを変えないrewriteによる **HTTP 503＋`Retry-After: 600`** に変更した（外形監視が正常と誤判定していたため）。エラーページも標準配置（`not-found.tsx` / `error.tsx` / `global-error.tsx` / `maintenance/page.tsx`）に整理した
 
 ## ADR-012: ドキュメントはリポジトリ内 `docs/` で管理する（2026-10-04）
 
