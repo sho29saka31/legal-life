@@ -47,7 +47,7 @@ This repository provides the source code, but reuse, copying, modification, and 
 
 ## 運用の仕組み
 
-- **緊急メンテナンス**：adacで有効化すると、全ページ（静的アセット・API・管理画面を除く）が `/maintenance` へリダイレクトされ、DB側もRLS（`maintenance_lockdown`）で anon/authenticated の直接アクセスを拒否する。管理者とservice_roleは対象外。取得失敗時は止めない（フェイルオープン）
+- **緊急メンテナンス**：adacで有効化すると、全ページ（静的アセット・API・管理画面を除く）について、URLを変えずに `/maintenance` の画面が HTTP 503（`Retry-After: 600`）で返され、稼働状況ページにも自動で反映される。DB側もRLS（`maintenance_lockdown`）で anon/authenticated の直接アクセスを拒否する。管理者とservice_roleは対象外。取得失敗時は止めない（フェイルオープン）
 - **機能フラグ**：`ai_chat` をOFFにすると `/api/chat` が503を返す
 - **データ保持**：`access_logs` は90日、`chat_history` は180日でpg_cronが日次削除。未ログイン時のチャット履歴はブラウザのlocalStorageのみ
 - **エラー画面**：404・500・メンテナンスの専用画面（500とメンテナンスには稼働状況ページへのリンク）
