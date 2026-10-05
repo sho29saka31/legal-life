@@ -2,6 +2,9 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-10-05（.env.local.exampleをGitHubから削除）
+- サンプルの環境変数ファイル `.env.local.example` を、GitHub上の全履歴から削除した（`git filter-repo` による履歴の書き換え。過去のコミットのSHAはすべて変わっている）。`.gitignore` で再追加を防ぎ、README・docsのセットアップ手順を `docs/ENVIRONMENT.md` の参照に変更した。履歴中に秘密の値（APIキー等）は含まれていなかった
+
 ## 2026-10-05
 - ドキュメント監査：READMEのメンテナンス記述を503の挙動に合わせた
 - 表示名をauthに統一（#48）。本番DBの `legal_life.profiles.display_name` 列を削除（ADR-010の未完了事項のうち表示名の列は完了。旧アカウント機能のテーブル削除は未実施）

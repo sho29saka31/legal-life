@@ -10,6 +10,7 @@ next-env.d.ts
 # 環境設定ファイル
 .env
 .env.local
+.env*.example
 
 # エディタ設定
 .vscode/
@@ -18,4 +19,3 @@ next-env.d.ts
 .wrangler
 .dev.vars*
 !.dev.vars.example
-!.env.example
