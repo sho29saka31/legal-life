@@ -70,7 +70,7 @@
 - **決定**：ログイン・サインアップ・パスワード再設定・MFA・パスキー・端末管理・アクティビティ履歴・アカウント削除を authリポジトリに集約し、legal-lifeの `/account/*` 一式（`login` `signup` `profile` `security` `device` `activity` `delete` `logout` `privacy`）と関連コンポーネント・`lib/auth` の大半を削除した。`requireAuth()` は未ログインを `auth.saka2931.jp/login?return_to=...` へ転送するだけにした。表示名は auth の `/api/profile` 経由
 - **残したもの**：アプリ固有データ（`profiles.photo_url` / `role`）、端末の登録・監視（`AuthSessionWatcher`）
 - **結果**：認証設定の影響範囲がauthアプリに限定された。代償として、legal-lifeのログイン可否がauthの可用性に依存する。詳細は authリポジトリの `docs/ADR.md`
-- **未完了**：`legal_life.profiles.display_name` 列は未削除（表示名が実際にauth経由で流れていることを確認した後にDROP予定）。旧機能のテーブル（`legal_life.sessions` / `activity_log` 等）も削除migrationは未発行
+- **未完了**：`legal_life.profiles.display_name` 列は2026-10-05に削除した（表示名の正はauthのみ）。旧機能のテーブル（`legal_life.sessions` / `activity_log` 等）も削除migrationは未発行
 
 ## ADR-011: 緊急メンテナンスはページ転送に加えてDB層（RLS）でも止める（2026-10-04）
 
