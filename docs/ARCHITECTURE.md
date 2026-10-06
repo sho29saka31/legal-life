@@ -37,7 +37,7 @@ Next.js (Vercel, App Router)
 他システムとの連携:
    auth.saka2931.jp ── ログイン/登録/MFA/パスキー/アカウント削除、表示名 (GET/PATCH /api/profile)
    saka2931-infra プロジェクト (adac/statusと共有、読み取り専用)
-     ├─ feature_flags         (緊急メンテナンス・account_features・ai_chat)
+     ├─ feature_flags         (緊急メンテナンス・ai_chat)       
      └─ service_announcements (お知らせ)
    service.saka2931.jp ── プライバシーポリシー・利用規約・Cookie・免責・お問い合わせ
    status.saka2931.jp  ── 稼働状況ページ (500/メンテナンス画面からリンク)

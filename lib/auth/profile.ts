@@ -31,20 +31,3 @@ export async function getProfile(uid: string): Promise<Profile | null> {
   if (!data) return null;
   return { display_name: displayName, photo_url: data.photo_url, role: data.role };
 }
-
-// 呼び出し元(プロフィール編集ページ)がtry/catchで失敗を検知できるよう、
-// 更新の成否をboolean で返す(以前のSupabaseエラーthrowと同じ理由: 失敗を
-// 握りつぶすと保存に失敗していても画面上は成功したかのように見えてしまう)。
-export async function updateDisplayName(name: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${AUTH_APP_URL}/api/profile`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ display_name: name }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
