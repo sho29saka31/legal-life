@@ -9,7 +9,6 @@ import AuthSessionWatcher from "@/components/AuthSessionWatcher";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import MaintenancePopup from "@/components/MaintenancePopup";
 import CookieBanner from "@/components/CookieBanner";
-import SiteChrome from "@/components/SiteChrome";
 import { getImportantAnnouncements } from "@/lib/announcements";
 import "./globals.css";
 
@@ -58,20 +57,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ja" className={bizUDGothic.variable}>
       <body className="font-sans">
-        <SiteChrome>
-          <div id="header"><Header importantAnnouncements={importantAnnouncements} /></div>
-        </SiteChrome>
+        <div id="header"><Header importantAnnouncements={importantAnnouncements} /></div>
         <main>{children}</main>
-        <SiteChrome>
-          <div id="footer"><Footer /></div>
-        </SiteChrome>
+        <div id="footer"><Footer /></div>
         <AccessLogger />
         <AuthSessionWatcher />
         <ScrollTopButton />
         <MaintenancePopup />
-        <SiteChrome>
-          <CookieBanner />
-        </SiteChrome>
+        <CookieBanner />
         <Analytics />
         <SpeedInsights />
       </body>

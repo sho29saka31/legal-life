@@ -52,7 +52,7 @@ where pubname = 'supabase_realtime' and tablename = 'sessions';
 
 ## 機能フラグで一時停止したい
 
-- 対象は `saka2931-infra` の `feature_flags`（`service='legal_life'`）。コードが参照するキーは `emergency_maintenance`・`ai_chat`・`account_features`（`lib/feature-flags.ts`）。adacの `/admin/features` から該当フラグをOFFにする
+- 対象は `saka2931-infra` の `feature_flags`（`service='legal_life'`）。コードが参照するキーは `emergency_maintenance`・`ai_chat`（`lib/feature-flags.ts`）。adacの `/admin/features` から該当フラグをOFFにする
 - `ai_chat` をOFFにすると `/api/chat` が503（案内メッセージ）を返す
 - フラグ取得に失敗した場合は「有効」がデフォルト（`saka2931-infra` 側の障害で誤って機能が止まらないフェイルオープン設計）
 
