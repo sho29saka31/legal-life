@@ -83,7 +83,7 @@ export default function PlanPage() {
               <div className="text-2xl font-bold">{p.price}</div>
               {p.priceSub && <div className="text-xs text-gray-400 mt-1">{p.priceSub}</div>}
             </div>
-            <ul className="w-full text-sm text-gray-600 text-left mb-6 flex-grow">
+            <ul className="w-full text-sm text-gray-600 text-left mb-6 grow">
               {p.features.map((f) => (
                 <li key={f} className="py-2.5 border-b border-dotted border-[#e0e0e0]">
                   {f}

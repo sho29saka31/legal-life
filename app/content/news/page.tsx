@@ -37,13 +37,13 @@ export default function NewsPage() {
         <div className="flex flex-wrap gap-4 mb-4 text-sm">
           <label className="flex items-center gap-2">
             ニュースタイプ:
-            <select className="border border-gray-300 rounded px-2 py-1" disabled>
+            <select className="border border-gray-300 rounded-sm px-2 py-1" disabled>
               <option>すべて</option>
             </select>
           </label>
           <label className="flex items-center gap-2">
             並び替え:
-            <select className="border border-gray-300 rounded px-2 py-1" disabled>
+            <select className="border border-gray-300 rounded-sm px-2 py-1" disabled>
               <option>指定なし</option>
             </select>
           </label>

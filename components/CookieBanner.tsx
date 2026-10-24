@@ -50,7 +50,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 w-full max-w-[100vw] box-border bg-slate-800/95 backdrop-blur text-white p-4 sm:p-5 shadow-[0_-2px_15px_rgba(0,0,0,0.3)] z-[2147483647] max-h-screen">
+    <div className="fixed bottom-0 left-0 right-0 w-full max-w-[100vw] box-border bg-slate-800/95 backdrop-blur-sm text-white p-4 sm:p-5 shadow-[0_-2px_15px_rgba(0,0,0,0.3)] z-2147483647 max-h-screen">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-5">
         <p className="text-[13px] sm:text-sm leading-relaxed flex-1 m-0">
           本サイトでは、アクセス解析およびサービス向上のためにCookieを使用しています。

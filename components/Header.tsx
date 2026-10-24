@@ -43,7 +43,7 @@ export default function Header({
 
   return (
     <>
-      <header className="flex items-center justify-between bg-gradient-to-r from-primary to-primary px-6 shadow-md relative">
+      <header className="flex items-center justify-between bg-linear-to-r from-primary to-primary px-6 shadow-md relative">
         <h1>
           <Link href="/" className="flex items-center gap-3 py-3 text-white font-bold text-xl">
             <Image src="/assets/images/logo.png" alt="site-logo" width={44} height={44} className="rounded-md" />
@@ -53,7 +53,7 @@ export default function Header({
         <nav className="flex items-center">
           <button
             ref={buttonRef}
-            className="hamberger-btn relative z-[1001] ml-2.5 flex flex-col gap-1.5 p-0"
+            className="hamberger-btn relative z-1001 ml-2.5 flex flex-col gap-1.5 p-0"
             aria-expanded={open}
             aria-controls="main-menu"
             aria-label="メニューを開く"
@@ -71,12 +71,12 @@ export default function Header({
             />
           </button>
           {open && (
-            <div className="fixed inset-0 bg-black/30 z-[999] transition-opacity" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0 bg-black/30 z-999 transition-opacity" onClick={() => setOpen(false)} />
           )}
           <ul
             ref={menuRef}
             id="main-menu"
-            className={`absolute top-0 right-0 w-[220px] max-h-screen p-8 bg-[#d6eaef] z-[1000] list-none transition-transform duration-300 ${
+            className={`absolute top-0 right-0 w-[220px] max-h-screen p-8 bg-[#d6eaef] z-1000 list-none transition-transform duration-300 ${
               open ? "translate-x-0 visible" : "translate-x-full invisible"
             }`}
           >

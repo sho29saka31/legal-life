@@ -261,7 +261,7 @@ export default function ChatApp() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#f1f5f9]">
           <span className="font-bold text-[#0f172a]">
             法令専門AIチャット
-            <span className="ml-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded px-1.5 py-0.5 align-middle">
+            <span className="ml-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded-sm px-1.5 py-0.5 align-middle">
               テスト中の機能
             </span>
           </span>
@@ -314,7 +314,7 @@ export default function ChatApp() {
         <div className="flex gap-4 items-end px-6 py-5 border-t border-[#f1f5f9]">
           <textarea
             ref={textareaRef}
-            className="flex-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-3 py-3 text-sm resize-none min-h-[45px] max-h-[150px] outline-none focus:bg-white focus:border-[#0f172a] focus:ring-2 focus:ring-[#0f172a]/5"
+            className="flex-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-3 py-3 text-sm resize-none min-h-[45px] max-h-[150px] outline-hidden focus:bg-white focus:border-[#0f172a] focus:ring-2 focus:ring-[#0f172a]/5"
             rows={1}
             placeholder="AIと話すにはここに入力..."
             value={input}
@@ -341,7 +341,7 @@ export default function ChatApp() {
       </div>
 
       {confirmTarget && (
-        <div className="fixed inset-0 bg-black/55 flex items-center justify-center z-[9999] p-5">
+        <div className="fixed inset-0 bg-black/55 flex items-center justify-center z-9999 p-5">
           <div className="bg-white rounded-2xl w-full max-w-[420px] shadow-[0_20px_60px_rgba(0,0,0,0.25)] px-6 py-7 text-center">
             <IconTrash className="w-8 h-8 mb-2.5 mx-auto text-[#ef4444]" />
             <p className="text-[#1e293b] font-medium leading-relaxed mb-5">

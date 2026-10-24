@@ -57,9 +57,9 @@ export default function ContentPage() {
           >
             <h3 className="relative inline-block self-center text-2xl text-[#333] mb-5 pb-4">
               {c.title}
-              <span className="absolute left-1/2 bottom-0 -translate-x-1/2 w-10 h-1 rounded bg-primary" />
+              <span className="absolute left-1/2 bottom-0 -translate-x-1/2 w-10 h-1 rounded-sm bg-primary" />
             </h3>
-            <p className="text-base text-[#666] leading-relaxed mb-7 flex-grow">
+            <p className="text-base text-[#666] leading-relaxed mb-7 grow">
               {c.desc}
               <br />
               当機能を利用した際は当サイトのサイトポリシーのすべてを同意したものとみなします。

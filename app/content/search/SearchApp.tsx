@@ -115,7 +115,7 @@ export default function SearchApp() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">e-gov法令API Version2 法令検索システム</h1>
-        <span className="inline-block mt-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded px-2 py-0.5">
+        <span className="inline-block mt-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded-sm px-2 py-0.5">
           テスト中の機能
         </span>
         <p className="text-sm text-gray-500 mt-2">
@@ -134,7 +134,7 @@ export default function SearchApp() {
       <div className="max-w-[800px] mx-auto bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.1)] overflow-hidden">
         <div className="flex">
           <button
-            className={`flex-1 px-5 py-3.5 font-bold tracking-wide transition-colors border-r border-black/[0.08] ${
+            className={`flex-1 px-5 py-3.5 font-bold tracking-wide transition-colors border-r border-black/8 ${
               target === "title" ? "bg-[#00bcd4] text-white" : "bg-[#b2dfdb] text-[#00695c] hover:bg-[#80cbc4] hover:text-white"
             }`}
             onClick={() => setTarget("title")}
@@ -156,7 +156,7 @@ export default function SearchApp() {
             <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              className="w-full border-2 border-[#e0e0e0] rounded-lg pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#00bcd4] focus:ring-4 focus:ring-[#00bcd4]/10"
+              className="w-full border-2 border-[#e0e0e0] rounded-lg pl-10 pr-10 py-2.5 text-sm focus:outline-hidden focus:border-[#00bcd4] focus:ring-4 focus:ring-[#00bcd4]/10"
               placeholder="ここに入力して検索"
               value={input}
               onChange={(e) => setInput(e.target.value)}
