@@ -11,7 +11,7 @@ export const metadata: Metadata = pageMetadata({
 
 function Badge() {
   return (
-    <span className="inline-block text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded px-1.5 py-0.5 ml-1">
+    <span className="inline-block text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded-sm px-1.5 py-0.5 ml-1">
       開発中の機能
     </span>
   );
@@ -27,7 +27,7 @@ export default function AboutPage() {
 
       <section className="text-center mb-14">
         <h2 className="text-2xl font-bold text-[#333] mb-5">このサイトについて</h2>
-        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded p-6 sm:p-7">
+        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded-sm p-6 sm:p-7">
           <p>「LEGAL&LIFE」は、法律に関する疑問や相談ができるプラットフォームです。</p>
           <p>当サイトは法令知識の普及と法知識不足による不利益を生まないことを目指しているサイトです。</p>
         </div>
@@ -35,7 +35,7 @@ export default function AboutPage() {
 
       <section className="text-center mb-14">
         <h2 className="text-2xl font-bold text-[#333] mb-5">対象ユーザー</h2>
-        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded p-6 sm:p-7">
+        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded-sm p-6 sm:p-7">
           <p className="mb-2">当サイトは以下のような方々を対象にしています:</p>
           <ul className="list-none p-0 m-0">
             {[
@@ -55,7 +55,7 @@ export default function AboutPage() {
 
       <section className="text-center mb-14">
         <h2 className="text-2xl font-bold text-[#333] mb-5">主要な機能</h2>
-        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded p-6 sm:p-7">
+        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded-sm p-6 sm:p-7">
           <ul className="list-none p-0 m-0">
             <li className="relative pl-7 mb-3">
               <IconCheck className="absolute left-[5px] top-1 w-3.5 h-3.5 text-[#333]" />
@@ -79,7 +79,7 @@ export default function AboutPage() {
 
       <section className="text-center mb-14">
         <h2 className="text-2xl font-bold text-[#333] mb-5">使い方</h2>
-        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded p-6 sm:p-7">
+        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#D6F5FA] rounded-sm p-6 sm:p-7">
           <ol className="list-none p-0 m-0">
             {[
               <><strong>学習</strong> - メニューから「法令学習」を選択します。<Badge /></>,
@@ -98,7 +98,7 @@ export default function AboutPage() {
 
       <section className="text-center">
         <h2 className="text-2xl font-bold text-[#333] mb-5">免責事項</h2>
-        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#fff3cd] rounded p-6 sm:p-7">
+        <div className="inline-block w-full max-w-[750px] text-left leading-loose bg-[#fff3cd] rounded-sm p-6 sm:p-7">
           <p>
             本サイトで提供する情報は、参考目的のみで提供されています。法律に関する具体的な相談や問題解決については、弁護士などの専門家にご相談ください。本サイトの情報に基づいて取った行動により生じた損害については、当サイトおよび運営団体は一切の責任を負いません。
           </p>

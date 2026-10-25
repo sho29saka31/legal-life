@@ -2,6 +2,12 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-10-24（依存・実行環境の更新）
+- 依存を最新版へ更新（next 16.4.3 / react 19.3.1 / TypeScript 6.0 など）。実行環境をNode 24系に変更（`package.json` の `engines`）
+- Tailwind CSSを3系から4系へ移行（`tailwind.config.ts` を廃止し `app/globals.css` の `@theme` へ、PostCSSプラグインを `@tailwindcss/postcss` に変更、`autoprefixer` を削除）
+- Next 16の推奨に合わせ、`middleware.ts` を `proxy.ts` に改名（関数名も `proxy`）
+- ESLint 10を導入（`eslint.config.mjs`）。`lint` スクリプトを廃止された `next lint` から `eslint` に変更
+
 ## 2026-10-06（ポニーテール再監査）
 - 参照のないコードを削除：`lib/deviceInfo.ts`、`lib/supabase/serverClient.ts`、表示名の更新をauthへ移した後に残っていた `updateDisplayName()`、使われていない依存 `resend`（メール送信はserviceへ移行済み）
 - 何もしない薄いラッパー `components/SiteChrome.tsx` を削除し、`app/layout.tsx` から直接ヘッダー・フッター・Cookieバナーを描画

@@ -35,7 +35,7 @@ export default async function HomePage() {
       <div className="text-center px-5 py-8 sm:py-14">
         <h1 className="relative inline-block text-2xl sm:text-3xl font-bold text-[#333] tracking-wide pb-4">
           legal&lifeへようこそ
-          <span className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-14 h-1 rounded bg-[#7ddce8]" />
+          <span className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-14 h-1 rounded-sm bg-[#7ddce8]" />
         </h1>
       </div>
 

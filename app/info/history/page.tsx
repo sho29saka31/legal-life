@@ -33,7 +33,7 @@ export default function HistoryPage() {
       <div className="space-y-6 border-l-2 border-primary/30 pl-6">
         {TIMELINE.map((item) => (
           <div key={item.date} className="relative">
-            <div className="absolute -left-[31px] top-1 w-3 h-3 rounded-full bg-primary" />
+            <div className="absolute left-[-31px] top-1 w-3 h-3 rounded-full bg-primary" />
             <h3 className="text-sm font-bold text-primary-dark">{item.date}</h3>
             <h4 className="font-bold mb-1">{item.title}</h4>
             <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
@@ -41,7 +41,7 @@ export default function HistoryPage() {
           </div>
         ))}
         <div className="relative">
-          <div className="absolute -left-[31px] top-1 w-3 h-3 rounded-full bg-gray-300" />
+          <div className="absolute left-[-31px] top-1 w-3 h-3 rounded-full bg-gray-300" />
           <h3 className="text-sm font-bold text-gray-500">今後の展開</h3>
           <h4 className="font-bold mb-1">正式リリースと機能拡充</h4>
           <p className="text-sm text-gray-600 leading-relaxed">

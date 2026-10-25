@@ -10,7 +10,7 @@ export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|assets|api|admin|maintenance|robots.txt|sitemap.xml).*)"],
 };
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   if (await isEmergencyMaintenanceActive()) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";

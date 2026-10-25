@@ -23,7 +23,7 @@ export default function FaqApp() {
     <div className="max-w-[1000px] mx-auto px-5 py-6">
       <h1 className="relative inline-block w-full text-center text-[28px] font-bold text-[#0f172a] pb-4 mt-10 mb-2">
         よくある質問(FAQ)
-        <span className="absolute left-1/2 bottom-0 -translate-x-1/2 w-14 h-1 rounded bg-primary" />
+        <span className="absolute left-1/2 bottom-0 -translate-x-1/2 w-14 h-1 rounded-sm bg-primary" />
       </h1>
       <p className="text-center text-sm text-[#64748b] mb-8">最終更新日: 2026年7月6日</p>
 
@@ -88,9 +88,9 @@ export default function FaqApp() {
       <div className="flex justify-center mt-20 mb-10">
         <div className="w-full max-w-[550px] bg-white border border-[#e0e0e0] rounded-2xl px-6 sm:px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
           <h2 className="flex items-center justify-center gap-1 text-lg font-bold text-[#333] mb-5">
-            <span className="hidden sm:block w-[150px] h-[3px] rounded bg-[#d1d1d1]" />
+            <span className="hidden sm:block w-[150px] h-[3px] rounded-sm bg-[#d1d1d1]" />
             解決しませんでしたか?
-            <span className="hidden sm:block w-[150px] h-[3px] rounded bg-[#d1d1d1]" />
+            <span className="hidden sm:block w-[150px] h-[3px] rounded-sm bg-[#d1d1d1]" />
           </h2>
           <p className="text-sm text-[#666] leading-relaxed mb-6">
             お調べの件が解決しなかった場合は、
