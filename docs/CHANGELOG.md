@@ -2,6 +2,11 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-10-26（お知らせ本文をMarkdownに統一）
+- adacで書くお知らせ本文をMarkdownに統一。`lib/sanitizeHtml.ts` の `renderAnnouncementBody` が、`marked` でHTMLに変換してからサニタイズして表示する（見出しはすべてh3、`>` の引用は灰色の囲み、表・リスト・リンクに対応）。移行前に保存されたHTML本文（先頭がタグ）は、変換せずサニタイズだけして従来どおり表示する。確認: `node --experimental-strip-types lib/sanitizeHtml.check.ts`
+- URLスラッグのないお知らせ（全体向けなど）も一覧・通知バーに表示する。詳細ページのURLはスラッグの代わりにidを使う
+- 詳細ページに番号付きリスト（`ol`）の見た目を追加
+
 ## 2026-10-24（依存・実行環境の更新）
 - 依存を最新版へ更新（next 16.4.3 / react 19.3.1 / TypeScript 6.0 など）。実行環境をNode 24系に変更（`package.json` の `engines`）
 - Tailwind CSSを3系から4系へ移行（`tailwind.config.ts` を廃止し `app/globals.css` の `@theme` へ、PostCSSプラグインを `@tailwindcss/postcss` に変更、`autoprefixer` を削除）
