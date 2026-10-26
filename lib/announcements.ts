@@ -1,14 +1,15 @@
 import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
-import { sanitizeAnnouncementHtml } from "@/lib/sanitizeHtml";
+import { renderAnnouncementBody } from "@/lib/sanitizeHtml";
 
 export type Announcement = {
+  /** URLスラッグ。未設定のお知らせはidを使う */
   slug: string;
   title: string;
   /** 公開・更新日の表示用テキスト（例: "公開日: 2026/1/1"）。管理画面で未入力の場合は日付から自動生成する */
   dateLabel: string;
   /** 一覧・トップページでの新着順ソート用 */
   publishedAt: string;
-  /** リッチHTML本文（管理画面で入力された内容をそのまま描画する） */
+  /** 表示用HTML（管理画面で入力されたMarkdownを変換・サニタイズしたもの） */
   bodyHtml: string;
   level: "info" | "notice" | "warning";
   /** ヘッダー直下のバナー（重要なお知らせ）に表示するか。adacの管理画面で個別に設定する */
@@ -29,15 +30,14 @@ function formatDateLabel(publishedAt: string): string {
  * saka2931-infra（adacの管理画面が書き込む）から、legal-life向け（'legal_life'
  * または'general'）の有効なお知らせを新しい順に取得する。RLSにより公開済み
  * （is_active=true かつ scheduled_atが未来でない）行のみが返る。
- * slugが未設定（Sporive向けに作成され、こちらでは表示不要な想定外のもの）は除外する。
+ * slugが未設定のもの（全体向けなど）も表示する。その場合のURLはidを使う。
  */
 export async function getAnnouncements(): Promise<Announcement[]> {
   const infra = createInfraReadOnlyClient();
   const { data, error } = await infra
     .from("service_announcements")
-    .select("slug, title, body, level, date_label, published_at, show_in_bar, created_at")
+    .select("id, slug, title, body, level, date_label, published_at, show_in_bar, created_at")
     .in("service", ["legal_life", "general"])
-    .not("slug", "is", null)
     // published_atが同一（同日移行データ等）の場合の並び順を安定させるため、
     // created_at（レコードの登録順）を副ソートキーにする。
     .order("published_at", { ascending: false })
@@ -48,15 +48,17 @@ export async function getAnnouncements(): Promise<Announcement[]> {
   }
 
   return (data ?? []).map((a) => ({
-    slug: a.slug as string,
+    slug: a.slug ?? a.id,
     title: a.title,
     dateLabel: a.date_label || formatDateLabel(a.published_at),
     publishedAt: a.published_at,
-    bodyHtml: sanitizeAnnouncementHtml(a.body),
+    bodyHtml: renderAnnouncementBody(a.body),
     level: a.level as Announcement["level"],
     showInBar: a.show_in_bar,
   }));
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function getAnnouncementBySlug(
   slug: string
@@ -64,9 +66,9 @@ export async function getAnnouncementBySlug(
   const infra = createInfraReadOnlyClient();
   const { data, error } = await infra
     .from("service_announcements")
-    .select("slug, title, body, level, date_label, published_at, show_in_bar")
+    .select("id, slug, title, body, level, date_label, published_at, show_in_bar")
     .in("service", ["legal_life", "general"])
-    .eq("slug", slug)
+    .eq(UUID_RE.test(slug) ? "id" : "slug", slug)
     .eq("is_active", true)
     .maybeSingle();
 
@@ -76,11 +78,11 @@ export async function getAnnouncementBySlug(
   if (!data) return null;
 
   return {
-    slug: data.slug as string,
+    slug: data.slug ?? data.id,
     title: data.title,
     dateLabel: data.date_label || formatDateLabel(data.published_at),
     publishedAt: data.published_at,
-    bodyHtml: sanitizeAnnouncementHtml(data.body),
+    bodyHtml: renderAnnouncementBody(data.body),
     level: data.level as Announcement["level"],
     showInBar: data.show_in_bar,
   };

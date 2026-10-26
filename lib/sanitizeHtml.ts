@@ -1,4 +1,5 @@
 import sanitizeHtml from "sanitize-html";
+import { Marked } from "marked";
 
 /**
  * お知らせ本文(service_announcements.body)は管理コンソール(adac)からのみ
@@ -42,4 +43,28 @@ export function sanitizeAnnouncementHtml(html: string): string {
     allowedSchemes: ["http", "https", "mailto"],
     allowProtocolRelative: false,
   });
+}
+
+// お知らせ本文はadacでMarkdownで書く。詳細ページのCSSが当たるタグに寄せる:
+// 見出しはすべてh3、引用(>)は灰色の囲み(section)、改行はbrにする。
+const markdown = new Marked({
+  gfm: true,
+  breaks: true,
+  renderer: {
+    heading(token) {
+      return `<h3>${this.parser.parseInline(token.tokens)}</h3>\n`;
+    },
+    blockquote(token) {
+      return `<section>${this.parser.parse(token.tokens)}</section>\n`;
+    },
+  },
+});
+
+/**
+ * 本文を表示用のHTMLにする。Markdownを変換してからサニタイズする。
+ * 移行前に保存されたHTML本文(先頭がタグ)は、変換せずサニタイズだけして表示する。
+ */
+export function renderAnnouncementBody(body: string): string {
+  const isLegacyHtml = /^\s*<[a-z]/i.test(body);
+  return sanitizeAnnouncementHtml(isLegacyHtml ? body : (markdown.parse(body, { async: false }) as string));
 }

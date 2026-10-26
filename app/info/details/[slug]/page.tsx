@@ -31,7 +31,7 @@ export default async function InfoDetailPage({
       <h1 className="text-xl sm:text-2xl text-[#333] border-l-[5px] border-[#7ddce8] pl-4 mb-2.5">{detail.title}</h1>
       <p className="block text-sm text-[#888] mb-8 pb-2.5 border-b border-[#eee]">{detail.dateLabel}</p>
       <div
-        className="leading-loose text-[#444] text-[1.05rem] [&_p]:mb-6 [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2 [&_section]:bg-gray-50 [&_section]:rounded-lg [&_section]:p-4 [&_section]:my-4 [&_table]:w-full [&_table]:border-collapse [&_th]:text-left [&_th]:text-gray-500 [&_th]:font-normal [&_th]:pr-4 [&_th]:py-1 [&_th]:align-top [&_td]:py-1 [&_a]:text-[#0076a3] [&_a]:underline [&_ul]:list-disc [&_ul]:pl-5 [&_strong]:text-[#0076a3]"
+        className="leading-loose text-[#444] text-[1.05rem] [&_p]:mb-6 [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2 [&_section]:bg-gray-50 [&_section]:rounded-lg [&_section]:p-4 [&_section]:my-4 [&_table]:w-full [&_table]:border-collapse [&_th]:text-left [&_th]:text-gray-500 [&_th]:font-normal [&_th]:pr-4 [&_th]:py-1 [&_th]:align-top [&_td]:py-1 [&_a]:text-[#0076a3] [&_a]:underline [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_strong]:text-[#0076a3]"
         dangerouslySetInnerHTML={{ __html: detail.bodyHtml }}
       />
       <div className="text-center">
