@@ -10,11 +10,21 @@ assert.match(html, /<ul>\s*<li>A<\/li>\s*<li>B<\/li>\s*<\/ul>/);
 assert.match(html, /<a href="https:\/\/example.com">/);
 
 // 引用は囲み(section)、表はtable
-assert.match(renderAnnouncementBody("> 注意"), /<section><p>注意<\/p>\s*<\/section>/);
+assert.match(renderAnnouncementBody("> 注意"), /<section class="update-point"><p>注意<\/p>\s*<\/section>/);
+
+// 囲みの種類(同じ行の改行・見出し続きの両方)
+assert.match(renderAnnouncementBody("> [!IMPORTANT]\n> ### 見出し\n>\n> 本文"), /<section class="important-notice-box"><h3>見出し<\/h3>/);
+assert.match(renderAnnouncementBody("> [!WARNING]\n> 本文"), /<section class="safety-note"><p>本文<\/p>/);
+assert.match(renderAnnouncementBody("> [!TIP]\n>\n> 本文"), /<section class="action-box"><p>本文<\/p>/);
+
+// 画像はラベル付き。許可外のclassやjavascript:は通らない
+assert.match(renderAnnouncementBody('![旧ロゴ](/assets/images/a.jpg "変更前")'), /<span class="img-item"><span class="img-label">変更前<\/span><img src="\/assets\/images\/a.jpg" alt="旧ロゴ" ?\/?><\/span>/);
+assert.doesNotMatch(renderAnnouncementBody("![x](javascript:alert(1))"), /src/);
+assert.doesNotMatch(renderAnnouncementBody('<section class="evil">x</section>'), /evil/);
 assert.match(renderAnnouncementBody("|項目|内容|\n|-|-|\n|日時|未定|"), /<table>[\s\S]*<th>項目<\/th>[\s\S]*<td>未定<\/td>/);
 
 // 本文中の生HTML・危険なリンクは無効化される(リンクにならず、href属性が残らない)
-assert.doesNotMatch(renderAnnouncementBody("<script>alert(1)</script>\n\n<img src=x onerror=alert(1)>"), /script|onerror|<img/);
+assert.doesNotMatch(renderAnnouncementBody("<script>alert(1)</script>\n\n<img src=x onerror=alert(1)>"), /script|onerror/);
 assert.doesNotMatch(renderAnnouncementBody("[x](javascript:alert(1))"), /href/);
 
 // 移行前のHTML本文は変換せず、サニタイズだけして表示する

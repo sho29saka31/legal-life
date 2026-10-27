@@ -35,9 +35,18 @@ export function sanitizeAnnouncementHtml(html: string): string {
       "th",
       "td",
       "span",
+      "img",
     ],
     allowedAttributes: {
       a: ["href", "target", "rel"],
+      img: ["src", "alt"],
+      section: ["class"],
+      span: ["class"],
+    },
+    // 旧サイトのCSS(app/globals.css の .announcement-body)が当たるクラスだけを通す
+    allowedClasses: {
+      section: ["update-point", "safety-note", "important-notice-box", "action-box"],
+      span: ["img-item", "img-label"],
     },
     // http(s)/mailto以外のスキーム(javascript:等)によるXSSを防止
     allowedSchemes: ["http", "https", "mailto"],
@@ -45,8 +54,13 @@ export function sanitizeAnnouncementHtml(html: string): string {
   });
 }
 
-// お知らせ本文はadacでMarkdownで書く。詳細ページのCSSが当たるタグに寄せる:
-// 見出しはすべてh3、引用(>)は灰色の囲み(section)、改行はbrにする。
+// お知らせ本文はadacでMarkdownで書く。旧サイトのCSSが当たる形に寄せる:
+// 見出しはすべてh3、引用(>)は囲み(section)、改行はbrにする。
+// 引用の先頭に [!IMPORTANT](赤)・[!WARNING](黄)・[!TIP](水色) を書くと囲みの種類が変わる。
+// 画像は ![代替テキスト](URL "ラベル") で、ラベル付きで並べて表示される。
+const BOX_CLASS = { IMPORTANT: "important-notice-box", WARNING: "safety-note", TIP: "action-box" } as const;
+const escapeAttr = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 const markdown = new Marked({
   gfm: true,
   breaks: true,
@@ -55,7 +69,18 @@ const markdown = new Marked({
       return `<h3>${this.parser.parseInline(token.tokens)}</h3>\n`;
     },
     blockquote(token) {
-      return `<section>${this.parser.parse(token.tokens)}</section>\n`;
+      let html = this.parser.parse(token.tokens);
+      let cls: string = "update-point";
+      const m = /^\s*<p>\[!(IMPORTANT|WARNING|TIP)\](<br ?\/?>|<\/p>)?\s*/.exec(html);
+      if (m) {
+        cls = BOX_CLASS[m[1] as keyof typeof BOX_CLASS];
+        html = (m[2] === "</p>" ? "" : "<p>") + html.slice(m[0].length);
+      }
+      return `<section class="${cls}">${html}</section>\n`;
+    },
+    image({ href, title, text }) {
+      const label = title ? `<span class="img-label">${escapeAttr(title)}</span>` : "";
+      return `<span class="img-item">${label}<img src="${escapeAttr(href)}" alt="${escapeAttr(text)}"></span>`;
     },
   },
 });

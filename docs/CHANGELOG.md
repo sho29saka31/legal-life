@@ -2,6 +2,10 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-10-27（お知らせ本文：旧サイトの囲み・表・画像の見た目を復元）
+- Markdown化で失われていた旧サイトのCSS（`info-plus.css`）を `app/globals.css` の `.announcement-body` に移植した。引用 `>` は水色見出しの囲み（`update-point`）、先頭に `[!IMPORTANT]`（赤の重要）・`[!WARNING]`（黄の注意）・`[!TIP]`（水色の案内）を書くと囲みの種類が変わる。強調は下線ハイライト、表は2列＝項目と内容、3列以上＝比較表（中央寄せ・横スクロール）
+- 画像は `![代替テキスト](URL "ラベル")` で表示できる。並べると「変更前 → 変更後」の比較表示になる。サニタイズは `img`（`src`・`alt`のみ）と、上記の決まったクラスだけを通す。確認: `node --experimental-strip-types lib/sanitizeHtml.check.ts`
+
 ## 2026-10-26（お知らせ本文をMarkdownに統一）
 - adacで書くお知らせ本文をMarkdownに統一。`lib/sanitizeHtml.ts` の `renderAnnouncementBody` が、`marked` でHTMLに変換してからサニタイズして表示する（見出しはすべてh3、`>` の引用は灰色の囲み、表・リスト・リンクに対応）。移行前に保存されたHTML本文（先頭がタグ）は、変換せずサニタイズだけして従来どおり表示する。確認: `node --experimental-strip-types lib/sanitizeHtml.check.ts`
 - URLスラッグのないお知らせ（全体向けなど）も一覧・通知バーに表示する。詳細ページのURLはスラッグの代わりにidを使う
