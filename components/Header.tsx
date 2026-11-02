@@ -119,7 +119,7 @@ function Announcements({ items }: { items: Announcement[] }) {
     <div className="w-full box-border">
       {items.map((item, i) => (
         <div
-          key={item.slug}
+          key={item.id}
           className={`max-w-[1000px] mx-auto flex items-center gap-3 px-5 py-2.5 bg-[#fff5f5] ${
             i > 0 ? "border-t border-dashed border-[#ffcccc]" : ""
           }`}
@@ -128,7 +128,7 @@ function Announcements({ items }: { items: Announcement[] }) {
           <p className="text-sm text-[#333] leading-snug m-0">
             {item.title} {item.dateLabel}
             <Link
-              href={`/info/details/${item.slug}`}
+              href={`/info/details/${item.id}`}
               className="text-[#0076a3] font-bold underline ml-2"
             >
               確認する

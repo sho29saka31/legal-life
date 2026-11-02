@@ -2,8 +2,8 @@ import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
 import { renderAnnouncementBody } from "@/lib/sanitizeHtml";
 
 export type Announcement = {
-  /** URLスラッグ。未設定のお知らせはidを使う */
-  slug: string;
+  /** お知らせのID(自動生成のUUID)。詳細ページのURL(/info/details/[id])に使う */
+  id: string;
   title: string;
   /** 公開・更新日の表示用テキスト（例: "公開日: 2026/1/1"）。管理画面で未入力の場合は日付から自動生成する */
   dateLabel: string;
@@ -27,17 +27,16 @@ function formatDateLabel(publishedAt: string): string {
 }
 
 /**
- * saka2931-infra（adacの管理画面が書き込む）から、legal-life向け（'legal_life'
- * または'general'）の有効なお知らせを新しい順に取得する。RLSにより公開済み
+ * saka2931-infra（adacの管理画面が書き込む）から、表示先に legal_life を含む有効な
+ * お知らせを新しい順に取得する。RLSにより公開済み
  * （is_active=true かつ scheduled_atが未来でない）行のみが返る。
- * slugが未設定のもの（全体向けなど）も表示する。その場合のURLはidを使う。
  */
 export async function getAnnouncements(): Promise<Announcement[]> {
   const infra = createInfraReadOnlyClient();
   const { data, error } = await infra
     .from("service_announcements")
-    .select("id, slug, title, body, level, date_label, published_at, show_in_bar, created_at")
-    .in("service", ["legal_life", "general"])
+    .select("id, title, body, level, date_label, published_at, show_in_bar, created_at")
+    .contains("services", ["legal_life"])
     // published_atが同一（同日移行データ等）の場合の並び順を安定させるため、
     // created_at（レコードの登録順）を副ソートキーにする。
     .order("published_at", { ascending: false })
@@ -48,7 +47,7 @@ export async function getAnnouncements(): Promise<Announcement[]> {
   }
 
   return (data ?? []).map((a) => ({
-    slug: a.slug ?? a.id,
+    id: a.id,
     title: a.title,
     dateLabel: a.date_label || formatDateLabel(a.published_at),
     publishedAt: a.published_at,
@@ -60,15 +59,15 @@ export async function getAnnouncements(): Promise<Announcement[]> {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function getAnnouncementBySlug(
-  slug: string
-): Promise<Announcement | null> {
+/** IDで1件取得する。IDの形式が不正・非公開・表示先外なら null(旧URLのスラッグも、ここでnullになり404) */
+export async function getAnnouncementById(id: string): Promise<Announcement | null> {
+  if (!UUID_RE.test(id)) return null;
   const infra = createInfraReadOnlyClient();
   const { data, error } = await infra
     .from("service_announcements")
-    .select("id, slug, title, body, level, date_label, published_at, show_in_bar")
-    .in("service", ["legal_life", "general"])
-    .eq(UUID_RE.test(slug) ? "id" : "slug", slug)
+    .select("id, title, body, level, date_label, published_at, show_in_bar")
+    .contains("services", ["legal_life"])
+    .eq("id", id)
     .eq("is_active", true)
     .maybeSingle();
 
@@ -78,7 +77,7 @@ export async function getAnnouncementBySlug(
   if (!data) return null;
 
   return {
-    slug: data.slug ?? data.id,
+    id: data.id,
     title: data.title,
     dateLabel: data.date_label || formatDateLabel(data.published_at),
     publishedAt: data.published_at,
