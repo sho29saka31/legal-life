@@ -55,8 +55,8 @@ export default function CookieBanner() {
         <p className="text-[13px] sm:text-sm leading-relaxed flex-1 m-0">
           本サイトでは、アクセス解析およびサービス向上のためにCookieを使用しています。
           「同意する」をクリックすることで、Google Analytics等の外部サービスによるデータ処理に同意したものとみなされます。
-          詳細は<a href="https://service.saka2931.jp/privacy#section5" className="text-sky-400 underline">外部サービスの利用とデータ提供</a>
-          および<a href="https://service.saka2931.jp/cookie" className="text-sky-400 underline">クッキーポリシー</a>をご確認ください。
+          詳細は<a href="https://saka2931.jp/privacy#section5" className="text-sky-400 underline">外部サービスの利用とデータ提供</a>
+          および<a href="https://saka2931.jp/cookie" className="text-sky-400 underline">クッキーポリシー</a>をご確認ください。
         </p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 sm:items-center">
           <button
@@ -79,7 +79,7 @@ export default function CookieBanner() {
           >
             拒否する
           </button>
-          <a href="https://service.saka2931.jp/cookie" className="w-full sm:w-auto text-center border border-white text-white text-sm rounded-md px-6 py-3">
+          <a href="https://saka2931.jp/cookie" className="w-full sm:w-auto text-center border border-white text-white text-sm rounded-md px-6 py-3">
             詳細を見る
           </a>
         </div>
