@@ -242,9 +242,9 @@ export default function ChatApp() {
         </ul>
         <p className="text-sm text-[#856404] pt-2.5 border-t border-dashed border-[#85640433]">
           当機能利用時は当サイト{" "}
-          <a href="https://service.saka2931.jp/disclaimer" className="underline font-bold">免責事項</a>{" "}
+          <a href="https://saka2931.jp/disclaimer" className="underline font-bold">免責事項</a>{" "}
           並びに{" "}
-          <a href="https://service.saka2931.jp/privacy#section6" className="underline font-bold">AI利用に関する詳細情報開示</a>{" "}
+          <a href="https://saka2931.jp/privacy#section6" className="underline font-bold">AI利用に関する詳細情報開示</a>{" "}
           に同意したものをみなします。
         </p>
       </div>

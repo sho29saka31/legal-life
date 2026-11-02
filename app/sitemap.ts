@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // robots.ts・各ページのmetadata.robotsでindex許可しているページのみ掲載する。
   // チャット・学習・ニュース・料金プラン・沿革・サイトマップは正式公開前の機能/ページ、
   // お知らせ詳細(/info/details/*)はnoindexのため、検索エンジンにも公開しない。
-  // /law/*・/info/contactはservice.saka2931.jpへのリダイレクト専用ページのため掲載しない。
+  // /law/*・/info/contactはsaka2931.jpへのリダイレクト専用ページのため掲載しない。
   const pages: {
     path: string;
     priority: number;

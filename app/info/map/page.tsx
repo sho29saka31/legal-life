@@ -49,17 +49,17 @@ const CATEGORIES: { title: string; links: SitemapLink[] }[] = [
       { href: null, label: "沿革", icon: IconScroll },
       { href: "/info", label: "お知らせ", icon: IconNewspaper },
       { href: "/info/faq", label: "よくある質問", icon: IconQuestion },
-      { href: "https://service.saka2931.jp/contact/legal-life", label: "お問い合わせ", icon: IconMail },
+      { href: "https://saka2931.jp/contact/legal-life", label: "お問い合わせ", icon: IconMail },
       { href: "/info/map", label: "サイトマップ", icon: IconMap },
     ],
   },
   {
     title: "法的情報ページ",
     links: [
-      { href: "https://service.saka2931.jp/privacy", label: "プライバシーポリシー", icon: IconLock },
-      { href: "https://service.saka2931.jp/terms", label: "利用規約", icon: IconClipboard },
-      { href: "https://service.saka2931.jp/disclaimer", label: "免責事項", icon: IconWarning },
-      { href: "https://service.saka2931.jp/cookie", label: "クッキーポリシー", icon: IconCookie },
+      { href: "https://saka2931.jp/privacy", label: "プライバシーポリシー", icon: IconLock },
+      { href: "https://saka2931.jp/terms", label: "利用規約", icon: IconClipboard },
+      { href: "https://saka2931.jp/disclaimer", label: "免責事項", icon: IconWarning },
+      { href: "https://saka2931.jp/cookie", label: "クッキーポリシー", icon: IconCookie },
     ],
   },
 ];
