@@ -30,7 +30,7 @@ Gemini APIを利用した法令に関する対話機能のサーバー側エン�
 
 ## お知らせ（読み取り専用、外部プロジェクト参照）
 
-`/info`・`/info/details/[slug]`・ヘッダーバナーは `saka2931-infra` の `service_announcements` テーブルを anon キーで読み取り、動的にレンダリングする（`lib/announcements.ts`）。本文は `sanitize-html` でサニタイズして表示する。書き込みは adac の管理画面からのみで、legal-life側にAPIは存在しない。
+`/info`・`/info/details/[id]`・ヘッダーバナーは `saka2931-infra` の `service_announcements` テーブルを anon キーで読み取り、動的にレンダリングする（`lib/announcements.ts`）。本文は `sanitize-html` でサニタイズして表示する。書き込みは adac の管理画面からのみで、legal-life側にAPIは存在しない。
 
 ## お問い合わせ
 

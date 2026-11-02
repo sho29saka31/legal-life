@@ -88,7 +88,7 @@ export default async function HomePage() {
             </div>
             {announcements.map((a) => (
               <div
-                key={a.slug}
+                key={a.id}
                 className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0 py-3 sm:py-3 px-1 border-b border-[#7ddce8] text-sm"
               >
                 <span className="w-full sm:w-24 shrink-0 text-[#666] sm:text-inherit">
@@ -96,7 +96,7 @@ export default async function HomePage() {
                 </span>
                 <span className="flex-1 sm:pl-2">{a.title}</span>
                 <span className="w-full sm:w-24 shrink-0 text-right sm:text-center">
-                  <Link href={`/info/details/${a.slug}`} className="text-[#0076a3]">
+                  <Link href={`/info/details/${a.id}`} className="text-[#0076a3]">
                     詳細
                   </Link>
                 </span>

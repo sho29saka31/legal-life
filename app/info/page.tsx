@@ -20,6 +20,14 @@ export default async function InfoPage() {
   return (
     <div className="px-4 py-8">
       <h1 className="text-2xl font-bold text-center mb-6">サイトからのお知らせ</h1>
+      <p className="text-center mb-6">
+        <a
+          href="https://saka2931.jp/news"
+          className="inline-block rounded-full border border-[#7ddce8] bg-[#f0fbfc] px-5 py-2 text-sm font-bold text-[#0076a3] transition-colors hover:bg-[#7ddce8] hover:text-white"
+        >
+          全サービスのお知らせを見る →
+        </a>
+      </p>
       <div className="max-w-[900px] mx-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
         <div className="hidden sm:flex items-center px-2.5 py-4 border-b-2 border-[#7ddce8] font-bold text-[#333] rounded-t-lg">
           <span className="w-[130px] shrink-0">公開・更新日</span>
@@ -28,7 +36,7 @@ export default async function InfoPage() {
         </div>
         {announcements.map((a) => (
           <div
-            key={a.slug}
+            key={a.id}
             className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-0 px-2.5 py-4 border-b border-[#e0f7f9] transition-colors hover:bg-[#f5fdfe]"
           >
             <span className="w-full sm:w-[130px] shrink-0 font-bold text-[#666] text-sm">
@@ -36,7 +44,7 @@ export default async function InfoPage() {
             </span>
             <span className="flex-1 sm:pr-5 text-[#333]">{a.title}</span>
             <Link
-              href={`/info/details/${a.slug}`}
+              href={`/info/details/${a.id}`}
               className="w-full sm:w-24 shrink-0 text-left sm:text-right font-bold text-sm text-[#0076a3] hover:underline"
             >
               内容を見る

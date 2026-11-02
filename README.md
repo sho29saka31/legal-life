@@ -24,7 +24,7 @@ This repository provides the source code, but reuse, copying, modification, and 
 | AIチャット | `/content/chat` | 正式公開前。Gemini APIを利用（サーバー側 `/api/chat` 経由のみ。APIキーは露出しない） |
 | 法令学習 | `/content/study` | 正式公開前 |
 | ニュース | `/content/news` | 正式公開前 |
-| お知らせ | `/info` `/info/details/[slug]` | 公開中。adacの管理画面から配信、ヘッダーバナーにも表示 |
+| お知らせ | `/info` `/info/details/[id]` | 公開中。adacの管理画面から配信、ヘッダーバナーにも表示 |
 | サイト概要・FAQ・沿革 | `/info/about` `/info/faq` `/info/history` | 公開中（沿革は非公開） |
 | ウェルカム | `/welcome` | 要ログイン（初回ログイン後の案内） |
 
