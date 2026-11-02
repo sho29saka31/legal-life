@@ -32,19 +32,28 @@ export function initConsentDefaults() {
   });
 }
 
+// 同意状態は saka2931.jp 配下の全サイト(service・auth・status・legal-life・Sporive)で共通にする。
+// 1度の選択がすべてのサイトに効くよう、Cookieのdomainを .saka2931.jp にする。
+const CONSENT_COOKIE_DOMAIN = ".saka2931.jp";
+
 function setCookie(name: string, value: string, days: number) {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+  const shared = location.hostname.endsWith("saka2931.jp") ? `;domain=${CONSENT_COOKIE_DOMAIN}` : "";
+  // 共通化前に保存されたホスト単位のCookieが残ると値が食い違うため、先に消す。
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+  document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/${shared};SameSite=Lax`;
 }
 
 export function getCookie(name: string) {
   const nameEQ = name + "=";
+  let found: string | null = null;
+  // 共通化前のホスト単位のCookieと並ぶ場合があるため、最後(=最も新しく書かれたもの)を採用する。
   for (const c of document.cookie.split(";")) {
     const trimmed = c.trimStart();
-    if (trimmed.startsWith(nameEQ)) return trimmed.slice(nameEQ.length);
+    if (trimmed.startsWith(nameEQ)) found = trimmed.slice(nameEQ.length);
   }
-  return null;
+  return found;
 }
 
 function deleteGACookies() {

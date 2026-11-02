@@ -2,6 +2,9 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-11-02（Cookie同意を全サイト共通に）
+- Cookie同意（`cookie_consent`）の保存先を `.saka2931.jp` 共通にした（service・auth・status・legal-life・Sporive のどこで選んでも全サイトに効く）。共通化前のホスト単位のCookieと並ぶ場合は、最も新しいものを採用する
+
 ## 2026-11-02（service を saka2931.jp に移転）
 - 規約類・お問い合わせへのリンクと、`/law/*`・`/info/contact` のリダイレクト先を、service.saka2931.jp から移転した `https://saka2931.jp` に変更。沿革（2026年9月）の記述は当時の記録として残した
 
