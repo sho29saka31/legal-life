@@ -17,7 +17,7 @@ Next.js (Vercel, App Router)
     ├── /content/search    e-Gov法令API連携の法令検索 (公開)
     ├── /content/{study,chat,news}  学習・AIチャット・ニュース (正式公開前。ナビからは「準備中」ポップアップ)
     ├── /api/chat          Gemini API連携 (サーバー側のみ。未認証でも呼べる、IP単位レート制限)
-    ├── /info, /info/details/[slug]  お知らせ (saka2931-infra参照、動的)
+    ├── /info, /info/details/[id]  お知らせ (saka2931-infra参照、動的)
     ├── /info/{about,faq,history,map}  サイト概要・FAQ・沿革・サイトマップ
     ├── /law/*, /info/contact  → service.saka2931.jp の同名ページへリダイレクト
     ├── /plan, /welcome    料金・ウェルカム (/welcome のみ要ログイン)

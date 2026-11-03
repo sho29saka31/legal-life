@@ -40,7 +40,7 @@ where pubname = 'supabase_realtime' and tablename = 'sessions';
 
 ## お知らせが表示されない・更新されない
 
-- `/info`・`/info/details/[slug]`は`saka2931-infra`プロジェクトの`service_announcements`をanonキーで参照する。表示されない場合は、まずadacの管理画面で該当お知らせが「公開」状態になっているか確認する
+- `/info`・`/info/details/[id]`は`saka2931-infra`プロジェクトの`service_announcements`をanonキーで参照する。表示されない場合は、まずadacの管理画面で該当お知らせが「公開」状態になっているか確認する
 - `NEXT_PUBLIC_INFRA_SUPABASE_URL`/`NEXT_PUBLIC_INFRA_SUPABASE_ANON_KEY`が正しく設定されているか確認
 
 ## 認証メール（パスワードリセット等）が届かない
