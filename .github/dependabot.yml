@@ -1,0 +1,17 @@
+# Dependabot の版上げ(バージョン更新)の設定。脆弱性の通知と自動修正は、リポジトリの設定で有効にしてある。
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+      production-minor-patch:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+    ignore:
+      # 型定義は、実行環境の Node のメジャーに合わせる(Node を上げるときに、手で一緒に上げる)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]

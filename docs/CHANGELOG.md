@@ -2,6 +2,11 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-11-12（TypeScript 7・Node 26 へ更新、Dependabot の版上げを有効化）
+- 型チェック（`npx tsc`）を TypeScript 7 に更新。TypeScript 7 にはまだプログラム用のAPIがないため、lint（typescript-eslint）とビルド（`next build`）は、公式の互換パッケージ（`@typescript/typescript6`）のAPIを使う。`package.json` の `@typescript/native` が TypeScript 7、`typescript` が互換パッケージ
+- 実行環境を Node 26 系に変更（`package.json` の `engines`）。`@types/node` も 26 系に
+- `.github/dependabot.yml` を追加（週1回、開発用と本番用にまとめて版上げの PR を作る）
+
 ## 2026-11-02（Cookie同意を全サイト共通に）
 - Cookie同意（`cookie_consent`）の保存先を `.saka2931.jp` 共通にした（service・auth・status・legal-life・Sporive のどこで選んでも全サイトに効く）。共通化前のホスト単位のCookieと並ぶ場合は、最も新しいものを採用する
 
