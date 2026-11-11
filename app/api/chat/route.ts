@@ -163,9 +163,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`, {
+    // APIキーは、URLのクエリではなくヘッダーで渡す(URLは、プロキシや例外の文面などに残りやすい)
+    const res = await fetch(GEMINI_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: buildPrompt(question) }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
