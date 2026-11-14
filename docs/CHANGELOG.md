@@ -2,6 +2,9 @@
 
 このセッションで把握している主要な変更履歴。日付が特定できないものは実施内容のみ記載。
 
+## 2026-11-14（依存関係の更新）
+- Chore: 依存関係を更新（@supabase/supabase-js 2.118.0→2.119.0、@vercel/speed-insights 2.0.0→2.1.0、marked 18.1.2→18.2.0、next 16.4.3→16.4.6、sanitize-html 2.18.1→2.18.2、@tailwindcss/postcss 4.3.3→4.3.5、eslint 10.13.0→10.14.0、eslint-config-next 16.4.3→16.4.6、postcss 8.5.31→8.5.32、tailwindcss 4.3.3→4.3.5）。型チェック・lint・ビルドは更新前と同じ結果
+
 ## 2026-11-12（TypeScript 7・Node 26 へ更新、Dependabot の版上げを有効化）
 - 型チェック（`npx tsc`）を TypeScript 7 に更新。TypeScript 7 にはまだプログラム用のAPIがないため、lint（typescript-eslint）とビルド（`next build`）は、公式の互換パッケージ（`@typescript/typescript6`）のAPIを使う。`package.json` の `@typescript/native` が TypeScript 7、`typescript` が互換パッケージ
 - 実行環境を Node 26 系に変更（`package.json` の `engines`）。`@types/node` も 26 系に
