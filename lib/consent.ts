@@ -42,7 +42,10 @@ function setCookie(name: string, value: string, days: number) {
   const shared = location.hostname.endsWith("saka2931.jp") ? `;domain=${CONSENT_COOKIE_DOMAIN}` : "";
   // 共通化前に保存されたホスト単位のCookieが残ると値が食い違うため、先に消す。
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
-  document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/${shared};SameSite=Lax`;
+  // サイトは常時HTTPS(HSTS)のため、Secureを付けても機能上の影響はない。平文HTTP
+  // 接続(例: 開発者が誤ってhttp://でアクセスした場合)での送受信を防ぐ
+  // 多層防御として明示する(コード監査で発見)。
+  document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/${shared};SameSite=Lax;Secure`;
 }
 
 export function getCookie(name: string) {

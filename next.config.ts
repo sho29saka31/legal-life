@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   reactStrictMode: true,
   images: {
     // Googleアカウントのプロフィール画像(next/imageの最適化対象として許可)
