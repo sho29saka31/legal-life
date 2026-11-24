@@ -34,7 +34,7 @@ Gemini APIを利用した法令に関する対話機能のサーバー側エン�
 
 ## お問い合わせ
 
-legal-life自体にはお問い合わせ用APIを持たない。`service.saka2931.jp/contact/legal-life` のフォーム送信APIに集約されており、送信内容は `saka2931-infra` の `contact_inquiries` テーブルに保存される（詳細はserviceリポジトリの [API](https://github.com/sho29saka31/service/blob/main/docs/API.md) を参照）。
+legal-life自体にはお問い合わせ用APIを持たない。`service.saka2931.jp/contact/legal-life` のフォーム送信APIに集約されており、送信内容は `saka2931-infra` の `contact_inquiries` テーブルに保存される（詳細はserviceリポジトリの [API](https://github.com/sho29saka31/saka2931-service/blob/main/docs/API.md) を参照）。
 
 ## 認証との境界
 
