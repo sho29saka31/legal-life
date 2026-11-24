@@ -32,17 +32,17 @@ This repository provides the source code, but reuse, copying, modification, and 
 
 ### アカウント機能について
 
-**ログイン・新規登録・パスワード再設定・多要素認証（TOTP）・パスキー・ログイン端末の管理・アクティビティ履歴・アカウント削除は、すべて `auth.saka2931.jp`（[authリポジトリ](https://github.com/sho29saka31/auth)）が提供します。** legal-life自身にはアカウント画面がなく、未ログインで要ログインページを開くと `auth.saka2931.jp/login?return_to=<元のURL>` へ転送され、認証後に戻ります。ヘッダーの「アカウント」も auth の `/account` へのリンクです。
+**ログイン・新規登録・パスワード再設定・多要素認証（TOTP）・パスキー・ログイン端末の管理・アクティビティ履歴・アカウント削除は、すべて `auth.saka2931.jp`（[authリポジトリ](https://github.com/sho29saka31/saka2931-auth)）が提供します。** legal-life自身にはアカウント画面がなく、未ログインで要ログインページを開くと `auth.saka2931.jp/login?return_to=<元のURL>` へ転送され、認証後に戻ります。ヘッダーの「アカウント」も auth の `/account` へのリンクです。
 
 ## saka2931.jpドメインとの連携
 
 | 連携先 | 内容 |
 |---|---|
-| [auth](https://github.com/sho29saka31/auth) | 認証・アカウント管理。`.saka2931.jp` スコープのCookieでセッションを共有（SSO）。表示名は `GET/PATCH /api/profile` 経由 |
-| [adac](https://github.com/sho29saka31/adac) | 機能フラグ・緊急メンテナンス・お知らせの管理画面 |
+| [auth](https://github.com/sho29saka31/saka2931-auth) | 認証・アカウント管理。`.saka2931.jp` スコープのCookieでセッションを共有（SSO）。表示名は `GET/PATCH /api/profile` 経由 |
+| [adac](https://github.com/sho29saka31/saka2931-adac) | 機能フラグ・緊急メンテナンス・お知らせの管理画面 |
 | `saka2931-infra`（Supabase） | `service_announcements`・`feature_flags` を読み取り専用（anonキー）で参照 |
-| [service](https://github.com/sho29saka31/service) | プライバシーポリシー・利用規約・Cookie・免責・お問い合わせ（`/law/*` と `/info/contact` はそちらへリダイレクト） |
-| [status](https://github.com/sho29saka31/status) | 稼働状況の公開ページ（500・メンテナンス画面からリンク） |
+| [service](https://github.com/sho29saka31/saka2931-service) | プライバシーポリシー・利用規約・Cookie・免責・お問い合わせ（`/law/*` と `/info/contact` はそちらへリダイレクト） |
+| [status](https://github.com/sho29saka31/saka2931-status) | 稼働状況の公開ページ（500・メンテナンス画面からリンク） |
 | [Sporive](https://github.com/sho29saka31/Sporive) | 兄弟アプリ。同じ `saka2931-service` プロジェクトを共有（スキーマは `legal_life` / `sporive` / `auth_app` で分離） |
 
 ## 運用の仕組み
