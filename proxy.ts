@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { maintenanceViewerRedirect, isMaintenanceViewer } from "@/lib/maintenance-viewer";
 import { isEmergencyMaintenanceActive } from "@/lib/feature-flags";
 
 // adacの管理画面で「緊急メンテナンスモード」を有効にした場合、静的アセット・API・
@@ -11,6 +12,9 @@ export const config = {
 };
 
 export default async function proxy(request: NextRequest) {
+  const viewerRedirect = maintenanceViewerRedirect(request);
+  if (viewerRedirect) return viewerRedirect;
+  if (isMaintenanceViewer(request)) return NextResponse.next();
   if (await isEmergencyMaintenanceActive()) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
