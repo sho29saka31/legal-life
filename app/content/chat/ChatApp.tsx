@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import AiConsentModal, { hasAiConsentCookie, saveAiConsentCookie } from "@/components/AiConsentModal";
 import { IconWarning, IconTrash, IconBulb } from "@/components/icons";
 
 const STORAGE_KEY = "legalChatHistory";
@@ -13,6 +14,7 @@ type ChatItem = { id: string; question: string; answer: string; category?: strin
 export default function ChatApp() {
   const [history, setHistory] = useState<ChatItem[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [askAi, setAskAi] = useState(false); // AI への送信の同意の確認を出しているか
   const [needsLink, setNeedsLink] = useState(false); // ログイン済みだが、legal-life との連携を許可していない
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -113,6 +115,11 @@ export default function ChatApp() {
       setError(`質問は${MAX_INPUT_LEN}文字以内で入力してください。`);
       return;
     }
+    // AI(Google Gemini)への送信に同意するまで、質問は送らない
+    if (!hasAiConsentCookie()) {
+      setAskAi(true);
+      return;
+    }
     setSending(true);
     setError("");
     setInput("");
@@ -204,6 +211,16 @@ export default function ChatApp() {
 
   return (
     <div className="max-w-[1100px] mx-auto px-5 pb-12">
+      {askAi && (
+        <AiConsentModal
+          onAgree={() => {
+            saveAiConsentCookie();
+            setAskAi(false);
+            void handleSend();
+          }}
+          onCancel={() => setAskAi(false)}
+        />
+      )}
       <div className="text-center py-6 mb-2">
         <h1 className="text-2xl font-bold">法令専門AIチャット</h1>
         <p className="text-sm text-gray-500 mt-2">

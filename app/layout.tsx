@@ -11,6 +11,7 @@ import MaintenancePopup from "@/components/MaintenancePopup";
 import CookieBanner from "@/components/CookieBanner";
 import { getImportantAnnouncements } from "@/lib/announcements";
 import "./globals.css";
+import AgeNotice from "@/components/AgeNotice";
 
 // 元リポジトリの BIZUDGothic-Bold.woff2 は拡張子のみwoff2で実体が壊れたフォントデータのため
 // (README記載の「Apple OSでフォントが正常に読み込まれない」不具合の原因と推測される)、ttfのみを使用する。
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="font-sans">
         <div id="header"><Header importantAnnouncements={importantAnnouncements} /></div>
         <main>{children}</main>
+        <AgeNotice />
         <div id="footer"><Footer /></div>
         <AccessLogger />
         <AuthSessionWatcher />
