@@ -18,7 +18,7 @@ export function saveAiConsentCookie() {
 export default function AiConsentModal({ onAgree, onCancel }: { onAgree: () => void; onCancel: () => void }) {
   const [agree, setAgree] = useState(false);
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto sm:items-center bg-black/60 p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="ai-consent-title" className="w-full max-w-md rounded-xl bg-white p-6 text-gray-900 shadow-2xl">
         <h2 id="ai-consent-title" className="text-base font-bold">AIチャットのご利用について</h2>
         <p className="mt-3 text-sm leading-relaxed">
