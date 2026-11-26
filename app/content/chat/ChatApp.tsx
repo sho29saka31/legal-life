@@ -13,6 +13,7 @@ type ChatItem = { id: string; question: string; answer: string; category?: strin
 export default function ChatApp() {
   const [history, setHistory] = useState<ChatItem[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [needsLink, setNeedsLink] = useState(false); // ログイン済みだが、legal-life との連携を許可していない
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -96,6 +97,7 @@ export default function ChatApp() {
       const res = await fetch("/api/me", { credentials: "include", cache: "no-store" }).catch(() => null);
       const user = res?.ok ? ((await res.json()) as { user: { id: string } }).user : null;
       if (!isMounted) return;
+      if (res?.status === 403) setNeedsLink(true);
       await initForUser(user?.id ?? null);
     })();
 
@@ -209,6 +211,14 @@ export default function ChatApp() {
           <br />
           履歴はご利用中の端末もしくはサーバーに自動で保存されます。
         </p>
+        {needsLink && (
+          <p className="text-sm mt-3">
+            アカウントでログイン中ですが、legal-life との連携が許可されていないため、履歴はこの端末にだけ保存されます。{" "}
+            <a className="underline text-blue-600" href={`https://auth.saka2931.jp/link?service=legal_life&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://legal-life.saka2931.jp/")}`}>
+              連携を許可する
+            </a>
+          </p>
+        )}
       </div>
 
       <div className="bg-[#fff9db] border border-[#ffe066] border-l-[6px] border-l-[#fcc419] rounded-xl px-6 py-4 mb-5 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
