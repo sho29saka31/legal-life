@@ -49,7 +49,7 @@ const CATEGORIES: { title: string; links: SitemapLink[] }[] = [
       { href: null, label: "沿革", icon: IconScroll },
       { href: "/info", label: "お知らせ", icon: IconNewspaper },
       { href: "/info/faq", label: "よくある質問", icon: IconQuestion },
-      { href: "https://saka2931.jp/contact/legal-life", label: "お問い合わせ", icon: IconMail },
+      { href: "https://saka2931.jp/contact", label: "お問い合わせ", icon: IconMail },
       { href: "/info/map", label: "サイトマップ", icon: IconMap },
     ],
   },

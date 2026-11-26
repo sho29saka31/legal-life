@@ -4,5 +4,5 @@ import { permanentRedirect } from "next/navigation";
 // このパスへの既存のリンク・ブックマーク・検索エンジンのインデックスを
 // 生かす形で新しいページへリダイレクトする。
 export default function ContactPage() {
-  permanentRedirect("https://saka2931.jp/contact/legal-life");
+  permanentRedirect("https://saka2931.jp/contact");
 }
