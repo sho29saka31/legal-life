@@ -96,9 +96,9 @@ export default async function HomePage() {
                 </span>
                 <span className="flex-1 sm:pl-2">{a.title}</span>
                 <span className="w-full sm:w-24 shrink-0 text-right sm:text-center">
-                  <Link href={`/info/details/${a.id}`} className="text-[#0076a3]">
+                  <a href={`https://saka2931.jp/news/${a.id}`} className="text-[#0076a3]">
                     詳細
-                  </Link>
+                  </a>
                 </span>
               </div>
             ))}
