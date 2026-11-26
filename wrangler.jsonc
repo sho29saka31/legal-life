@@ -16,5 +16,34 @@
     "traces": { "enabled": true, "head_sampling_rate": 1, "persist": true },
     "issues": { "enabled": true }
   },
-  "placement": { "region": "aws:ap-northeast-1" }
+  "placement": { "region": "aws:ap-northeast-1" },
+  // 検証用(Neon の dev ブランチ)。本番の legal-life.saka2931.jp には一切つながない。
+  // HYPERDRIVE: service の dev(利用者データ。キャッシュ無効)/ INFRA: infra の dev(お知らせ・フラグの読み取りのみ)。
+  // 本番の Hyperdrive(main ブランチ向け)は、切り替え(Phase 7)のときにトップレベルへ追加する。
+  "env": {
+    "staging": {
+      "name": "legal-life-staging",
+      "main": ".open-next/worker.js",
+      "compatibility_date": "2026-11-01",
+      "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+      "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+      // 本番のカスタムドメインを引き継がない(空配列で明示。付け替え事故の防止)
+      "routes": [],
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": { "ENVIRONMENT": "staging", "AUTH_BASE_URL": "https://auth-staging.saka2931.workers.dev" },
+      "hyperdrive": [
+        { "binding": "HYPERDRIVE", "id": "b5f0397c65ba4652a529eae0f72dc845" },
+        { "binding": "INFRA", "id": "3a06473772ea48e1af1d8f620f555bbd" }
+      ],
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+        "traces": { "enabled": true, "head_sampling_rate": 1, "persist": true },
+        "issues": { "enabled": true }
+      },
+      "placement": { "region": "aws:ap-northeast-1" }
+    }
+  }
 }

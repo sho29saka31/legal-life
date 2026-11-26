@@ -1,4 +1,4 @@
-import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
+import { asInfraAnon } from "@/lib/server/db";
 import { renderAnnouncementBody } from "@/lib/sanitizeHtml";
 
 export type Announcement = {
@@ -32,21 +32,16 @@ function formatDateLabel(publishedAt: string): string {
  * （is_active=true かつ scheduled_atが未来でない）行のみが返る。
  */
 export async function getAnnouncements(): Promise<Announcement[]> {
-  const infra = createInfraReadOnlyClient();
-  const { data, error } = await infra
-    .from("service_announcements")
-    .select("id, title, body, level, date_label, published_at, show_in_bar, created_at")
-    .contains("services", ["legal_life"])
-    // published_atが同一（同日移行データ等）の場合の並び順を安定させるため、
-    // created_at（レコードの登録順）を副ソートキーにする。
-    .order("published_at", { ascending: false })
-    .order("created_at", { ascending: false });
+  // published_atが同一（同日移行データ等）の場合の並び順を安定させるため、created_at を副ソートキーにする。
+  // 時刻は、文字列(ISO)で受け取る(画面側の整形が文字列を前提にしているため)。
+  const data = await asInfraAnon(
+    (sql) => sql<{ id: string; title: string; body: string; level: string; date_label: string | null; published_at: string; show_in_bar: boolean }[]>`
+      select id, title, body, level, date_label, to_jsonb(published_at) #>> '{}' as published_at, show_in_bar
+      from public.service_announcements where 'legal_life' = any(services)
+      order by published_at desc, created_at desc`,
+  );
 
-  if (error) {
-    throw new Error(`お知らせの取得に失敗しました: ${error.message}`);
-  }
-
-  return (data ?? []).map((a) => ({
+  return data.map((a) => ({
     id: a.id,
     title: a.title,
     dateLabel: a.date_label || formatDateLabel(a.published_at),
@@ -62,18 +57,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /** IDで1件取得する。IDの形式が不正・非公開・表示先外なら null(旧URLのスラッグも、ここでnullになり404) */
 export async function getAnnouncementById(id: string): Promise<Announcement | null> {
   if (!UUID_RE.test(id)) return null;
-  const infra = createInfraReadOnlyClient();
-  const { data, error } = await infra
-    .from("service_announcements")
-    .select("id, title, body, level, date_label, published_at, show_in_bar")
-    .contains("services", ["legal_life"])
-    .eq("id", id)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`お知らせの取得に失敗しました: ${error.message}`);
-  }
+  const data = (
+    await asInfraAnon(
+      (sql) => sql<{ id: string; title: string; body: string; level: string; date_label: string | null; published_at: string; show_in_bar: boolean }[]>`
+        select id, title, body, level, date_label, to_jsonb(published_at) #>> '{}' as published_at, show_in_bar
+        from public.service_announcements where 'legal_life' = any(services) and id = ${id} and is_active`,
+    )
+  )[0];
   if (!data) return null;
 
   return {

@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 import { IconWarning, IconTrash, IconBulb } from "@/components/icons";
 
 const STORAGE_KEY = "legalChatHistory";
@@ -45,14 +44,11 @@ export default function ChatApp() {
       }
     };
 
-    const loadFromSupabase = async (uid: string, requestId: number) => {
-      const { data } = await supabase
-        .from("chat_history")
-        .select("id, question, answer, category")
-        .eq("user_id", uid)
-        .order("created_at", { ascending: true });
+    const loadFromSupabase = async (_uid: string, requestId: number) => {
+      const res = await fetch("/api/chat-history", { credentials: "include", cache: "no-store" }).catch(() => null);
+      const data = res?.ok ? ((await res.json()) as ChatItem[]) : [];
       if (authRequestIdRef.current !== requestId) return; // superseded by a newer auth state change
-      setHistory(data ?? []);
+      setHistory(data);
     };
 
     const migrateLocalToSupabase = async (uid: string) => {
@@ -69,14 +65,13 @@ export default function ChatApp() {
         localStorage.removeItem(STORAGE_KEY);
         return;
       }
-      const { error: migrateError } = await supabase.from("chat_history").insert(
-        local.map((item) => ({
-          user_id: uid,
-          question: item.question,
-          answer: item.answer,
-          category: item.category ?? null,
-        })),
-      );
+      const res = await fetch("/api/chat-history", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: local.map((item) => ({ question: item.question, answer: item.answer, category: item.category ?? null })) }),
+      }).catch(() => null);
+      const migrateError = !res?.ok;
       // Only clear the locally-stored history once it has actually been saved to
       // Supabase; previously this ran unconditionally, so a failed insert (network
       // error, RLS rejection, etc.) permanently deleted the user's chat history.
@@ -96,32 +91,16 @@ export default function ChatApp() {
     };
 
     let isMounted = true;
-    let subscription: { unsubscribe: () => void } | undefined;
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // ログイン中かどうかは、サーバー(auth への問い合わせ)で確認する。ログイン・ログアウトはページ遷移を伴うため、変化の購読はしない
+      const res = await fetch("/api/me", { credentials: "include", cache: "no-store" }).catch(() => null);
+      const user = res?.ok ? ((await res.json()) as { user: { id: string } }).user : null;
       if (!isMounted) return;
       await initForUser(user?.id ?? null);
-      if (!isMounted) return;
-      const {
-        data: { subscription: sub },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        initForUser(session?.user?.id ?? null);
-      });
-      // If the component unmounted while the above awaits were in flight, the
-      // cleanup below already ran (subscription was still undefined at that
-      // point), so unsubscribe immediately instead of leaking this listener.
-      if (!isMounted) {
-        sub.unsubscribe();
-        return;
-      }
-      subscription = sub;
     })();
 
     return () => {
       isMounted = false;
-      subscription?.unsubscribe();
     };
   }, []);
 
@@ -151,13 +130,15 @@ export default function ChatApp() {
       }
 
       if (userId) {
-        const { data: inserted, error: insertError } = await supabase
-          .from("chat_history")
-          .insert({ user_id: userId, question, answer: data.answer, category: data.category ?? null })
-          .select("id, question, answer, category")
-          .single();
-        if (!insertError && inserted) {
-          setHistory((h) => [...h, inserted]);
+        const saveRes = await fetch("/api/chat-history", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: [{ question, answer: data.answer, category: data.category ?? null }] }),
+        }).catch(() => null);
+        const savedId = saveRes?.ok ? ((await saveRes.json()) as { ids: string[] }).ids[0] : null;
+        if (savedId) {
+          setHistory((h) => [...h, { id: savedId, question, answer: data.answer, category: data.category ?? null }]);
         } else {
           // Saving to Supabase failed, but the AI already answered — show the
           // answer locally instead of silently discarding it (previously the
@@ -197,12 +178,12 @@ export default function ChatApp() {
   const runConfirm = async () => {
     if (!confirmTarget) return;
     if (confirmTarget.type === "one") {
-      if (userId) await supabase.from("chat_history").delete().eq("id", confirmTarget.id).eq("user_id", userId);
+      if (userId) await fetch(`/api/chat-history?id=${encodeURIComponent(confirmTarget.id)}`, { method: "DELETE", credentials: "include" }).catch(() => null);
       const next = history.filter((i) => i.id !== confirmTarget.id);
       setHistory(next);
       if (!userId) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } else {
-      if (userId) await supabase.from("chat_history").delete().eq("user_id", userId);
+      if (userId) await fetch("/api/chat-history", { method: "DELETE", credentials: "include" }).catch(() => null);
       setHistory([]);
       if (!userId) localStorage.removeItem(STORAGE_KEY);
     }
