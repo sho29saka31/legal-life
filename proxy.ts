@@ -1,16 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { maintenanceViewerRedirect, isMaintenanceViewer } from "@/lib/maintenance-viewer";
 import { isEmergencyMaintenanceActive } from "@/lib/feature-flags";
 
 // adacの管理画面で「緊急メンテナンスモード」を有効にした場合、静的アセット・API・
 // 管理画面・メンテナンスページ自身・クローラー用ファイルを除く全ページを
 // /maintenance の内容を HTTP 503 で返す(他アプリのメンテナンス表示と統一)。
-// legal-lifeは認証をブラウザ側(@supabase/ssr)で完結させておりmiddlewareで
-// セッションを扱わないため、ここでは緊急メンテナンスの判定のみを行う。
+// legal-lifeの認証は auth.saka2931.jp(Better Auth)が行い、ここでは(CPU時間の節約のため)
+// セッションを扱わず、緊急メンテナンスの判定のみを行う。
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|assets|api|admin|maintenance|robots.txt|sitemap.xml).*)"],
 };
 
 export default async function proxy(request: NextRequest) {
+  const viewerRedirect = maintenanceViewerRedirect(request);
+  if (viewerRedirect) return viewerRedirect;
+  if (isMaintenanceViewer(request)) return NextResponse.next();
   if (await isEmergencyMaintenanceActive()) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";

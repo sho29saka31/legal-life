@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import AiConsentModal, { hasAiConsentCookie, saveAiConsentCookie } from "@/components/AiConsentModal";
 import { IconWarning, IconTrash, IconBulb } from "@/components/icons";
 
 const STORAGE_KEY = "legalChatHistory";
@@ -14,6 +14,8 @@ type ChatItem = { id: string; question: string; answer: string; category?: strin
 export default function ChatApp() {
   const [history, setHistory] = useState<ChatItem[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [askAi, setAskAi] = useState(false); // AI への送信の同意の確認を出しているか
+  const [needsLink, setNeedsLink] = useState(false); // ログイン済みだが、legal-life との連携を許可していない
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -45,14 +47,11 @@ export default function ChatApp() {
       }
     };
 
-    const loadFromSupabase = async (uid: string, requestId: number) => {
-      const { data } = await supabase
-        .from("chat_history")
-        .select("id, question, answer, category")
-        .eq("user_id", uid)
-        .order("created_at", { ascending: true });
+    const loadFromSupabase = async (_uid: string, requestId: number) => {
+      const res = await fetch("/api/chat-history", { credentials: "include", cache: "no-store" }).catch(() => null);
+      const data = res?.ok ? ((await res.json()) as ChatItem[]) : [];
       if (authRequestIdRef.current !== requestId) return; // superseded by a newer auth state change
-      setHistory(data ?? []);
+      setHistory(data);
     };
 
     const migrateLocalToSupabase = async (uid: string) => {
@@ -69,14 +68,13 @@ export default function ChatApp() {
         localStorage.removeItem(STORAGE_KEY);
         return;
       }
-      const { error: migrateError } = await supabase.from("chat_history").insert(
-        local.map((item) => ({
-          user_id: uid,
-          question: item.question,
-          answer: item.answer,
-          category: item.category ?? null,
-        })),
-      );
+      const res = await fetch("/api/chat-history", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: local.map((item) => ({ question: item.question, answer: item.answer, category: item.category ?? null })) }),
+      }).catch(() => null);
+      const migrateError = !res?.ok;
       // Only clear the locally-stored history once it has actually been saved to
       // Supabase; previously this ran unconditionally, so a failed insert (network
       // error, RLS rejection, etc.) permanently deleted the user's chat history.
@@ -96,32 +94,17 @@ export default function ChatApp() {
     };
 
     let isMounted = true;
-    let subscription: { unsubscribe: () => void } | undefined;
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // ログイン中かどうかは、サーバー(auth への問い合わせ)で確認する。ログイン・ログアウトはページ遷移を伴うため、変化の購読はしない
+      const res = await fetch("/api/me", { credentials: "include", cache: "no-store" }).catch(() => null);
+      const user = res?.ok ? ((await res.json()) as { user: { id: string } }).user : null;
       if (!isMounted) return;
+      if (res?.status === 403) setNeedsLink(true);
       await initForUser(user?.id ?? null);
-      if (!isMounted) return;
-      const {
-        data: { subscription: sub },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        initForUser(session?.user?.id ?? null);
-      });
-      // If the component unmounted while the above awaits were in flight, the
-      // cleanup below already ran (subscription was still undefined at that
-      // point), so unsubscribe immediately instead of leaking this listener.
-      if (!isMounted) {
-        sub.unsubscribe();
-        return;
-      }
-      subscription = sub;
     })();
 
     return () => {
       isMounted = false;
-      subscription?.unsubscribe();
     };
   }, []);
 
@@ -130,6 +113,11 @@ export default function ChatApp() {
     if (!question || sending) return;
     if (question.length > MAX_INPUT_LEN) {
       setError(`質問は${MAX_INPUT_LEN}文字以内で入力してください。`);
+      return;
+    }
+    // AI(Google Gemini)への送信に同意するまで、質問は送らない
+    if (!hasAiConsentCookie()) {
+      setAskAi(true);
       return;
     }
     setSending(true);
@@ -151,13 +139,15 @@ export default function ChatApp() {
       }
 
       if (userId) {
-        const { data: inserted, error: insertError } = await supabase
-          .from("chat_history")
-          .insert({ user_id: userId, question, answer: data.answer, category: data.category ?? null })
-          .select("id, question, answer, category")
-          .single();
-        if (!insertError && inserted) {
-          setHistory((h) => [...h, inserted]);
+        const saveRes = await fetch("/api/chat-history", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: [{ question, answer: data.answer, category: data.category ?? null }] }),
+        }).catch(() => null);
+        const savedId = saveRes?.ok ? ((await saveRes.json()) as { ids: string[] }).ids[0] : null;
+        if (savedId) {
+          setHistory((h) => [...h, { id: savedId, question, answer: data.answer, category: data.category ?? null }]);
         } else {
           // Saving to Supabase failed, but the AI already answered — show the
           // answer locally instead of silently discarding it (previously the
@@ -197,12 +187,12 @@ export default function ChatApp() {
   const runConfirm = async () => {
     if (!confirmTarget) return;
     if (confirmTarget.type === "one") {
-      if (userId) await supabase.from("chat_history").delete().eq("id", confirmTarget.id).eq("user_id", userId);
+      if (userId) await fetch(`/api/chat-history?id=${encodeURIComponent(confirmTarget.id)}`, { method: "DELETE", credentials: "include" }).catch(() => null);
       const next = history.filter((i) => i.id !== confirmTarget.id);
       setHistory(next);
       if (!userId) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } else {
-      if (userId) await supabase.from("chat_history").delete().eq("user_id", userId);
+      if (userId) await fetch("/api/chat-history", { method: "DELETE", credentials: "include" }).catch(() => null);
       setHistory([]);
       if (!userId) localStorage.removeItem(STORAGE_KEY);
     }
@@ -221,6 +211,16 @@ export default function ChatApp() {
 
   return (
     <div className="max-w-[1100px] mx-auto px-5 pb-12">
+      {askAi && (
+        <AiConsentModal
+          onAgree={() => {
+            saveAiConsentCookie();
+            setAskAi(false);
+            void handleSend();
+          }}
+          onCancel={() => setAskAi(false)}
+        />
+      )}
       <div className="text-center py-6 mb-2">
         <h1 className="text-2xl font-bold">法令専門AIチャット</h1>
         <p className="text-sm text-gray-500 mt-2">
@@ -228,6 +228,14 @@ export default function ChatApp() {
           <br />
           履歴はご利用中の端末もしくはサーバーに自動で保存されます。
         </p>
+        {needsLink && (
+          <p className="text-sm mt-3">
+            アカウントでログイン中ですが、legal-life との連携が許可されていないため、履歴はこの端末にだけ保存されます。{" "}
+            <a className="underline text-blue-600" href={`https://auth.saka2931.jp/link?service=legal_life&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://legal-life.saka2931.jp/")}`}>
+              連携を許可する
+            </a>
+          </p>
+        )}
       </div>
 
       <div className="bg-[#fff9db] border border-[#ffe066] border-l-[6px] border-l-[#fcc419] rounded-xl px-6 py-4 mb-5 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">

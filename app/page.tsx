@@ -96,9 +96,9 @@ export default async function HomePage() {
                 </span>
                 <span className="flex-1 sm:pl-2">{a.title}</span>
                 <span className="w-full sm:w-24 shrink-0 text-right sm:text-center">
-                  <Link href={`/info/details/${a.id}`} className="text-[#0076a3]">
+                  <a href={`https://saka2931.jp/news/${a.id}`} className="text-[#0076a3]">
                     詳細
-                  </Link>
+                  </a>
                 </span>
               </div>
             ))}
@@ -121,7 +121,7 @@ export default async function HomePage() {
           </p>
           <div className="my-8">
             <Link
-              href="https://saka2931.jp/contact/legal-life"
+              href="https://saka2931.jp/contact"
               className="inline-block w-full sm:w-auto min-w-[150px] bg-[#b2e2e8] text-[#333] font-bold rounded-[10px] px-6 sm:px-12 py-4 shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-all duration-300 hover:bg-[#7ddce8] hover:shadow-[0_8px_15px_rgba(0,0,0,0.15)] hover:-translate-y-1"
             >
               お問い合わせはこちら

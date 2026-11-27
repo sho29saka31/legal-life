@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { getAnnouncements, formatSimpleDate } from "@/lib/announcements";
@@ -43,12 +42,12 @@ export default async function InfoPage() {
               {formatSimpleDate(a.publishedAt)}
             </span>
             <span className="flex-1 sm:pr-5 text-[#333]">{a.title}</span>
-            <Link
-              href={`/info/details/${a.id}`}
+            <a
+              href={`https://saka2931.jp/news/${a.id}`}
               className="w-full sm:w-24 shrink-0 text-left sm:text-right font-bold text-sm text-[#0076a3] hover:underline"
             >
               内容を見る
-            </Link>
+            </a>
           </div>
         ))}
       </div>

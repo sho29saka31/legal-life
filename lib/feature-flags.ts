@@ -1,4 +1,4 @@
-import { createInfraReadOnlyClient } from "@/lib/supabase/infra";
+import { asInfraAnon } from "@/lib/server/db";
 
 /**
  * 機能フラグ。saka2931-infra（adacの管理画面が書き込む）の feature_flags
@@ -26,14 +26,10 @@ export async function getFeatureFlags<K extends string>(
   >;
 
   try {
-    const infra = createInfraReadOnlyClient();
-    const { data } = await infra
-      .from("feature_flags")
-      .select("key, enabled")
-      .eq("service", "legal_life")
-      .in("key", [...keys]);
-
-    for (const row of data ?? []) {
+    const data = await asInfraAnon(
+      (sql) => sql<{ key: string; enabled: boolean }[]>`select key, enabled from public.feature_flags where service = 'legal_life' and key in ${sql([...keys] as string[])}`,
+    );
+    for (const row of data) {
       if ((keys as readonly string[]).includes(row.key)) {
         result[row.key as K] = row.enabled;
       }
@@ -60,14 +56,10 @@ export async function getFeatureFlag(key: FeatureFlagKey): Promise<boolean> {
  */
 export async function isEmergencyMaintenanceActive(): Promise<boolean> {
   try {
-    const infra = createInfraReadOnlyClient();
-    const { data } = await infra
-      .from("feature_flags")
-      .select("enabled")
-      .eq("service", "legal_life")
-      .eq("key", "emergency_maintenance")
-      .maybeSingle();
-    return data?.enabled ?? false;
+    const rows = await asInfraAnon(
+      (sql) => sql<{ enabled: boolean }[]>`select enabled from public.feature_flags where service = 'legal_life' and key = 'emergency_maintenance' limit 1`,
+    );
+    return rows[0]?.enabled ?? false;
   } catch {
     return false;
   }

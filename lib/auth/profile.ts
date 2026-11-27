@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase/client";
 
 const AUTH_APP_URL = "https://auth.saka2931.jp";
 
@@ -23,11 +22,14 @@ async function getDisplayName(): Promise<string | null> {
   }
 }
 
-export async function getProfile(uid: string): Promise<Profile | null> {
-  const [{ data }, displayName] = await Promise.all([
-    supabase.from("profiles").select("photo_url, role").eq("id", uid).maybeSingle(),
+export async function getProfile(_uid: string): Promise<Profile | null> {
+  const [me, displayName] = await Promise.all([
+    fetch("/api/me", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ profile: { photo_url: string | null; role: string } | null }>) : null))
+      .catch(() => null),
     getDisplayName(),
   ]);
+  const data = me?.profile;
   if (!data) return null;
   return { display_name: displayName, photo_url: data.photo_url, role: data.role };
 }

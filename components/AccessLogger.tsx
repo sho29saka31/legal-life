@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 import { fetchLocation, parseUA, type LocationInfo } from "@/lib/browserInfo";
 
 // 独自アクセスログ収集。access_logsテーブルにページビュー・スクロール・滞在時間・クリックを記録する。
@@ -55,9 +54,11 @@ export default function AccessLogger() {
       if (cancelled) return;
 
       const logEvent = (type: string, extra: Record<string, string | number | boolean | null> = {}) => {
-        supabase
-          .from("access_logs")
-          .insert({
+        void fetch("/api/access-log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
             event_type: type,
             path: pathname,
             browser: ua.browser,
@@ -70,8 +71,8 @@ export default function AccessLogger() {
             region: loc.region,
             city: loc.city,
             extra,
-          })
-          .then(() => {});
+          }),
+        }).catch(() => {});
       };
 
       logEvent("page_view", {

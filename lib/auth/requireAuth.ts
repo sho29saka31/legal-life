@@ -1,24 +1,15 @@
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase/client";
+export type AuthUser = { id: string; email: string; name: string };
 
 // ログイン・サインアップ・パスワードリセット・MFA等はすべて auth.saka2931.jp
 // に一元化されているため、未ログインを検知したらそちらへ return_to 付きで
 // リダイレクトする。
 const AUTH_APP_URL = "https://auth.saka2931.jp";
 
-export function requireAuth(): Promise<User> {
-  return new Promise((resolve) => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      subscription.unsubscribe();
-      const user = session?.user;
-      if (!user) {
-        const returnTo = `${location.origin}${location.pathname}${location.search}`;
-        window.location.replace(`${AUTH_APP_URL}/login?return_to=${encodeURIComponent(returnTo)}`);
-      } else {
-        resolve(user);
-      }
-    });
-  });
+/** ログイン中の利用者を返す。未ログインなら auth のログイン画面へ移動し、解決しない */
+export async function requireAuth(): Promise<AuthUser> {
+  const res = await fetch("/api/me", { credentials: "include", cache: "no-store" }).catch(() => null);
+  if (res?.ok) return ((await res.json()) as { user: AuthUser }).user;
+  const returnTo = `${location.origin}${location.pathname}${location.search}`;
+  window.location.replace(`${AUTH_APP_URL}/login?return_to=${encodeURIComponent(returnTo)}`);
+  return new Promise<AuthUser>(() => {});
 }

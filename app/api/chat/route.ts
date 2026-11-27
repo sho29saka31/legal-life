@@ -138,6 +138,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // AI(Google Gemini)への送信に、同意(画面の確認)がなければ、受け付けない
+  if (req.cookies.get("legal_life_ai_consent")?.value !== "1") {
+    return NextResponse.json({ error: "AIチャットを使うには、入力内容をAI(Google Gemini)へ送信することへの同意が必要です。", code: "ai_consent_required" }, { status: 403 });
+  }
+
   if (isRateLimited(getClientIp(req))) {
     return NextResponse.json(
       { error: "リクエストが多すぎます。しばらく待ってから再度お試しください。" },

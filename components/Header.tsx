@@ -91,7 +91,7 @@ export default function Header({
             <li className="mb-5"><Link href="/info/about" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">サイト概要</Link></li>
             <li className="mb-5"><Link href="/info" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">お知らせ</Link></li>
             <li className="mb-5"><Link href="/info/faq" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">よくある質問</Link></li>
-            <li className="mb-5"><Link href="https://saka2931.jp/contact/legal-life" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">お問い合わせ</Link></li>
+            <li className="mb-5"><Link href="https://saka2931.jp/contact" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">お問い合わせ</Link></li>
             <li className="mb-5"><Link href="/info/map" onClick={() => setOpen(false)} className="text-gray-800 hover:text-primary-dark">サイトマップ</Link></li>
           </ul>
         </nav>
@@ -127,12 +127,12 @@ function Announcements({ items }: { items: Announcement[] }) {
           <span className="w-[22px] h-[22px] shrink-0"><ImportantIcon /></span>
           <p className="text-sm text-[#333] leading-snug m-0">
             {item.title} {item.dateLabel}
-            <Link
-              href={`/info/details/${item.id}`}
+            <a
+              href={`https://saka2931.jp/news/${item.id}`}
               className="text-[#0076a3] font-bold underline ml-2"
             >
               確認する
-            </Link>
+            </a>
           </p>
         </div>
       ))}

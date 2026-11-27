@@ -1,20 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
 import { parseUA } from "@/lib/browserInfo";
 
 /**
- * この端末をauth_app.sessionsに登録・監視するためのlocalStorageキー。
- * authアプリ自身の登録(auth.saka2931.jpのlocalStorage)とはオリジンが異なり
- * 共有されないため、legal-life自身でも同じ仕組みを持つ必要がある
- * (authの`account/devices`でlegal-life経由のこの端末を個別に確認・強制ログアウトできるようにする)。
- * 旧`components/SessionWatcher.tsx`(legal_life.sessionsを監視)の後継。
+ * この端末を auth_app.sessions に登録・監視する。
+ * authアプリ自身の登録(auth.saka2931.jpのlocalStorage)とはオリジンが異なり共有されないため、
+ * legal-life 自身でも同じ仕組みを持つ(authの`account/devices`で、この端末を個別に確認・強制ログアウトできる)。
+ * 他端末の「ログアウトさせる」指示は、60秒ごとの確認で検知する。
  */
 const SESSION_KEY = "legallife-auth-session-id";
 const POLL_INTERVAL_MS = 60_000;
 
-async function registerSession(userId: string): Promise<void> {
+async function registerSession(): Promise<boolean> {
   try {
     let sid = localStorage.getItem(SESSION_KEY);
     if (!sid) {
@@ -22,83 +20,41 @@ async function registerSession(userId: string): Promise<void> {
       localStorage.setItem(SESSION_KEY, sid);
     }
     const ua = parseUA();
-    const { error } = await supabase.schema("auth_app").from("sessions").upsert({
-      id: sid,
-      user_id: userId,
-      app: "legal_life",
-      browser: ua.browser,
-      os: ua.os,
-      device: ua.device,
-      last_active: new Date().toISOString(),
+    const res = await fetch("/api/auth-session", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: sid, browser: ua.browser, os: ua.os, device: ua.device }),
     });
-    if (error) console.error("Failed to register session", error);
-  } catch (error) {
-    console.error("Failed to register session", error);
+    return res.ok; // 401 は未ログイン(何もしない)
+  } catch {
+    return false;
   }
 }
 
 async function signOutAndRedirect(sid: string): Promise<void> {
   localStorage.removeItem(SESSION_KEY);
-  await supabase.schema("auth_app").from("sessions").delete().eq("id", sid);
-  await supabase.auth.signOut();
+  // auth 側で、この端末のセッションは既に失効している。ログイン画面へ戻す
   window.location.replace("https://auth.saka2931.jp/login");
 }
 
-// 他端末の「デバイス管理」からログアウトさせると、該当セッションのshould_logoutが
-// trueになるので、それをSupabase Realtimeで監視して自動的にサインアウトする。
-//
-// RealtimeのWebSocketは切断されうるため、Realtimeを主経路としつつ、一定間隔で
-// should_logoutを直接ポーリングするフォールバックを保険として併用する。
 export default function AuthSessionWatcher() {
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      channel?.unsubscribe();
-      channel = null;
-      if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-      }
-
-      const user = session?.user;
-      if (!user) return;
-
-      void registerSession(user.id);
+    (async () => {
+      if (!(await registerSession()) || cancelled) return;
       const sid = localStorage.getItem(SESSION_KEY);
       if (!sid) return;
-
-      pollTimer = setInterval(async () => {
-        const { data } = await supabase
-          .schema("auth_app")
-          .from("sessions")
-          .select("should_logout")
-          .eq("id", sid)
-          .maybeSingle();
-        if (!cancelled && data?.should_logout === true) signOutAndRedirect(sid);
+      timer = setInterval(async () => {
+        const res = await fetch(`/api/auth-session?sid=${encodeURIComponent(sid)}`, { credentials: "include", cache: "no-store" }).catch(() => null);
+        if (cancelled || !res?.ok) return;
+        if (((await res.json()) as { should_logout: boolean }).should_logout) void signOutAndRedirect(sid);
       }, POLL_INTERVAL_MS);
-
-      channel = supabase
-        .channel(`legallife-session-watch-${sid}`)
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "auth_app", table: "sessions", filter: `id=eq.${sid}` },
-          (payload) => {
-            if (payload.new.should_logout === true) signOutAndRedirect(sid);
-          },
-        )
-        .subscribe();
-    });
-
+    })();
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
-      channel?.unsubscribe();
-      if (pollTimer) clearInterval(pollTimer);
+      if (timer) clearInterval(timer);
     };
   }, []);
 
