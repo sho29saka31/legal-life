@@ -100,7 +100,7 @@ export default function ChatApp() {
     // 入力中・送信に失敗した質問を、入力欄に戻す
     try {
       const draft = localStorage.getItem(DRAFT_KEY);
-      if (draft) setInput(draft.slice(0, MAX_INPUT_LEN));
+      if (draft) queueMicrotask(() => setInput((cur) => cur || draft.slice(0, MAX_INPUT_LEN)));
     } catch {}
 
     let isMounted = true;
