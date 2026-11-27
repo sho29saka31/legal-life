@@ -12,7 +12,7 @@
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "marked": "^18.2.0",
+    "marked": "^18.3.0",
     "next": "^16.4.6",
     "postgres": "^4.1.1",
     "react": "^19.3.1",
