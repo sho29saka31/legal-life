@@ -8,7 +8,6 @@ export const metadata: Metadata = pageMetadata({
   path: "/content/chat",
   description:
     "法令や法律に関する疑問をAIに質問できるチャット機能のページです。日本国憲法や主要な法令について気軽に相談できます。回答は参考情報であり、具体的な法律問題は弁護士などの専門家へご相談ください。",
-  index: false,
 });
 
 export default async function ChatPage() {

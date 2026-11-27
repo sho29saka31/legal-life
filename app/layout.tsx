@@ -56,6 +56,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ja" className={bizUDGothic.variable}>
       <body className="font-sans">
+        <script
+          type="application/ld+json"
+          // 検索エンジン向けの構造化データ(WebSite)。内容は固定値のみ
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "legal&life", url: (process.env.NEXT_PUBLIC_SITE_URL || "https://legal-life.saka2931.jp"), inLanguage: "ja" }) }}
+        />
         <div id="header"><Header importantAnnouncements={importantAnnouncements} /></div>
         <main>{children}</main>
         <AgeNotice />
