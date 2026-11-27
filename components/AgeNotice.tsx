@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 // 未成年者への案内(個人情報保護法のガイドラインに沿い、15歳未満の方は、保護者の同意を得て使うよう、利用の前に伝える)。
 //  ・ページを開くたびに、まだ確認していなければ表示する。確認すると、ブラウザを閉じる(セッションが切れる)まで出さない
@@ -30,7 +31,22 @@ export default function AgeNotice() {
     if (!hasCookie(SESSION_COOKIE) && !hasCookie(SKIP_COOKIE)) setOpen(true);
   }, []);
   useEffect(() => {
-    if (open) btnRef.current?.focus();
+    if (!open) return;
+    btnRef.current?.focus();
+    // 確認が済むまで、背景の画面は操作できないようにする(スクロール・キーボード・スクリーンリーダー)。
+    // モーダルは body 直下に出し、それ以外の body 直下の要素を inert にする
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const locked: Element[] = [];
+    for (const el of Array.from(document.body.children)) {
+      if (el.hasAttribute("data-age-notice") || el.tagName === "SCRIPT" || el.hasAttribute("inert")) continue;
+      el.setAttribute("inert", "");
+      locked.push(el);
+    }
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      for (const el of locked) el.removeAttribute("inert");
+    };
   }, [open]);
 
   if (!open) return null;
@@ -40,8 +56,8 @@ export default function AgeNotice() {
     setOpen(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto sm:items-center bg-black/60 p-4">
+  return createPortal(
+    <div data-age-notice className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto sm:items-center bg-black/60 p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="age-notice-title" className="w-full max-w-md rounded-xl bg-white p-6 text-gray-900 shadow-2xl">
         <h2 id="age-notice-title" className="text-base font-bold">
           ご利用にあたって(年齢のご確認)
@@ -57,6 +73,7 @@ export default function AgeNotice() {
           確認しました
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
