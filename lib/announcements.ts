@@ -18,8 +18,9 @@ export type Announcement = {
 
 /** 一覧の「公開・更新日」列に表示するシンプルな日付表記（例: "2026/1/1"） */
 export function formatSimpleDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  // 日本時間(JST)で表示する(Workers はUTCで動くため、日付をまたぐ時刻(JST 0:00〜9:00)で、前日の日付になってしまう)
+  const [y, m, d] = new Date(iso).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "numeric", day: "numeric" }).split("/");
+  return `${y}/${m}/${d}`;
 }
 
 function formatDateLabel(publishedAt: string): string {
