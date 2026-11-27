@@ -63,7 +63,9 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <PopupLink className={CONTENT_BUTTON_CLASS}>法令学習</PopupLink>
-            <PopupLink className={CONTENT_BUTTON_CLASS}>チャット</PopupLink>
+            <Link href="/content/chat" className={CONTENT_BUTTON_CLASS}>
+              チャット
+            </Link>
             <Link href="/content/search" className={CONTENT_BUTTON_CLASS}>
               法令検索
             </Link>
