@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AccessLogger from "@/components/AccessLogger";
@@ -67,8 +65,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ScrollTopButton />
         <MaintenancePopup />
         <CookieBanner />
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );

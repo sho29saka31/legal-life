@@ -12,8 +12,6 @@
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.1.0",
     "marked": "^18.2.0",
     "next": "^16.4.6",
     "postgres": "^4.1.1",
