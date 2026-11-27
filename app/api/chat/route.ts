@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFeatureFlag } from "@/lib/feature-flags";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
+// 使うモデルの順番。先頭が高負荷で応答しないとき(2026/11/28 に gemini-3.5-flash が 30 秒以上応答せず 503 になった)は、次のモデルに切り替える
+const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"] as const;
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+// 1つのモデルを待つ上限(超えたら次のモデルへ)
+const GEMINI_TIMEOUT_MS = 20_000;
 const MAX_INPUT_LEN = 1000;
 
 // このAPIは未認証で誰でも呼べる(ログイン前でもチャットを試せる仕様)ため、
@@ -169,15 +172,29 @@ export async function POST(req: NextRequest) {
 
   try {
     // APIキーは、URLのクエリではなくヘッダーで渡す(URLは、プロキシや例外の文面などに残りやすい)
-    const res = await fetch(GEMINI_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: buildPrompt(question) }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
-      }),
-    });
-    if (!res.ok) throw new Error("APIリクエストに失敗しました");
+    let res: Response | null = null;
+    for (const model of GEMINI_MODELS) {
+      try {
+        const r = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: buildPrompt(question) }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
+          }),
+          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+        });
+        if (r.ok) {
+          res = r;
+          break;
+        }
+        // 高負荷(503)・制限(429)・サーバーの不調(5xx)のときだけ、次のモデルを試す
+        if (r.status !== 429 && r.status < 500) throw new Error("APIリクエストに失敗しました");
+      } catch (e) {
+        if (!(e instanceof DOMException) && !(e instanceof TypeError)) throw e; // タイムアウト・通信の失敗は、次のモデルへ
+      }
+    }
+    if (!res) throw new Error("APIリクエストに失敗しました");
     const data = await res.json();
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!answer) throw new Error("AIから有効な回答が得られませんでした");
