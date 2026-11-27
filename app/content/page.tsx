@@ -7,7 +7,7 @@ export const metadata: Metadata = pageMetadata({
   title: "コンテンツ",
   path: "/content",
   description:
-    "legal&lifeのコンテンツ一覧です。e-Gov法令APIを使った法令検索のほか、AIチャット相談・法令学習・法令ニュース(いずれも公開準備中)の4つの機能を紹介しています。調べたい内容や目的に合わせて機能をお選びください。",
+    "legal&lifeのコンテンツ一覧です。e-Gov法令APIを使った法令検索のほか、AIチャット相談・法令学習・法令ニュース(法令学習・ニュースは公開準備中)の4つの機能を紹介しています。調べたい内容や目的に合わせて機能をお選びください。",
 });
 
 const CARDS = [
@@ -20,7 +20,7 @@ const CARDS = [
   {
     title: "チャット",
     desc: "弁護士に対して相談するとお金がかかる。そんな問題を解決するために、いつでも、日本国憲法や主要な法令に対して思っていることをAIにチャットして聞くことができます。",
-    href: null,
+    href: "/content/chat",
     label: "チャットする",
   },
   {

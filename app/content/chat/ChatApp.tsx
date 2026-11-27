@@ -346,9 +346,6 @@ export default function ChatApp() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#f1f5f9]">
           <span className="font-bold text-[#0f172a]">
             法令専門AIチャット
-            <span className="ml-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded-sm px-1.5 py-0.5 align-middle">
-              テスト中の機能
-            </span>
           </span>
           <div className="flex items-center gap-2">
             <button

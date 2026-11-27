@@ -115,9 +115,6 @@ export default function SearchApp() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">e-gov法令API Version2 法令検索システム</h1>
-        <span className="inline-block mt-2 text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 rounded-sm px-2 py-0.5">
-          テスト中の機能
-        </span>
         <p className="text-sm text-gray-500 mt-2">
           e-gov法令API Version2を利用して法令検索機能を作成しています
           <br />

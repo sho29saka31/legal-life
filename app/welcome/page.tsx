@@ -11,7 +11,7 @@ import PopupLink from "@/components/PopupLink";
 // href: null の項目は /content と同様、正式公開前の機能として
 // 遷移させず「準備中」ポップアップを表示する(PopupLink)。
 const FEATURES: { href: string | null; icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; desc: string }[] = [
-  { href: null, icon: IconChat, title: "チャット", desc: "日本の法令に関する疑問をAIに質問できます" },
+  { href: "/content/chat", icon: IconChat, title: "チャット", desc: "日本の法令に関する疑問をAIに質問できます" },
   { href: null, icon: IconBook, title: "法令学習", desc: "憲法をはじめとした各種法令をわかりやすく解説しています" },
   { href: "/content/search", icon: IconSearch, title: "法令検索", desc: "e-Govの情報を使って法令を検索できます" },
   { href: null, icon: IconNewspaper, title: "ニュース", desc: "最新の法令に関する話題をお届けします" },
