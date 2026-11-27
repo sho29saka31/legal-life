@@ -34,7 +34,7 @@ export default function ChatApp() {
   // (and any subsequent send) actually points to.
   const authRequestIdRef = useRef(0);
 
-  // ログイン中はSupabase(chat_history)に読み書きし、未ログイン時はブラウザのlocalStorageに保存する。
+  // ログイン中はデータベース(chat_history)に読み書きし、未ログイン時はブラウザのlocalStorageに保存する。
   // 未ログインで貯まった履歴は、ログインした瞬間にSupabaseへ移行してlocalStorageから消す。
   useEffect(() => {
     const loadFromLocal = () => {
