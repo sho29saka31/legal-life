@@ -8,6 +8,7 @@ import { IconWarning, IconTrash, IconBulb } from "@/components/icons";
 
 const STORAGE_KEY = "legalChatHistory";
 const MAX_INPUT_LEN = 1000;
+const DRAFT_KEY = "legalChatDraft"; // 入力中・送信に失敗した質問(再読み込みで、入力欄に戻す)
 
 type ChatItem = { id: string; question: string; answer: string; category?: string | null };
 
@@ -15,6 +16,9 @@ export default function ChatApp() {
   const [history, setHistory] = useState<ChatItem[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [askAi, setAskAi] = useState(false); // AI への送信の同意の確認を出しているか
+  const [confirmSend, setConfirmSend] = useState<string | null>(null); // 送信前の確認(この内容で送信してよいか)
+  const [linkModal, setLinkModal] = useState(false); // アカウント連携の確認(ログイン済みで、連携が未許可のとき)
+  const [notLoggedIn, setNotLoggedIn] = useState(false);
   const [needsLink, setNeedsLink] = useState(false); // ログイン済みだが、legal-life との連携を許可していない
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -93,13 +97,23 @@ export default function ChatApp() {
       }
     };
 
+    // 入力中・送信に失敗した質問を、入力欄に戻す
+    try {
+      const draft = localStorage.getItem(DRAFT_KEY);
+      if (draft) setInput(draft.slice(0, MAX_INPUT_LEN));
+    } catch {}
+
     let isMounted = true;
     (async () => {
       // ログイン中かどうかは、サーバー(auth への問い合わせ)で確認する。ログイン・ログアウトはページ遷移を伴うため、変化の購読はしない
       const res = await fetch("/api/me", { credentials: "include", cache: "no-store" }).catch(() => null);
       const user = res?.ok ? ((await res.json()) as { user: { id: string } }).user : null;
       if (!isMounted) return;
-      if (res?.status === 403) setNeedsLink(true);
+      if (res?.status === 403) {
+        setNeedsLink(true);
+        setLinkModal(true);
+      }
+      if (!user && res?.status !== 403) setNotLoggedIn(true);
       await initForUser(user?.id ?? null);
     })();
 
@@ -108,7 +122,8 @@ export default function ChatApp() {
     };
   }, []);
 
-  const handleSend = async () => {
+  // 送信ボタン・Enter: すぐには送らず、確認のモーダルを出す
+  const handleSend = () => {
     const question = input.trim();
     if (!question || sending) return;
     if (question.length > MAX_INPUT_LEN) {
@@ -120,9 +135,16 @@ export default function ChatApp() {
       setAskAi(true);
       return;
     }
+    setConfirmSend(question);
+  };
+
+  const doSend = async (question: string) => {
+    if (sending) return;
     setSending(true);
     setError("");
     setInput("");
+    // 送信に成功するまで、質問を端末に残す(失敗したときや、再読み込みしたときに、入力欄に戻すため)
+    try { localStorage.setItem(DRAFT_KEY, question); } catch {}
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
@@ -134,9 +156,11 @@ export default function ChatApp() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "エラーが発生しました");
       if (data.ignored) {
+        try { localStorage.removeItem(DRAFT_KEY); } catch {}
         setError("法令に関する質問ではないため、回答・保存をスキップしました。");
         return;
       }
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
 
       if (userId) {
         const saveRes = await fetch("/api/chat-history", {
@@ -169,7 +193,7 @@ export default function ChatApp() {
         areaRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? `${e.message}(入力した内容は、入力欄に戻しました)` : String(e));
       // Restore the question text on failure so the user doesn't lose what they typed.
       setInput((current) => current || question);
     } finally {
@@ -213,13 +237,57 @@ export default function ChatApp() {
     <div className="max-w-[1100px] mx-auto px-5 pb-12">
       {askAi && (
         <AiConsentModal
+          agreeLabel="同意する"
           onAgree={() => {
             saveAiConsentCookie();
             setAskAi(false);
-            void handleSend();
+            // 質問が入力済みなら、続けて、送信の確認へ進む
+            const q = input.trim();
+            if (q && q.length <= MAX_INPUT_LEN) setConfirmSend(q);
           }}
           onCancel={() => setAskAi(false)}
         />
+      )}
+      {confirmSend !== null && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-5">
+          <div role="dialog" aria-modal="true" className="w-full max-w-[460px] rounded-2xl bg-white px-6 py-7 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <p className="mb-3 text-center font-bold text-[#1e293b]">この内容で送信してもよろしいですか?</p>
+            <p className="mb-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap rounded-lg bg-[#f8fafc] p-3 text-sm text-[#334155]">{confirmSend}</p>
+            <p className="mb-5 text-xs text-gray-500">入力した内容は、回答の生成のため、Google の Gemini API へ送信されます。個人情報は入力しないでください。</p>
+            <div className="flex justify-center gap-3">
+              <button className="max-w-[160px] flex-1 rounded-[10px] bg-gray-100 py-2.5 font-bold text-gray-700 hover:bg-gray-200" onClick={() => setConfirmSend(null)}>戻る</button>
+              <button
+                className="max-w-[160px] flex-1 rounded-[10px] bg-[#0f172a] py-2.5 font-bold text-white hover:bg-[#334155]"
+                onClick={() => {
+                  const q = confirmSend;
+                  setConfirmSend(null);
+                  void doSend(q);
+                }}
+              >
+                送信する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {linkModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-5">
+          <div role="dialog" aria-modal="true" className="w-full max-w-[460px] rounded-2xl bg-white px-6 py-7 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <p className="mb-2 text-center text-lg font-bold text-[#1e293b]">アカウントの連携を確認してください</p>
+            <p className="mb-5 text-sm leading-relaxed text-[#334155]">
+              アカウントでログイン中ですが、legal-life との連携が許可されていません。このままでは、チャットの履歴は、この端末にだけ保存されます。連携を許可すると、履歴が、アカウントに保存されます。
+            </p>
+            <div className="flex flex-col gap-2">
+              <a
+                className="rounded-[10px] bg-[#0f172a] py-3 text-center font-bold text-white hover:bg-[#334155]"
+                href={`https://auth.saka2931.jp/link?service=legal_life&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://legal-life.saka2931.jp/")}`}
+              >
+                連携を許可する
+              </a>
+              <button className="rounded-[10px] bg-gray-100 py-3 font-bold text-gray-700 hover:bg-gray-200" onClick={() => setLinkModal(false)}>今は許可しない(この端末だけで使う)</button>
+            </div>
+          </div>
+        </div>
       )}
       <div className="text-center py-6 mb-2">
         <h1 className="text-2xl font-bold">法令専門AIチャット</h1>
@@ -228,15 +296,24 @@ export default function ChatApp() {
           <br />
           履歴はご利用中の端末もしくはサーバーに自動で保存されます。
         </p>
-        {needsLink && (
-          <p className="text-sm mt-3">
-            アカウントでログイン中ですが、legal-life との連携が許可されていないため、履歴はこの端末にだけ保存されます。{" "}
-            <a className="underline text-blue-600" href={`https://auth.saka2931.jp/link?service=legal_life&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://legal-life.saka2931.jp/")}`}>
-              連携を許可する
-            </a>
-          </p>
-        )}
       </div>
+
+      {needsLink && (
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-[#f59e0b] bg-[#fffbeb] px-6 py-4">
+          <p className="text-sm font-bold text-[#92400e]">アカウントの連携が許可されていません。履歴は、この端末にだけ保存されます。</p>
+          <a
+            className="rounded-lg bg-[#0f172a] px-5 py-2 text-sm font-bold text-white hover:bg-[#334155]"
+            href={`https://auth.saka2931.jp/link?service=legal_life&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://legal-life.saka2931.jp/")}`}
+          >
+            連携を許可する
+          </a>
+        </div>
+      )}
+      {notLoggedIn && (
+        <div className="mb-5 rounded-xl border-2 border-[#60a5fa] bg-[#eff6ff] px-6 py-4 text-sm font-bold text-[#1e40af]">
+          ログインしていません。履歴は、この端末にだけ保存されます。アカウントに保存したいときは、ログインして、連携を許可してください。
+        </div>
+      )}
 
       <div className="bg-[#fff9db] border border-[#ffe066] border-l-[6px] border-l-[#fcc419] rounded-xl px-6 py-4 mb-5 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
         <p className="font-bold text-[#856404] text-lg mb-2 flex items-center gap-1.5">
@@ -326,13 +403,22 @@ export default function ChatApp() {
             rows={1}
             placeholder="AIと話すにはここに入力..."
             value={input}
+            onFocus={() => {
+              // 初めて入力欄にさわったとき、AI(Google Gemini)の利用についての確認を出す
+              if (!hasAiConsentCookie()) {
+                textareaRef.current?.blur();
+                setAskAi(true);
+              }
+            }}
             onChange={(e) => {
               setInput(e.target.value);
+              try { if (e.target.value) localStorage.setItem(DRAFT_KEY, e.target.value); else localStorage.removeItem(DRAFT_KEY); } catch {}
               e.target.style.height = "auto";
               e.target.style.height = Math.min(e.target.scrollHeight, 150) + "px";
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Enter では、すぐには送信せず、確認のモーダルを出す(日本語の変換の確定の Enter では、何もしない)。Shift+Enter は改行
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 handleSend();
               }

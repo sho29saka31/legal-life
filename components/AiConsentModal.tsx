@@ -15,7 +15,7 @@ export function saveAiConsentCookie() {
  * AI チャットを使う前の確認。入力した質問は、回答の生成のため、Google の Gemini API(米国)へ送信される。
  * 同意するまで、AI には何も送らない。
  */
-export default function AiConsentModal({ onAgree, onCancel }: { onAgree: () => void; onCancel: () => void }) {
+export default function AiConsentModal({ onAgree, onCancel, agreeLabel = "同意して、質問を送る" }: { onAgree: () => void; onCancel: () => void; agreeLabel?: string }) {
   const [agree, setAgree] = useState(false);
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto sm:items-center bg-black/60 p-4">
@@ -35,7 +35,7 @@ export default function AiConsentModal({ onAgree, onCancel }: { onAgree: () => v
           上記の内容を理解し、AIへの送信に同意します
         </label>
         <button type="button" disabled={!agree} onClick={onAgree} className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white disabled:opacity-50">
-          同意して、質問を送る
+          {agreeLabel}
         </button>
         <button type="button" onClick={onCancel} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
           同意しない(送らない)
